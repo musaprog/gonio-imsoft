@@ -52,11 +52,13 @@ import msvcrt                           # Non-blocking input reading on Windows
 
 from arduino_serial import ArduinoReader
 from camera_client import CameraClient
+from dynamic_parameters import DEFAULT_DYNAMIC_PARAMETERS, ParameterEditor, getModifiedParameters
 
 DEFAULT_TRIGGER_CHANNEL = "Dev1/ao0"
 DEFAULT_IMAGING_DELAY = 0.03
 DEFAULT_SAVEDIR = 'data'
 STRESS_TEST = False
+
 
 # DEPRECATED
 # Dynamic imaging parameters
@@ -80,27 +82,25 @@ STRESS_TEST = False
 # ir_channel    NI channel for IR                               for example ["Dev2/ao0", "Dev2/ao1"] or "Dev1/ao0"
 # flash_channel NI channel for Flash                            for example ["Dev2/ao0", "Dev2/ao1"] or "Dev1/ao0"
 
-DEFAULT_DYNAMIC_PARAMETERS = {'isi': 20.0, 'repeats': 1, 'pre_stim': 0.000,
-                              'stim': 0.200, 'post_stim': 0.00, 'frame_length' : 0.010,
-                              'ir_imaging': 5, 'ir_waiting': 0, 'ir_livefeed': 1,
-                              'flash_on': 10, 'flash_off': 0,
-                              'ir_channel': ["Dev2/ao0", "Dev2/ao1"], 'flash_channel': "Dev1/ao0"}
+
+
+
 
 # Paremeters for studying movements when there's background light
-DEFAULT_DYNAMIC_PARAMETERS['flash_off'] = DEFAULT_DYNAMIC_PARAMETERS['flash_on']/10
+#BACKGROUND_ON_DYNAMIC_PARAMETERS['flash_off'] = self.dynamic_parameters['flash_on']/10
 
 
 # Parameters for the longterm study
 # ISI 10*60 s = 10 every 10 mins
 # repeats 288 with that ISI means 24h
-#DEFAULT_DYNAMIC_PARAMETERS = {'isi': 1*60.0, 'repeats': 5*288, 'pre_stim': 0.000,
+#self.dynamic_parameters = {'isi': 1*60.0, 'repeats': 5*288, 'pre_stim': 0.000,
 #                              'stim': 0.200, 'post_stim': 0.00, 'frame_length' : 0.010}
 
 # Parameters for ISI study
-#DEFAULT_DYNAMIC_PARAMETERS = {'repeats': 20, 'pre_stim': 0.000,
+#self.dynamic_parameters = {'repeats': 20, 'pre_stim': 0.000,
 #                              'stim': 0.200, 'post_stim': 0.00, 'frame_length' : 0.010}
-#DEFAULT_DYNAMIC_PARAMETERS['isi'] = np.flip(np.logspace(0, 2, DEFAULT_DYNAMIC_PARAMETERS['repeats']))
-#DEFAULT_DYNAMIC_PARAMETERS['isi'] = DEFAULT_DYNAMIC_PARAMETERS['isi'].tolist()
+#self.dynamic_parameters['isi'] = np.flip(np.logspace(0, 2, self.dynamic_parameters['repeats']))
+#self.dynamic_parameters['isi'] = self.dynamic_parameters['isi'].tolist()
 
 #sys.setswitchinterval(0.0005)
 #print(sys.getswitchinterval())
@@ -281,7 +281,7 @@ class Triggerer:
 
         self.angles.append(self.reader.getLatest())
 
-        # To speed things up, for the last repeat we didn't wait the ISI. Now here, if the user
+:        # To speed things up, for the last repeat we didn't wait the ISI. Now here, if the user
         # is very fast, we wait the ISI time.
         try:
             if time.time() < self.isi_slept_time: 
@@ -306,7 +306,7 @@ class Triggerer:
             print('  Imaging {}'.format(label))
 
             
-            self.setLED(DEFAULT_DYNAMIC_PARAMETERS['ir_channel'], DEFAULT_DYNAMIC_PARAMETERS['ir_imaging'])
+            self.setLED(self.dynamic_parameters['ir_channel'], self.dynamic_parameters['ir_imaging'])
             time.sleep(0.5)
             
             self.camera.acquireSeries(frame_length, 0, N_frames, label, os.path.join(self.preparation['name'], 'pos{}'.format(imaging_angle)))
@@ -314,14 +314,14 @@ class Triggerer:
             self.waitForTrigger()
             time.sleep(self.dynamic_parameters['pre_stim'])
             
-            self.setLED(DEFAULT_DYNAMIC_PARAMETERS['flash_channel'], DEFAULT_DYNAMIC_PARAMETERS['flash_on'])
+            self.setLED(self.dynamic_parameters['flash_channel'], self.dynamic_parameters['flash_on'])
             time.sleep(self.dynamic_parameters['stim'])
 
-            self.setLED(DEFAULT_DYNAMIC_PARAMETERS['flash_channel'], DEFAULT_DYNAMIC_PARAMETERS['flash_off'])
+            self.setLED(self.dynamic_parameters['flash_channel'], self.dynamic_parameters['flash_off'])
             
             time.sleep(self.dynamic_parameters['post_stim'])
             
-            self.setLED(DEFAULT_DYNAMIC_PARAMETERS['ir_channel'], DEFAULT_DYNAMIC_PARAMETERS['ir_waiting'])
+            self.setLED(self.dynamic_parameters['ir_channel'], self.dynamic_parameters['ir_waiting'])
             
             if i+1 == self.dynamic_parameters['repeats']:
                 self.isi_slept_time = time.time() + self.dynamic_parameters['isi'][i]
@@ -330,7 +330,7 @@ class Triggerer:
 
             #self.angles.extend([imaging_angle]*N_frames)
 
-        self.setLED(DEFAULT_DYNAMIC_PARAMETERS['ir_channel'], DEFAULT_DYNAMIC_PARAMETERS['ir_livefeed'])
+        self.setLED(self.dynamic_parameters['ir_channel'], self.dynamic_parameters['ir_livefeed'])
         print('DONE!')
         
 
@@ -379,8 +379,8 @@ class Triggerer:
         
         desc_string = "name {}\nsex {}\nage {}".format(self.preparation['name'], self.preparation['sex'], self.preparation['age'])
         self.camera.saveDescription(self.preparation['name'], desc_string)
-        self.setLED(DEFAULT_DYNAMIC_PARAMETERS['ir_channel'], DEFAULT_DYNAMIC_PARAMETERS['ir_livefeed'])
-        self.setLED(DEFAULT_DYNAMIC_PARAMETERS['flash_channel'], DEFAULT_DYNAMIC_PARAMETERS['flash_off'])
+        self.setLED(self.dynamic_parameters['ir_channel'], self.dynamic_parameters['ir_livefeed'])
+        self.setLED(self.dynamic_parameters['flash_channel'], self.dynamic_parameters['flash_off'])
         previous_angle = None
         self.running = True
         while self.running:
@@ -410,7 +410,7 @@ class Triggerer:
                 self.camera.acquireSingle()
                 time.sleep(0.1)
 
-        self.setLED(DEFAULT_DYNAMIC_PARAMETERS['ir_channel'], 0)
+        self.setLED(self.dynamic_parameters['ir_channel'], 0)
 
     
     def run(self, mode):
@@ -425,10 +425,9 @@ class Triggerer:
                 t.start()
                 
             elif mode == 'dynamic':
-                #target = self.loopDynamic
+                
+                self.dynamic_parameters = getModifiedParameters()
                 self.loopDynamic()
-                #t = threading.Thread(target=target)
-                #t.start()
 
     def stop(self):
         self.save(force=True)
