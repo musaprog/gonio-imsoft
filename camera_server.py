@@ -329,8 +329,7 @@ def runServer(force=False):
     else:
 
         with open(lockfile, 'w') as fp:
-            fp.write("Hello there, I'm a lockfile.\n
-                    My job is to prevent multiple server instances running simultaneously.")
+            fp.write("Hello there, I'm a lockfile.\nMy job is to prevent multiple server instances running simultaneously.")
         
         try:
             cam_server = CameraServer()
