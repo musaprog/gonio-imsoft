@@ -276,7 +276,11 @@ class CameraServer:
         self.functions = {'acquireSeries': self.cam.acquireSeries,
                           'setSavingDirectory': self.cam.setSavingDirectory,
                           'acquireSingle': self.cam.acquireSingle,
-                          'saveDescription': self.cam.saveDescription}
+                          'saveDescription': self.cam.saveDescription,
+                          'ping': self.ping}
+
+    def ping(self, message):
+        print message
 
     def run(self):
         '''
@@ -317,25 +321,12 @@ def test_camera():
 
 
 
-def runServer(force=False):
+def runServer():
     '''
-    Running the server. Setting optional argument force
-    to value True dismisses the lock file check.
+    Running the server.
     '''
-    lockfile = 'camera_server.lock'
-
-    if os.path.exists(lockfile):
-        print('Server seems to be running. Remove {} if problems.'.format(lockfile))
-    else:
-
-        with open(lockfile, 'w') as fp:
-            fp.write("Hello there, I'm a lockfile.\nMy job is to prevent multiple server instances running simultaneously.")
-        
-        try:
-            cam_server = CameraServer()
-            cam_server.run()
-        finally:
-            os.remove(lockfile)
+    cam_server = CameraServer()
+    cam_server.run()
             
         
 if __name__ == "__main__":

@@ -6,6 +6,9 @@ Meant to be running using Python 3.
 
 import socket
 import time
+import os
+import subprocess
+
 class CameraClient:
     '''
     Connecting to the CameraServer and sending imaging commands.
@@ -60,6 +63,16 @@ class CameraClient:
 
     def saveDescription(self, filename, string):
         self.sendCommand('saveDescription;'+filename+':'+string)
+
+    def isServerRunning(self):
+        try:
+            self.sendCommand('ping;Client wants to know if server is running')
+        except ConnectionRefusedError:
+            return False
+        return True
+
+    def startServer(self):
+        subprocess.Popen(['C:\Python27\python.exe', 'camera_server.py'], stdout=open(os.devnull, 'w'))
 
 def test():
     cam = CameraClient()

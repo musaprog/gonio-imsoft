@@ -177,7 +177,9 @@ class Triggerer:
         self.last_save_time = 0
 
         self.camera = CameraClient()
-
+        if not self.camera.isServerRunning():
+            self.camera.startServer()
+            
         # Details about preparation (name, sex) can be saved in this
         self.preparation = {}
 
@@ -281,7 +283,7 @@ class Triggerer:
 
         self.angles.append(self.reader.getLatest())
 
-:        # To speed things up, for the last repeat we didn't wait the ISI. Now here, if the user
+        # To speed things up, for the last repeat we didn't wait the ISI. Now here, if the user
         # is very fast, we wait the ISI time.
         try:
             if time.time() < self.isi_slept_time: 
@@ -647,7 +649,7 @@ class ImagingTerminalUI:
 
 
 def main():
-    subprocess.Popen(['C:\Python27\python.exe', 'camera_server.py'], stdout=open(os.devnull, 'w'))
+
     ui = ImagingTerminalUI()
     ui.run()
 
