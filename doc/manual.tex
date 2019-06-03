@@ -1,0 +1,62 @@
+\documentclass{article}
+
+\begin{document}
+\section{Introduction}
+
+PupilImsoft is image acqusition software for Hamamatsu Orca Flash 4.0v3 and two Arduino connected rotary encoders.
+PupilImsoft is to allow taking still images (static imaging) or a image time series while flashing stimulus light (dynamic imaging)
+from a fixed sample orientation, while also saving the orientation (the two rotary encoders).
+
+PupilImsoft runs on Windows but with small modifications (see TODO.txt) could be multiplatform.
+The main problem is that if using Hamamatsu's Orca Flash as a camera, there may not be (official) drivers for other platforms.
+
+\subsection{Work principles}
+
+\subsection{Arduino and rotary encoders}
+PupulImsoft enqueries the state of the two rotary encoders from an Arduino board.
+Every time there's a change in encoders' values, Arduino sends the new values (angle pairs) to serial connection.
+
+
+\subsection{Camera and NI boards}
+There are currently two ways how the camera can be controlled:
+Either by sending hardware trigger signals to the camera that has been set to acqusition mode by an external software
+or by software using Micro-Manager's (an open source microscopy software) Python 2 bindings.
+
+The first method, hardware triggering, is used in the static imaging mode because it offers very fast, low latency acqusition.
+Every time a new angle pair is encountered, a hardware trigger signal is sent to the camera, and the camera acquires.
+It is assumed that an external program sets the acqusition mode (Micro-Manager).
+
+
+The second method, software acqusition, is used in the dynamic imaging.
+Here, Micro-Manager's Python bindings are used to change camera's parameters, set aqusition on or take still images.
+Because Micro-Manager by default provides Python 2 bindings and PupilImsoft is Python 3 code an extra server-client scheme is deployed.
+Here, the camera server is ran in Python 2, and it recieves commands from the camera client over socket connection.
+
+In dynamic imaging, stimulus-light-onset waits for a trigger from the camera, and then continues the protocol (Python code with sleep commands).
+This is half-software half-hardware triggering method that seems to be accurate enough (Window's timer resolution is low, something from 1 ms to 16 ms, bad for realtime applications).
+
+
+\subsection{NI boards}
+Controlling National Instruments DAQ devices is done by National Instruments' nidaqmx Python package, that is an API to the NI-DAQmx driver.
+
+
+\section{Usage}
+
+Here, a short instruction how to run the experimental protocols is given.
+
+
+\subsection{Static imaging}
+
+To be completed...
+
+\subsection{Dynamic imaging}
+
+Set the rotary encoders to (0,0) initial positions, and confirm sample's orientation [FIGURE].
+Launch IMSOFT.cmd shortcut.
+Check that illumination light is focused on the specimen.
+Confirm microscope settings.
+
+To be completed...
+
+
+\end{document}
