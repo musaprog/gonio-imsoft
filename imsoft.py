@@ -378,9 +378,15 @@ class Triggerer:
             self.preparation['sex'] = input('Sex >>: ')
             self.preparation['age'] = input('Age >>: ')
         print('Preparation name set as {}, sex {}, age {} days.'.format(self.preparation['name'], self.preparation['sex'], self.preparation['age']))
-        
+
+        # Saving description file
         desc_string = "name {}\nsex {}\nage {}".format(self.preparation['name'], self.preparation['sex'], self.preparation['age'])
+        desc_string += "\n\n#DYNAMIC PROTOCOL PARAMETERS\n"
+        for name, value in self.dynamic_parameters.items():
+            desc_string += '{} {}\n'.format(name, value)
+        print(desc_string)
         self.camera.saveDescription(self.preparation['name'], desc_string)
+        
         self.setLED(self.dynamic_parameters['ir_channel'], self.dynamic_parameters['ir_livefeed'])
         self.setLED(self.dynamic_parameters['flash_channel'], self.dynamic_parameters['flash_off'])
         previous_angle = None
@@ -593,7 +599,6 @@ class ImagingTerminalUI:
         while not done:
             if msvcrt.kbhit():
                 a = ord(msvcrt.getwch())
-                print(a)
                 if a == 13:
                     done = True
                 elif a == 32:
@@ -602,7 +607,6 @@ class ImagingTerminalUI:
                     string += str(chr(a))
                 print(string)
             time.sleep(0.2)
-        print('breaking free')
         return string
     
     def __clearScreen(self):
