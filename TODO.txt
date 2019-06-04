@@ -2,7 +2,13 @@
 TODO
 *** taking snaps
 *** setting zero point
+*** add histogram or counts information in SETTING UP MODE
+*** SETTING UP MODE: setting the fly in center and (0,0) position
 ** Opening the documentation (manual.pdf) from the program
+*** Livefeed resize to fill the full windows
+** clean dynamic feed from setting prints
+* Livefeed window title
+* Logo
 * change to CLI to use curses (separate curses frontend?)
 * camera_server/client: asking free diskspace, and showing this in the program
 * Multiplatform
