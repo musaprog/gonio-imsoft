@@ -1,0 +1,12 @@
+
+TODO
+*** taking snaps
+*** setting zero point
+** Opening the documentation (manual.pdf) from the program
+* change to CLI to use curses (separate curses frontend?)
+* camera_server/client: asking free diskspace, and showing this in the program
+* Multiplatform
+	changes needed
+	- add non-bloking input for other platforms
+	- change nidaqmx to PyDAQmx
+	- MM is multiplatform, just confirm that the camera works on other platforms 
