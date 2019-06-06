@@ -166,7 +166,7 @@ class Camera:
         if save == 'True':
             metadata = {'exposure_time_s': exposure_time, 'binning': binning, 'function': 'acquireSingle', 'start_time': start_time}
 
-            save_thread = threading.Thread(target=self.saveImages, args=([image],'snap_{}'.format(start_time),metadata,self.saving_directory))
+            save_thread = threading.Thread(target=self.saveImages, args=([image],'snap_{}'.format(start_time.replace(':','.').replace(' ','_')),metadata,self.saving_directory))
             save_thread.start()
 
 
