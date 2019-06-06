@@ -91,14 +91,17 @@ class ImageShower:
             inspect_area = data[y:y+h, x:x+w]
         else:
             inspect_area = data
-
-        data = np.clip(data, np.percentile(inspect_area, 5), np.percentile(inspect_area, 95))
+        
+        data_max = np.max(data)
+        per95 = np.percentile(inspect_area, 95)
+        data = np.clip(data, np.percentile(inspect_area, 5), per95)
         
         data = data - np.min(data)
-        data = data.astype(float)/np.max(data)
+        data = data.astype(float)/data_max
        
         
         self.im.set_array(data)
+        self.fig.suptitle('Selection 95th percentile: {}'.format(per95), fontsize=10)
         text = ''
         return self.im, text
            
