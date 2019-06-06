@@ -408,12 +408,19 @@ class Triggerer:
                     # Enter pressed
                     self.running = False
                     break 
-            
+                elif a == ord('s'):
+                    self.setLED(self.dynamic_parameters['ir_channel'], self.dynamic_parameters['ir_imaging'])
+                    time.sleep(0.3)
+                    self.camera.acquireSingle(True)
+                    self.setLED(self.dynamic_parameters['ir_channel'], self.dynamic_parameters['ir_livefeed'])
+                    time.sleep(0.2)
+
+
             if self.image_now and self.triggering:
                 self.imageSeries()
                 self.image_now = False
             else:
-                self.camera.acquireSingle()
+                self.camera.acquireSingle(False)
                 time.sleep(0.1)
 
         self.setLED(self.dynamic_parameters['ir_channel'], 0)
