@@ -238,10 +238,8 @@ class Triggerer:
                 value = [value for i in range(len(device))]
             
             if wait_trigger:
-                print('setting to wait for trigger')
                 task.timing.cfg_samp_clk_timing(10000)
                 task.triggers.start_trigger.cfg_dig_edge_start_trig("/Dev1/PFI0", trigger_edge=nidaqmx.constants.Edge.FALLING)
-            print('setting {} to {}'.format(device, value))
             task.write(value)
 
 
