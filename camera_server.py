@@ -92,11 +92,12 @@ class ImageShower:
         else:
             inspect_area = data
         
-        data_max = np.max(data)
+        
         per95 = np.percentile(inspect_area, 95)
         data = np.clip(data, np.percentile(inspect_area, 5), per95)
         
         data = data - np.min(data)
+        data_max = np.max(data)
         data = data.astype(float)/data_max
        
         
