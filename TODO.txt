@@ -1,12 +1,7 @@
 
 TODO
 
-TEST *** taking snaps
-TEST *** setting zero point
-TEST*** add histogram or counts information in SETTING UP MODE
 ** Opening the documentation (manual.pdf) from the program
-TEST *** Livefeed resize to fill the full windows
-TEST** clean dynamic feed from setting prints
 * Livefeed window title
 * Logo
 * change to CLI to use curses (separate curses frontend?)
