@@ -414,6 +414,9 @@ class Triggerer:
                     self.camera.acquireSingle(True)
                     self.setLED(self.dynamic_parameters['ir_channel'], self.dynamic_parameters['ir_livefeed'])
                     time.sleep(0.2)
+                elif a == ord('0'):
+                    if input('Set new zero-point (y/n)? >> ').lower() in ['y', 'yes']
+                        self.reader.currentAsZero()
 
 
             if self.image_now and self.triggering:
