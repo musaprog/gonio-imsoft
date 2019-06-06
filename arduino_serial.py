@@ -20,6 +20,14 @@ class ArduinoReader:
         self.serial = serial.Serial(port=port, baudrate=9600, timeout=0.1)
 
         self.latest_angle = (0,0)
+        self.offset = (0,0)
+
+    def _offsetCorrect(self, angles):
+        '''
+        Rreturn the offset (zero-point) corrected angles pair.
+        '''
+        return (angles[0] - self.offset[0], angles[1] - self.offset[1])
+
 
     def readAngles(self):
         '''
@@ -32,17 +40,23 @@ class ArduinoReader:
             angles = read_string.split(',')
             self.latest_angle = tuple(map(int, angles))
 
-        return self.latest_angle
+        return self._offsetCorrect(self.latest_angle)
 
     def getLatest(self):
         '''
         Returns the latest angle that has been read from Arduino.
         (Arduino sends an angle only when it has changed)
         '''
-        return self.latest_angle
+        return self._offsetCorrect(self.latest_angle)
     
     def closeConnection(self):
         '''
         If it is required to manually close the serial connection.
         '''
         serial.close()
+
+    def currentAsZero(self):
+        '''
+        Sets the current angle pair value to (0,0)
+        '''
+        self.offset = self.getLatest()
