@@ -139,9 +139,15 @@ class Camera:
 
 
 
-    def acquireSingle(self, removeme):
-        self.setBinning('2x2')
-        self.mmc.setExposure(0.01*1000)
+    def acquireSingle(self, save):
+        exposure_time = 0.01
+        binning = '2x2'
+
+        self.setBinning(binning)
+        self.mmc.setExposure(exposure_time*1000)
+
+        start_time = str(datetime.datetime.now())
+ 
         self.mmc.snapImage()
         image = self.mmc.getImage()
         
@@ -153,6 +159,13 @@ class Camera:
             p.start()
             
         self.live_queue.put(image)
+
+        if save == 'True':
+            metadata = {'exposure_time_s': exposure_time, 'binning': binning, 'function': 'acquireSingle', 'start_time': start_time}
+
+            save_thread = threading.Thread(target=self.saveImages, args=([image],'snap_{}'.format(start_time),metadata,self.saving_directory))
+            save_thread.start()
+
 
 
     def acquireSeries(self, exposure_time, image_interval, N_frames, label, subdir):

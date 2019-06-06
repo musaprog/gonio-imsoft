@@ -55,8 +55,8 @@ class CameraClient:
         
         self.sendCommand(message)
 
-    def acquireSingle(self):
-        self.sendCommand('acquireSingle;none')
+    def acquireSingle(self, save):
+        self.sendCommand('acquireSingle;{}'.format(str(save)))
 
     def setSavingDirectory(self, saving_directory):
         self.sendCommand('setSavingDirectory;'+saving_directory)
