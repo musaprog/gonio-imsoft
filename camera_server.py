@@ -142,7 +142,7 @@ class Camera:
 
 
 
-    def acquireSingle(self, save):
+    def acquireSingle(self, save, subdir):
         exposure_time = 0.01
         binning = '2x2'
 
@@ -166,7 +166,7 @@ class Camera:
         if save == 'True':
             metadata = {'exposure_time_s': exposure_time, 'binning': binning, 'function': 'acquireSingle', 'start_time': start_time}
 
-            save_thread = threading.Thread(target=self.saveImages, args=([image],'snap_{}'.format(start_time.replace(':','.').replace(' ','_')),metadata,self.saving_directory))
+            save_thread = threading.Thread(target=self.saveImages,args=([image],'snap_{}'.format(start_time.replace(':','.').replace(' ','_')), metadata,os.path.join(self.saving_directory, subdir)))
             save_thread.start()
 
 

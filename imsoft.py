@@ -411,7 +411,7 @@ class Triggerer:
                 elif a == ord('s'):
                     self.setLED(self.dynamic_parameters['ir_channel'], self.dynamic_parameters['ir_imaging'])
                     time.sleep(0.3)
-                    self.camera.acquireSingle(True)
+                    self.camera.acquireSingle(True, os.path.join(self.preparation['name'], 'snaps'))
                     self.setLED(self.dynamic_parameters['ir_channel'], self.dynamic_parameters['ir_livefeed'])
                     time.sleep(0.2)
                 elif a == ord('0'):
@@ -423,7 +423,7 @@ class Triggerer:
                 self.imageSeries()
                 self.image_now = False
             else:
-                self.camera.acquireSingle(False)
+                self.camera.acquireSingle(False, '')
                 time.sleep(0.1)
 
         self.setLED(self.dynamic_parameters['ir_channel'], 0)
