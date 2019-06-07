@@ -32,7 +32,6 @@ import os
 import sys
 import time
 import datetime
-import csv
 import threading
 import multiprocessing
 import subprocess
@@ -50,6 +49,7 @@ except:
 
 import msvcrt                           # Non-blocking input reading on Windows
 
+from anglepairs import saveAnglePairs, loadAnglePairs, toDegrees
 from arduino_serial import ArduinoReader
 from camera_client import CameraClient
 from dynamic_parameters import DEFAULT_DYNAMIC_PARAMETERS, ParameterEditor, getModifiedParameters
@@ -104,38 +104,6 @@ STRESS_TEST = False
 
 #sys.setswitchinterval(0.0005)
 #print(sys.getswitchinterval())
-
-
-def saveAnglePairs(fn, angles):
-    '''
-    Saving angle pairs to a file.
-    '''
-    with open(fn, 'w') as fp:
-        writer = csv.writer(fp)
-        for angle in angles:
-            writer.writerow(angle)
-
-def loadAnglePairs(fn):
-    '''
-    Loading angle pairs from a file.
-    '''
-    angles = []
-    with open(fn, 'r') as fp:
-        reader = csv.reader(fp)
-        for row in reader:
-            if row:
-                angles.append([int(a) for a in row])
-    return angles
-
-def toDegrees(angles):
-    '''
-    Transform 'angles' (that here are just the steps of rotary encoder)
-    to actual degree angle values.
-    '''
-    for i in range(len(angles)):
-        angles[i][0] *= (360/1024)
-        angles[i][1] *= (360/1024)
-
 
 
 class Triggerer:
