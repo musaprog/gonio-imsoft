@@ -1,6 +1,8 @@
 
 TODO
-
+*** test that leds flash counts are higher during imaging
+	(prevents that optoled forgotten to manual mode)
+*** zero padding in saved filenames
 ** Opening the documentation (manual.pdf) from the program
 * Livefeed window title
 * Logo
