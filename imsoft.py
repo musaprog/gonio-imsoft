@@ -1,31 +1,11 @@
 '''
-A tool for dynamic and static imaging of Drosophila pseudopupils.
+A program for static and dynamic imaging of Drosophila pseudopupils.
 
-PRINCIPLE OF FUNCTION
-A triggering pulse is sent every time when a new angle value pair is read
-from Arduino attached 2 rotary encoders. The trigger then makes a camera
-to take an image. The angle pairs are saved in a comma separated text file.
+The program reads rotary encoders from serial connected Arduino board,
+and takes images with Hamamatsu Orca Flash 4.0 v3 using Micro-Manager's
+Python API.
 
-Currently controlling the camera and saving images is done in Micro-Manager's
-GUI. Using the saved angle pairs one assing each image with an angle pair.
-
-
-TECHNICAL DETAILS
-Moving too fast may cause Arduino drop some angles. Moving too fast may
-cause taking images using past angle pairs.
-
-FEATURES TODO
-- Coarsness to angles; Taking image every n:th degrees for example
-- Mode to set relative zero position
-- Use Micro-Manager Python bindings to manage image shooting
-    * requires building MM from source
-- Linux/OSX equivalent of nonblockin input read
-- Graphical user interface? 
-
-BUGS TOFIX
-- angle plotter: Closing the plot window causes problems
-
-
+For more see the files README.txt and for developers TODO.txt.
 '''
 
 import os
@@ -60,35 +40,6 @@ DEFAULT_SAVEDIR = 'data'
 STRESS_TEST = False
 
 
-# DEPRECATED
-# Dynamic imaging parameters
-#DEFAULT_FLASH_CHANNEL = "Dev1/ao0"
-#DEFAULT_IR_CHANNEL = ["Dev2/ao0", "Dev2/ao1"]
-#DEFAULT_FLASH_BRIGHTNESS = [10]
-#DEFAULT_IR_BRIGHTNESS = 5
-
-
-# PARAMETERS EXPLAINED
-# ISI           Inter stimulus interval                         seconds
-# repeats       How many times the protocol is repeated
-# stim          Stimulus (step pulse) length                    seconds
-# post_stim     How long to image after the pulse               seconds
-# frame_length  Exposure time / inter-frame interval            seconds
-# ir_imaging    IR brightness during image acqusition           0-10 V to NI board
-# ir_waiting    IR brightness when waiting ISI                  0-10 V to NI board
-# ir_livefeed   IR brightness while updating the live image     0-10 V to NI board
-# flash_on      Flash brightness during stim                    0-10 V to NI board
-# flash_off     Flash brightness during image acqustition       0-10 V to NI board
-# ir_channel    NI channel for IR                               for example ["Dev2/ao0", "Dev2/ao1"] or "Dev1/ao0"
-# flash_channel NI channel for Flash                            for example ["Dev2/ao0", "Dev2/ao1"] or "Dev1/ao0"
-
-
-
-
-
-# Paremeters for studying movements when there's background light
-#BACKGROUND_ON_DYNAMIC_PARAMETERS['flash_off'] = self.dynamic_parameters['flash_on']/10
-
 
 # Parameters for the longterm study
 # ISI 10*60 s = 10 every 10 mins
@@ -102,7 +53,6 @@ STRESS_TEST = False
 #self.dynamic_parameters['isi'] = np.flip(np.logspace(0, 2, self.dynamic_parameters['repeats']))
 #self.dynamic_parameters['isi'] = self.dynamic_parameters['isi'].tolist()
 
-#sys.setswitchinterval(0.0005)
 #print(sys.getswitchinterval())
 
 
@@ -112,6 +62,12 @@ class Triggerer:
 
     Every time when a new angle pair is read, its appended to a list of angle pairs
     and triggering pulse is sent to the camera.
+    
+    ALTERNATIVE
+    A triggering pulse is sent every time when a new angle value pair is read
+    from Arduino attached 2 rotary encoders. The trigger then makes a camera
+    to take an image. The angle pairs are saved in a comma separated text file.
+
     '''
 
     def __init__(self, trigger_channel=DEFAULT_TRIGGER_CHANNEL, imaging_delay=DEFAULT_IMAGING_DELAY,
