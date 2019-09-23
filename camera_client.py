@@ -9,6 +9,9 @@ import time
 import os
 import subprocess
 
+MAX_RETRIES = 10
+RETRY_INTERVAL = 1
+
 class CameraClient:
     '''
     Connecting to the CameraServer and sending imaging commands.
@@ -23,7 +26,7 @@ class CameraClient:
         self.host = '127.0.0.1'
         self.port = 50071
         
-    def sendCommand(self, command_string):
+    def sendCommand(self, command_string, retries=MAX_RETRIES):
         '''
         Send an arbitrary command to the CameraServer.
         All the methods of the Camera class (see camera_server.py) are supported.
@@ -35,9 +38,22 @@ class CameraClient:
         This is where a socket connection to the server is formed. After the command_string
         has been send, the socket terminates.
         '''
+
+        tries = 0
         
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.connect((self.host, self.port))
+            
+            while True:
+                try:
+                    s.connect((self.host, self.port))
+                    break
+                except ConnectionRefusedError:
+                    tries += 1
+                    if tries > retries:
+                        raise ConnectionRefusedError('Cannot connect to the camera server')
+                    print('Camera server connection refused, retrying...')
+                    time.sleep(RETRY_INTERVAL)
+                
             s.sendall(command_string.encode())
 
     def acquireSeries(self, exposure_time, image_interval, N_frames, label, subdir):
@@ -66,7 +82,7 @@ class CameraClient:
 
     def isServerRunning(self):
         try:
-            self.sendCommand('ping;Client wants to know if server is running')
+            self.sendCommand('ping;Client wants to know if server is running', retries=0)
         except ConnectionRefusedError:
             return False
         return True

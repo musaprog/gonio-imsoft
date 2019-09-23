@@ -159,8 +159,12 @@ class Triggerer:
                 # If device is actually a list of devices
                 for dev in device:
                     task.ao_channels.add_ao_voltage_chan(dev)
-                value = [value for i in range(len(device))]
-            
+
+                # If value is actually a list of values (for each device different)
+                if type(value) == type(42) or type(value) == type(4.2):
+                    value = [value for i in range(len(device))]
+                else:
+                    value = value
             if wait_trigger:
                 task.timing.cfg_samp_clk_timing(10000)
                 task.triggers.start_trigger.cfg_dig_edge_start_trig("/Dev1/PFI0", trigger_edge=nidaqmx.constants.Edge.FALLING)
@@ -348,8 +352,8 @@ class Triggerer:
                 self.image_now = False
             else:
                 self.camera.acquireSingle(False, '')
-                time.sleep(0.1)
-
+                #time.sleep(0.1)
+                time.sleep(1)
         self.setLED(self.dynamic_parameters['ir_channel'], 0)
 
     

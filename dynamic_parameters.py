@@ -50,6 +50,16 @@ def getRightType(parameter_name, string_value):
         return seconds
 
     if parameter_name in  DYNAMIC_PARAMETERS_TYPES['voltage']:
+
+        # FIXME uniform this
+
+        if string_value.startswith('[') and string_value.endswith(']'):
+            voltages = ast.literal_eval(string_value)
+            for voltage in voltages:
+                if not -10<=voltage<=10:
+                    raise ValueError('Voltage value range -10 to 10 V exceeded.')
+            return voltages
+        
         voltage = float(string_value)
         if not -10<=voltage<=10:
             raise ValueError('Voltage value range -10 to 10 V exceeded.')
