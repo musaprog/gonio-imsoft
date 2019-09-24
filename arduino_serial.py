@@ -60,3 +60,16 @@ class ArduinoReader:
         Sets the current angle pair value to (0,0)
         '''
         self.offset = self.getLatest()
+
+    
+    def focus(self, direction, time):
+        '''
+
+        direction
+        time            in seconds
+        '''
+
+        N = round(time * 10)
+
+        for i in range(N):
+            self.serial.write_line(direction[0])
