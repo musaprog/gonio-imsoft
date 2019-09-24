@@ -3,9 +3,10 @@ Writing with digital pins to control the microcope focus
 through a stepper motor.
 */
 
-int pin_closer = 13;
+int pin_closer = 8;
 int pin_further = 12;
 
+int action;
 
 int get_action()
 {
@@ -33,16 +34,21 @@ void setup()
 
 void loop()
 {
-	if(get_action == "c")
+  action = get_action();
+  
+	if(action == 'c')
 	{
-		digitalWrite(pin_closer, 'HIGH')
-		delay(100)
-		digitalWrite(pin_closer, 'LOW')
+		digitalWrite(pin_closer, HIGH);
+		delay(100);
 	}
-	else if(get_action == 'f')
+	if(action == 'f')
 	{
-		digitalWrite(pin_further, 'HIGH')
-		delay(100)
-		digitalWrite(pin_further, 'LOW')
+		digitalWrite(pin_further, HIGH);
+		delay(100);
 	}
+  if(action != 'f' and action != 'c')
+  {
+    digitalWrite(pin_further, LOW);
+    digitalWrite(pin_closer, LOW);
+  }
 }

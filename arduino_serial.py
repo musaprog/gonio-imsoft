@@ -69,7 +69,17 @@ class ArduinoReader:
         time            in seconds
         '''
 
+        if direction == 'closer':
+            dirr = 'c'
+        elif direction == 'further':
+            dirr = 'f'
+
+            
         N = round(time * 10)
 
-        for i in range(N):
-            self.serial.write_line(direction[0])
+        string = ''.join([dirr for i in range(N)])
+        print(string)
+
+        self.serial.write(bytearray(string.encode()))
+            
+

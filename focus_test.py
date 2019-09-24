@@ -8,11 +8,11 @@ from arduino_serial import ArduinoReader
 
 r = ArduinoReader()
 
+time.sleep(2)
+
+r.focus('further', 4)
+
 r.focus('closer', 4)
-time.sleep(5)
-
-r.focus('furhter', 4)
-
 
 
 
