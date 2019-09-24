@@ -219,4 +219,17 @@ class Dynamic:
     def finalize(self):
         self.set_led(self.dynamic_parameters['ir_channel'], 0)
         self.set_led(self.dynamic_parameters['flash_channel'], 0)
+    
+
+    #
+    # CONTROLLING LEDS, MOTORS ETC
+    #
+
+    def focus_in(time=1):
+        self.reader.focus('in', time)
+
+    def focus_out(time=1):
+        self.reader.focus('out', time)
+
+
 

@@ -85,6 +85,10 @@ class TUI:
             elif key == '\r':
                 # If user hits enter we'll exit
                 break
+            elif key == '[':
+                self.dynamic.focus_in()
+            elif key == ']'
+                self.dynamic.focus_out()
             elif key == '':
                 # When there's no input just update the live feed
                 self.dynamic.takeSnap(save=False)
