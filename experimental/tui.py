@@ -86,9 +86,22 @@ class TUI:
                 # If user hits enter we'll exit
                 break
             elif key == '[':
-                self.dynamic.focus_in()
+                self.dynamic.move_motor(0, -1)
             elif key == ']'
-                self.dynamic.focus_out()
+                self.dynamic.move_motor(0, 1)
+            
+            elif key == 'o':
+                self.dynamic.move_motor(1, -1)
+            elif key == 'p'
+                self.dynamic.move_motor(1, 1)
+
+            elif key == 'l':
+                self.dynamic.move_motor(2, -1)
+            elif key == ';'
+                self.dynamic.move_motor(2, 1)
+
+
+
             elif key == '':
                 # When there's no input just update the live feed
                 self.dynamic.takeSnap(save=False)

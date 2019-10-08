@@ -1,5 +1,6 @@
 '''
-Reading rotation encoder signals from an Arduino Board.
+1) Reading rotation encoder signals from an Arduino Board.
+2) and controlling stepper motors.
 '''
 
 import serial
@@ -62,22 +63,25 @@ class ArduinoReader:
         self.offset = self.getLatest()
 
     
-    def focus(self, direction, time):
+    def move_motor(self, i_motor, direction, time=1):
         '''
-
-        direction
+         
+        direction       -1 or +1
         time            in seconds
         '''
 
-        if direction == 'closer':
-            dirr = 'c'
-        elif direction == 'further':
-            dirr = 'f'
+        motor_letters = ['a', 'b', 'c', 'd', 'e']
+    
+        letter = motor_letters[i_motor]
 
-            
+        if direction >= 0:
+            letter = letter.lower()
+        else:
+            letter = letter.upper()
+        
         N = round(time * 10)
 
-        string = ''.join([dirr for i in range(N)])
+        string = ''.join([letter for i in range(N)])
         print(string)
 
         self.serial.write(bytearray(string.encode()))
