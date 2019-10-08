@@ -14,7 +14,7 @@ import nidaqmx
 from anglepairs import saveAnglePairs, loadAnglePairs, toDegrees
 from arduino_serial import ArduinoReader
 from camera_client import CameraClient
-from dynamic_parameters import DEFAULT_DYNAMIC_PARAMETERS, ParameterEditor, getModifiedParameters
+from imaging_parameters import DEFAULT_DYNAMIC_PARAMETERS, ParameterEditor, getModifiedParameters
 
 
 class Static:
@@ -224,12 +224,8 @@ class Dynamic:
     #
     # CONTROLLING LEDS, MOTORS ETC
     #
-
-    def focus_in(time=1):
-        self.reader.focus('in', time)
-
-    def focus_out(time=1):
-        self.reader.focus('out', time)
-
+    
+    def move_motor(*args, **kwargs):
+        self.reader.move_motor(*args, **kwargs)
 
 
