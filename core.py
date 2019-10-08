@@ -14,6 +14,7 @@ import nidaqmx
 from anglepairs import saveAnglePairs, loadAnglePairs, toDegrees
 from arduino_serial import ArduinoReader
 from camera_client import CameraClient
+from motors import Motor
 from imaging_parameters import DEFAULT_DYNAMIC_PARAMETERS, ParameterEditor, getModifiedParameters
 
 
@@ -33,6 +34,7 @@ class Dynamic:
         '''
         Sets up ArduinoReader, CameraClient/Server.
         '''
+
         # Angle pairs reader (rotary encoder values)
         self.reader = ArduinoReader()
         
@@ -47,6 +49,14 @@ class Dynamic:
         self.dynamic_parameters = dynamic_parameters
         
         self.previous_angle = None
+
+        # Set up motors followingly
+        # 0)    Horizontal + sensor
+        # 1)    Vertical + sensor
+        # 2)    Microscope focus (no sensor)
+        self.motors = []
+        for i_motor, i_sensor in zip([0,1,2],[0,1,None]):
+            self.motors.append(Motors(i_motor, i_sensor))
 
 
     def set_led(self, device, value, wait_trigger=False):

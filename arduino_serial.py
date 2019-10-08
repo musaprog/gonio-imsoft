@@ -85,5 +85,12 @@ class ArduinoReader:
         print(string)
 
         self.serial.write(bytearray(string.encode()))
-            
+    
+
+    def get_sensor(self, i_sensor):
+        '''
+        Yet another way to read anglepairs, separated.
+        '''
+        angles = self.getLatest()
+        return angles[i_sensor]
 

@@ -85,21 +85,48 @@ class TUI:
             elif key == '\r':
                 # If user hits enter we'll exit
                 break
+
             elif key == '[':
-                self.dynamic.move_motor(0, -1)
-            elif key == ']'
-                self.dynamic.move_motor(0, 1)
+                self.dynamic.motors[0].move_raw(-1)
+            elif key == ']':
+                self.dynamic.motors[0].move_raw(1)
             
             elif key == 'o':
-                self.dynamic.move_motor(1, -1)
+                self.dynamic.motors[1].move_raw(-1)
             elif key == 'p'
-                self.dynamic.move_motor(1, 1)
+                self.dynamic.motors[1].move_raw(1)
 
             elif key == 'l':
-                self.dynamic.move_motor(2, -1)
-            elif key == ';'
-                self.dynamic.move_motor(2, 1)
+                self.dynamic.motors[2].move_raw(-1)
+            elif key == ';':
+                self.dynamic.motors[2].move_raw(1)
 
+            elif key == '`':
+                command = input("Type command >> ").split(' ')
+                
+                # Setting and getting motor limits
+                if command[0] == 'limit':
+                    if command[1] == 'set':
+                        if command[2] == 'upper':
+                            self.dynamic.motors[int(command[3])].set_upper_limit()
+                        elif command[2] == 'lower':
+                            self.dynamic.motors[int(command[3])].set_lower_limit()
+                    
+                    if command[1] == 'get':
+                        mlim = self.dynamic.motors[int(command[2])].get_limits()
+                        print('  Motor {} limited at {} lower and {} upper'.format(command[2], *mlim))
+
+
+                # Getting motor's position
+                if command[0] == 'where':
+                    mpos = self.dynamic.motors[int(command[2])].get_position()
+                    print('  Motor {} at {}'.format(command[2], mpos))
+
+
+                # Driving a motor to specific position
+                if command[0] == 'drive':
+                    self.dynamic.motors[int(command[1])].move_to(float(command[2]))
+                
 
 
             elif key == '':
