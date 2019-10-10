@@ -61,19 +61,19 @@ int stepChange(unsigned char result) {
 
 // ----------------------------------------------
 // STEPPER MOTOR CONTROL PART
-int pin_a = 2;
-int pin_A = 3;
+int pin_a = 12;
+int pin_A = 11;
 unsigned long a_time = 0;
 unsigned long A_time = 0;
 
 
-int pin_b = 4;
-int pin_B = 5;
+int pin_b = 10;
+int pin_B = 9;
 unsigned long b_time = 0;
 unsigned long B_time = 0;
 
 
-int pin_c = 6;
+int pin_c = 8;
 int pin_C = 7;
 unsigned long c_time = 0;
 unsigned long C_time = 0;
@@ -96,9 +96,9 @@ int get_action()
 }
 
 // Checks wheter a timer has experied
-bool is_experied(unsigned long time)
+bool is_experied(unsigned long atime)
 {
-	if (time < millis())
+	if (atime < millis())
 	{
 		return true;
 	}
@@ -123,6 +123,13 @@ void setup() {
   r2.begin();
 
   // STEPPER MOTOR PART
+  pinMode(pin_a, OUTPUT);
+  pinMode(pin_A, OUTPUT);
+  pinMode(pin_b, OUTPUT);
+  pinMode(pin_B, OUTPUT);
+  pinMode(pin_c, OUTPUT);
+  pinMode(pin_C, OUTPUT);
+  
   digitalWrite(pin_a, LOW);
   digitalWrite(pin_A, LOW);
   
@@ -164,87 +171,89 @@ void loop() {
   do {
   	action = get_action();
 	
-	if (action == 'a')
-	{
-		if  (is_experied(a_time))
-		{
-			digitalWrite(pin_a, HIGH);
-			a_time = millis() + on_time_ms;
-		}
-		else
-		{
-			a_time += on_time_ms;
-		}
-	}
-	else if (action == 'A')
-	{
-		if (is_experied(A_time))
-		{
-			digitalWrite(pin_A, HIGH);
-			A_time = millis() + on_time_ms;
-		}
-		else
-		{
-			A_time += on_time_ms;
-		}
-	
-	}
-	else if (action == 'b')
-	{
-		if (is_experied(b_time))
-		{
-			digitalWrite(pin_b, HIGH);
-			b_time = millis() + on_time_ms;
-		}
-		else
-		{
-			b_time += on_time_ms;
-		}
-	
-	}
-	else if (action == 'B')
-	{
-		if (is_experied(B_time))
-		{
-			digitalWrite(pin_B, HIGH);
-			B_time = millis() + on_time_ms;
-		}
-		else
-		{
-			B_time += on_time_ms;
-		}
-	
-	}
-	else if (action == 'c')
-	{
-		if (is_experied(c_time))
-		{
-			digitalWrite(pin_c, HIGH);
-			c_time = millis() + on_time_ms;
-		}
-		else
-		{
-			c_time += on_time_ms;
-		}
-	
-	}
-	else if (action == 'C')
-	{
-		if (is_experied(C_time))
-		{
-			digitalWrite(pin_C, HIGH);
-			C_time = millis() + on_time_ms;
-		}
-		else
-		{
-			C_time += on_time_ms;
-		}
-	
-	}
-	else
-	{
-		action = 0;
-	}
+  	if (action == 'a')
+  	{
+      
+  		if  (is_experied(a_time))
+  		{
+  			digitalWrite(pin_a, HIGH);
+        Serial.println("action a");
+  			a_time = millis() + on_time_ms;
+  		}
+  		else
+  		{
+  			a_time += on_time_ms;
+  		}
+  	}
+  	else if (action == 'A')
+  	{
+  		if (is_experied(A_time))
+  		{
+  			digitalWrite(pin_A, HIGH);
+  			A_time = millis() + on_time_ms;
+  		}
+  		else
+  		{
+  			A_time += on_time_ms;
+  		}
+  	
+  	}
+  	else if (action == 'b')
+  	{
+  		if (is_experied(b_time))
+  		{
+  			digitalWrite(pin_b, HIGH);
+  			b_time = millis() + on_time_ms;
+  		}
+  		else
+  		{
+  			b_time += on_time_ms;
+  		}
+  	
+  	}
+  	else if (action == 'B')
+  	{
+  		if (is_experied(B_time))
+  		{
+  			digitalWrite(pin_B, HIGH);
+  			B_time = millis() + on_time_ms;
+  		}
+  		else
+  		{
+  			B_time += on_time_ms;
+  		}
+  	
+  	}
+  	else if (action == 'c')
+  	{
+  		if (is_experied(c_time))
+  		{
+  			digitalWrite(pin_c, HIGH);
+  			c_time = millis() + on_time_ms;
+  		}
+  		else
+  		{
+  			c_time += on_time_ms;
+  		}
+  	
+  	}
+  	else if (action == 'C')
+  	{
+  		if (is_experied(C_time))
+  		{
+  			digitalWrite(pin_C, HIGH);
+  			C_time = millis() + on_time_ms;
+  		}
+  		else
+  		{
+  			C_time += on_time_ms;
+  		}
+  	
+  	}
+  	else
+  	{
+  		action = 0;
+  	}
 
   } while(action != 0);
 

@@ -5,7 +5,7 @@ import msvcrt
 import core
 
 
-class TUI:
+class TextUI:
     '''
     A simple text based user interface pseudopupil imaging.
     '''
@@ -17,7 +17,7 @@ class TUI:
 
         self.choices = {'Static imaging': self.loop_static,
                 'Dynamic imaging': self.loop_dynamic,
-                'Quit', self.quit}
+                'Quit': self.quit}
 
         self.quit = False
 
@@ -45,7 +45,7 @@ class TUI:
         for i, item in enumerate(items):
             print('{}) {}'.format(i, item))
         
-        selection + ''
+        selection = ''
         while True:
             selection += self._readKey()
             if selection.endswith('\r') or selection.endswith('\n'):
@@ -55,7 +55,7 @@ class TUI:
                 except ValueError:
                     print('Invalid input')
                     selection = ''
-        return selection
+        return items[selection]
 
 
     def loop_static(self):
@@ -77,11 +77,11 @@ class TUI:
             key = self._readKey()
 
             if key == ' ':
-                self.dynamic.imageSeries()
+                self.dynamic.image_Series()
             elif key == '0':
-                self.dynamic.setZero()
+                self.dynamic.set_zero()
             elif key == 's':
-                self.dynamic.takeSnap(save=True)
+                self.dynamic.take_snap(save=True)
             elif key == '\r':
                 # If user hits enter we'll exit
                 break
@@ -93,7 +93,7 @@ class TUI:
             
             elif key == 'o':
                 self.dynamic.motors[1].move_raw(-1)
-            elif key == 'p'
+            elif key == 'p':
                 self.dynamic.motors[1].move_raw(1)
 
             elif key == 'l':
@@ -133,14 +133,14 @@ class TUI:
 
             elif key == '':
                 # When there's no input just update the live feed
-                self.dynamic.takeSnap(save=False)
+                self.dynamic.take_snap(save=False)
 
             self.dynamic.tick()
 
         self.dynamic.finalize()
 
     
-    def run():
+    def run(self):
         '''
         Run TUI until user quitting.
         '''
@@ -157,3 +157,10 @@ class TUI:
 
     def quit():
         self.quit = True
+
+def main():
+    tui = TextUI()
+    tui.run()
+
+if __name__ == "__main__":
+    main()

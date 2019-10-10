@@ -32,7 +32,7 @@ class Motor:
 
     def move_raw(self, direction, time=1):
         
-        curpos = get_position()
+        curpos = self.get_position()
 
         # Only move so that we don't go over limits
         if ((self.limits[0] <= curpos and direction >= 0) or

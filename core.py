@@ -56,7 +56,7 @@ class Dynamic:
         # 2)    Microscope focus (no sensor)
         self.motors = []
         for i_motor, i_sensor in zip([0,1,2],[0,1,None]):
-            self.motors.append(Motors(i_motor, i_sensor))
+            self.motors.append(Motor(self.reader, i_motor, i_sensor))
 
 
     def set_led(self, device, value, wait_trigger=False):
