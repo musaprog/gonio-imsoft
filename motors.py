@@ -4,6 +4,8 @@ import time
 import atexit
 import threading
 
+from anglepairs import degree2steps
+
 class Motor:
     '''
     Moving motors with limits.
@@ -56,6 +58,13 @@ class Motor:
     def move_to(self, motor_position):
         '''
         Move motor to specific position.
+
+        If self.i_sensor == None:
+            motor_position is measured in time units, hoping that the motor
+            has constant speed
+
+        otherwise
+            motor_position is measured in degrees from the zero position
         '''
         print('Driving motor {} to {}'.format(self.i_motor, motor_position))
         if self.i_sensor is None:
@@ -77,7 +86,7 @@ class Motor:
                 callable_getpos = lambda: self.reader.get_sensor(self.i_sensor)
             
                 self.thread = threading.Thread(target=self._move_to_thread,
-                                               args=(motor_position, callable_getpos))
+                                               args=(degrees2steps(motor_position), callable_getpos))
                 self.thread.start()
                 print('started thread')
 
@@ -98,9 +107,9 @@ class Motor:
 
             direction = pos-target
             self.move_raw(direction, time=0.1)
-            print('looping thread, dir {}'.format(direction))
-            # The thread can sleep 100 ms while waiting the motor to move
-            time.sleep(0.1)
+            
+            # The thread can sleep 95 ms while waiting the motor to move
+            time.sleep(0.095)
 
         self.thread = None
 
