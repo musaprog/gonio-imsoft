@@ -1,1 +1,1 @@
-python imsoft.py
+python tui.py

@@ -61,19 +61,19 @@ int stepChange(unsigned char result) {
 
 // ----------------------------------------------
 // STEPPER MOTOR CONTROL PART
-int pin_a = 2;
-int pin_A = 3;
+int pin_a = 12;
+int pin_A = 11;
 unsigned long a_time = 0;
 unsigned long A_time = 0;
 
 
-int pin_b = 4;
-int pin_B = 5;
+int pin_b = 10;
+int pin_B = 9;
 unsigned long b_time = 0;
 unsigned long B_time = 0;
 
 
-int pin_c = 6;
+int pin_c = 8;
 int pin_C = 7;
 unsigned long c_time = 0;
 unsigned long C_time = 0;
