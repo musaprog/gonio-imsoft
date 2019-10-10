@@ -1,5 +1,7 @@
 
 import math
+import time
+import atexit
 
 class Motor:
     '''
@@ -21,8 +23,14 @@ class Motor:
         self.position = 0
         
         self.limits = [-math.inf, math.inf]
+        
+        # Moving motor specific place using a sensor
+        # maxmis = Maximum allowed error when using move_to
+        self.maxmis = 5
+        self.thread = None
+        
+        atexit.register(self.move_to, 0)
 
-    
     def get_position(self):
         '''
         Returns the current position of the motor
@@ -47,15 +55,57 @@ class Motor:
         '''
         Move motor to specific position.
         '''
-        time = position - motor_position
-        if time >= 0:
-            direction = 1
+        
+        if self.i_sensor is None:
+            # If no extra sensor connected to the motor we'll just move
+            # based on where we think we are
+            time = position - motor_position
+            if time >= 0:
+                direction = 1
+            else:
+                direction = -1
+                time = -time
+            self.move_raw(direction, time=time)
         else:
-            direction = -1
-            time = -time
+            # If we have a sensor we should move towards it, launch a thread
+            # that runs in background until the task finished
 
-        self.move_raw(direction, time=time)
+            if self.thread:
+                callable_getpos = lambda: self.reader.get_sensor(self.i_sensor)
+            
+                self.thread = threading.Thread(target=self._move_to_thread, callable_getpos)
+                self.thread.start()
 
+    def _move_to_thread(self, target, callable_getpos):
+        '''
+        This is a target
+        
+        callable_getpos         A callable that returns the current position of the 
+        '''
+
+        while True:
+
+            pos = callable_getpos()
+
+            if target-self.maxmis/2 < pos < target+self.maxmis/2:
+                break
+
+            direction = target-pos
+            self.move_raw(direction, time=0.1)
+            
+            # The thread can sleep 100 ms while waiting the motor to move
+            time.sleep(0.1)
+
+        self.thread = None
+
+    def reached_target(self):
+        '''
+        Returns True if the motor has reached its target set at move_to.
+        '''
+        if self.thread:
+            return False
+        else:
+            return True
 
     def set_upper_limit(self):
         '''
@@ -72,3 +122,5 @@ class Motor:
 
     def get_limits(self):
         return self.limits
+
+
