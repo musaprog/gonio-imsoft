@@ -177,7 +177,6 @@ void loop() {
   		if  (is_experied(a_time))
   		{
   			digitalWrite(pin_a, HIGH);
-        Serial.println("action a");
   			a_time = millis() + on_time_ms;
   		}
   		else
