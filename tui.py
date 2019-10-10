@@ -127,6 +127,8 @@ class TUI:
                 if command[0] == 'drive':
                     self.dynamic.motors[int(command[1])].move_to(float(command[2]))
                 
+                if command[0] == 'macro':
+
 
 
             elif key == '':

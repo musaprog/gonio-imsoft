@@ -239,3 +239,8 @@ class Dynamic:
         self.reader.move_motor(*args, **kwargs)
 
 
+    #
+    # PROTOCOL QUEUE / MACRO
+    #
+    
+    
