@@ -36,7 +36,12 @@ class TextUI:
             os.system('clear')
         elif os.name == 'nt':
             os.system('cls')
+    
+    def _print_screen(lines):
 
+        for text in lines:
+            print(text)
+        
 
     def _selectItem(self, items):
         '''
@@ -72,9 +77,16 @@ class TextUI:
 
         self.dynamic.initialize(input('Name >> '), input('Sex >> '), input('Age >> '))
 
+        upper_lines = ['-','Dynamic imaging', '-', 'Help F1', 'Space ']
+
         while True:
+            
+            lines = upper_lines
 
             key = self._readKey()
+            
+            if key == 112:
+                lines.append('')
 
             if key == ' ':
                 self.dynamic.image_Series()
@@ -128,12 +140,16 @@ class TextUI:
                     self.dynamic.motors[int(command[1])].move_to(float(command[2]))
                 
                 if command[0] == 'macro':
-
+                    self.dynamic.run_macro()
 
 
             elif key == '':
                 # When there's no input just update the live feed
                 self.dynamic.take_snap(save=False)
+            
+            
+
+            self._print_lines(lines)
 
             self.dynamic.tick()
 

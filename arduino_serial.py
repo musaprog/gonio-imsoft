@@ -23,16 +23,16 @@ class ArduinoReader:
         self.latest_angle = (0,0)
         self.offset = (0,0)
 
-    def _offsetCorrect(self, angles):
+    def _offset_correct(self, angles):
         '''
         Rreturn the offset (zero-point) corrected angles pair.
         '''
         return (angles[0] - self.offset[0], angles[1] - self.offset[1])
 
 
-    def readAngles(self):
+    def read_angles(self):
         '''
-        Read the oldest unread angles that Arduino has sent to the serial.
+        Read the oldest unread angles pair that Arduino has sent to the serial.
 
         Returns angle pair, (horizontal_angle, vertical_angle).
         '''
@@ -43,20 +43,20 @@ class ArduinoReader:
 
         return self._offsetCorrect(self.latest_angle)
 
-    def getLatest(self):
+    def get_latest(self):
         '''
         Returns the latest angle that has been read from Arduino.
         (Arduino sends an angle only when it has changed)
         '''
         return self._offsetCorrect(self.latest_angle)
     
-    def closeConnection(self):
+    def close_connection(self):
         '''
         If it is required to manually close the serial connection.
         '''
         serial.close()
 
-    def currentAsZero(self):
+    def current_as_zero(self):
         '''
         Sets the current angle pair value to (0,0)
         '''
@@ -65,32 +65,46 @@ class ArduinoReader:
     
     def move_motor(self, i_motor, direction, time=1):
         '''
-         
-        direction       -1 or +1
-        time            in seconds
+        Move motor i_motor to given direction for the given time (default 1 s)
+
+        Communication to the Arduino board controlling the motor states
+        happens by sending characters to the serial; each sent character makes
+        the motor to move for 100 ms ideally; letters as
+            a       for the motor 0 to + direction
+            A       for the motor 0 to - direction
+            b       for the motor 1 to + direction
+            ....
+
+        
+        Input arguments
+        i_motor         Index number of the motor
+        direction       Positive for + direction, negative number for - direction
+                        0 makes nothing
+        time            In seconds
         '''
 
         motor_letters = ['a', 'b', 'c', 'd', 'e']
     
         letter = motor_letters[i_motor]
-
-        if direction >= 0:
-            letter = letter.lower()
-        else:
-            letter = letter.upper()
         
-        N = round(time * 10)
+        if not direction == 0:
+            
 
-        string = ''.join([letter for i in range(N)])
-        print(string)
+            if direction > 0:
+                letter = letter.lower()
+            else:
+                letter = letter.upper()
+            
+            N = round(time * 10)
+            string = ''.join([letter for i in range(N)])
 
-        self.serial.write(bytearray(string.encode()))
-    
+            self.serial.write(bytearray(string.encode()))
+        
 
     def get_sensor(self, i_sensor):
         '''
         Yet another way to read anglepairs, separated.
         '''
-        angles = self.getLatest()
+        angles = self.read_angles()
         return angles[i_sensor]
 

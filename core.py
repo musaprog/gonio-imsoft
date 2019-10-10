@@ -57,6 +57,15 @@ class Dynamic:
         self.motors = []
         for i_motor, i_sensor in zip([0,1,2],[0,1,None]):
             self.motors.append(Motor(self.reader, i_motor, i_sensor))
+        
+
+        # Macro imaging: Automatically move motors and take images
+        # self macro is a list of anglepairs where to move the horizontal/vertical,
+        # take image "commands" (string 'image') and other functions.
+        # For more details see the tick method of this class.
+        self.macro = None
+        self.i_macro = 0
+
 
 
     def set_led(self, device, value, wait_trigger=False):
@@ -117,7 +126,7 @@ class Dynamic:
         
         print('Starting dynamic imaging')
 
-        self.angles.append(self.reader.getLatest())
+        self.angles.append(self.reader.get_latest())
 
         # To speed things up, for the last repeat we didn't wait the ISI. Now here, if the user
         # is very fast, we wait the ISI time.
@@ -136,7 +145,7 @@ class Dynamic:
                     
         for i in range(self.dynamic_parameters['repeats']):
 
-            imaging_angle = self.reader.getLatest()      
+            imaging_angle = self.reader.get_latest()      
             frame_length = self.dynamic_parameters['frame_length']
             N_frames = int((self.dynamic_parameters['pre_stim']+self.dynamic_parameters['stim']+self.dynamic_parameters['post_stim'])/frame_length)
 
@@ -207,7 +216,9 @@ class Dynamic:
         '''
         
         while True:
-            current_angle = [list(self.reader.readAngles())]
+            
+            # Update current angle and echo it to the console
+            current_angle = [list(self.reader.read_angles())]
             toDegrees(current_angle)
 
             if self.previous_angle != current_angle:
@@ -217,12 +228,31 @@ class Dynamic:
                 break
 
 
+            # Run macro if set
+            if self.macro:
+                
+                next_macro_step = False
+
+                action = self.macro[self.i_macro]
+                if type(action) = type((0,0)):
+                    self.motors[0].move_to(action[0])
+                    self.motors[1].move_to(action[1])
+
+                    if all([self.motors[i].reached_target() for i in [0,1]]):
+                        next_macro_step = True
+
+                if next_macro_step:
+                    self.i_macro += 1
+                    if self.i_macro == len(self.macro):
+                        self.macro = None
+                        self.i_macro = 0
+
     def set_zero(self):
         '''
         Define the current angle pair as the zero point
         (Like tar button on scales)
         '''
-        self.reader.currentAsZero()
+        self.reader.current_as_zero()
 
 
 
@@ -243,4 +273,9 @@ class Dynamic:
     # PROTOCOL QUEUE / MACRO
     #
     
-    
+    def run_macro(self):
+        points = [(0,0), (10,0), (10,10), (0,0)]
+        self.macro = points
+        self.i_macro
+
+
