@@ -41,14 +41,14 @@ class ArduinoReader:
             angles = read_string.split(',')
             self.latest_angle = tuple(map(int, angles))
 
-        return self._offsetCorrect(self.latest_angle)
+        return self._offset_correct(self.latest_angle)
 
     def get_latest(self):
         '''
         Returns the latest angle that has been read from Arduino.
         (Arduino sends an angle only when it has changed)
         '''
-        return self._offsetCorrect(self.latest_angle)
+        return self._offset_correct(self.latest_angle)
     
     def close_connection(self):
         '''
@@ -60,7 +60,7 @@ class ArduinoReader:
         '''
         Sets the current angle pair value to (0,0)
         '''
-        self.offset = self.getLatest()
+        self.offset = self.get_latest()
 
     
     def move_motor(self, i_motor, direction, time=1):
@@ -99,12 +99,12 @@ class ArduinoReader:
             string = ''.join([letter for i in range(N)])
 
             self.serial.write(bytearray(string.encode()))
-        
+            print(string)
 
     def get_sensor(self, i_sensor):
         '''
         Yet another way to read anglepairs, separated.
         '''
-        angles = self.read_angles()
+        angles = self.get_latest()
         return angles[i_sensor]
 

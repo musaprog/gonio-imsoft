@@ -234,7 +234,7 @@ class Dynamic:
                 next_macro_step = False
 
                 action = self.macro[self.i_macro]
-                if type(action) = type((0,0)):
+                if type(action) == type((0,0)):
                     self.motors[0].move_to(action[0])
                     self.motors[1].move_to(action[1])
 

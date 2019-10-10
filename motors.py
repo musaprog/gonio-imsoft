@@ -2,6 +2,7 @@
 import math
 import time
 import atexit
+import threading
 
 class Motor:
     '''
@@ -26,10 +27,11 @@ class Motor:
         
         # Moving motor specific place using a sensor
         # maxmis = Maximum allowed error when using move_to
-        self.maxmis = 5
+        self.maxmis = 4
         self.thread = None
         
         atexit.register(self.move_to, 0)
+
 
     def get_position(self):
         '''
@@ -55,10 +57,11 @@ class Motor:
         '''
         Move motor to specific position.
         '''
-        
+        print('Driving motor {} to {}'.format(self.i_motor, motor_position))
         if self.i_sensor is None:
             # If no extra sensor connected to the motor we'll just move
             # based on where we think we are
+            position = self.get_position()
             time = position - motor_position
             if time >= 0:
                 direction = 1
@@ -70,11 +73,13 @@ class Motor:
             # If we have a sensor we should move towards it, launch a thread
             # that runs in background until the task finished
 
-            if self.thread:
+            if not self.thread:
                 callable_getpos = lambda: self.reader.get_sensor(self.i_sensor)
             
-                self.thread = threading.Thread(target=self._move_to_thread, callable_getpos)
+                self.thread = threading.Thread(target=self._move_to_thread,
+                                               args=(motor_position, callable_getpos))
                 self.thread.start()
+                print('started thread')
 
     def _move_to_thread(self, target, callable_getpos):
         '''
@@ -82,7 +87,8 @@ class Motor:
         
         callable_getpos         A callable that returns the current position of the 
         '''
-
+        print('got to thread')
+        
         while True:
 
             pos = callable_getpos()
@@ -90,9 +96,9 @@ class Motor:
             if target-self.maxmis/2 < pos < target+self.maxmis/2:
                 break
 
-            direction = target-pos
+            direction = pos-target
             self.move_raw(direction, time=0.1)
-            
+            print('looping thread, dir {}'.format(direction))
             # The thread can sleep 100 ms while waiting the motor to move
             time.sleep(0.1)
 

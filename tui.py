@@ -36,9 +36,9 @@ class TextUI:
             os.system('clear')
         elif os.name == 'nt':
             os.system('cls')
-    
-    def _print_screen(lines):
-
+    @staticmethod
+    def _print_lines(lines):
+        
         for text in lines:
             print(text)
         
@@ -148,8 +148,8 @@ class TextUI:
                 self.dynamic.take_snap(save=False)
             
             
-
-            self._print_lines(lines)
+            #self._clearScreen()
+            #self._print_lines(lines)
 
             self.dynamic.tick()
 
