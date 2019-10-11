@@ -227,25 +227,27 @@ class Dynamic:
             else:
                 break
 
-
-            # Run macro if set
-            if self.macro:
+        # Run macro if set
+        if self.macro:
                 
-                next_macro_step = False
+            next_macro_step = False
 
-                action = self.macro[self.i_macro]
-                if type(action) == type((0,0)):
+            action = self.macro[self.i_macro]
+            print(action)
+
+            
+            if type(action) == type((0,0)):
+                # Move motors only if they have reached their positions
+                if all([self.motors[i].reached_target() for i in [0,1]]):
                     self.motors[0].move_to(action[0])
                     self.motors[1].move_to(action[1])
-
-                    if all([self.motors[i].reached_target() for i in [0,1]]):
-                        next_macro_step = True
-
-                if next_macro_step:
-                    self.i_macro += 1
-                    if self.i_macro == len(self.macro):
-                        self.macro = None
-                        self.i_macro = 0
+                    next_macro_step = True
+                    
+            if next_macro_step:
+                self.i_macro += 1
+                if self.i_macro == len(self.macro):
+                    self.macro = None
+                    self.i_macro = 0
 
     def set_zero(self):
         '''
@@ -276,6 +278,6 @@ class Dynamic:
     def run_macro(self):
         points = [(0,0), (10,0), (10,10), (0,0)]
         self.macro = points
-        self.i_macro
+        self.i_macro = 0
 
 
