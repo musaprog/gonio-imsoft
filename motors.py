@@ -4,7 +4,7 @@ import time
 import atexit
 import threading
 
-from anglepairs import degree2steps
+from anglepairs import degrees2steps
 
 class Motor:
     '''
@@ -29,7 +29,7 @@ class Motor:
         
         # Moving motor specific place using a sensor
         # maxmis = Maximum allowed error when using move_to
-        self.maxmis = 4
+        self.maxmis = 2
         self.thread = None
         
         atexit.register(self.move_to, 0)
@@ -39,11 +39,15 @@ class Motor:
         '''
         Returns the current position of the motor
         '''
-        return self.position
-
+        if self.i_sensor is None:
+            return self.position
+        else:
+            return self.reader.get_sensor(self.i_sensor)
 
     def move_raw(self, direction, time=1):
-        
+        '''
+        Return False if movement wans't allowed, otherwise True.
+        '''
         curpos = self.get_position()
 
         # Only move so that we don't go over limits
@@ -53,6 +57,10 @@ class Motor:
             
             self.reader.move_motor(self.i_motor, direction, time=time)
             self.position += time*direction
+
+            return True
+        else:
+            return False
 
     
     def move_to(self, motor_position):
@@ -106,7 +114,10 @@ class Motor:
                 break
 
             direction = pos-target
-            self.move_raw(direction, time=0.1)
+            
+            if not self.move_raw(direction, time=0.1):
+                # If hitting the limits stop here
+                break
             
             # The thread can sleep 95 ms while waiting the motor to move
             time.sleep(0.095)
@@ -126,14 +137,14 @@ class Motor:
         '''
         Sets current position as the upper limit
         '''
-        self.limits[0] = self.position
+        self.limits[1] = self.position
 
 
     def set_lower_limit(self):
         '''
         Sets current position as the lower limit
         '''
-        self.limits[1] = self.position
+        self.limits[0] = self.position
 
     def get_limits(self):
         return self.limits

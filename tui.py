@@ -131,8 +131,8 @@ class TextUI:
 
                 # Getting motor's position
                 if command[0] == 'where':
-                    mpos = self.dynamic.motors[int(command[2])].get_position()
-                    print('  Motor {} at {}'.format(command[2], mpos))
+                    mpos = self.dynamic.motors[int(command[1])].get_position()
+                    print('  Motor {} at {}'.format(command[1], mpos))
 
 
                 # Driving a motor to specific position

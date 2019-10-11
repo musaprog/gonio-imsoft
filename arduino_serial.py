@@ -99,7 +99,6 @@ class ArduinoReader:
             string = ''.join([letter for i in range(N)])
 
             self.serial.write(bytearray(string.encode()))
-            print(string)
 
     def get_sensor(self, i_sensor):
         '''
