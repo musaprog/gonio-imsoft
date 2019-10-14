@@ -117,7 +117,24 @@ class ImageShower:
 
         plt.show()
 
-        
+class DummyCamera:
+    '''
+    A dummy camera class, used when unable to load the real Camera class
+    due to camera being off or something similar.
+    '''
+    def acquireSingle(self, save, subdir):
+        pass
+    def acquireSeries(self, exposure_time, image_interval, N_frames, label, subdir):
+        pass
+    def saveImages(images, label, metadata, savedir):
+        pass
+    def setSavingDirectory(self, saving_directory):
+        pass
+    def setBinning(self, binning):
+        pass
+    def saveDescription(self, filename, string):
+        pass
+    
 class Camera:
     '''
     Controlling ORCA FLASH 4.0 camera using Micro-Manager's
@@ -132,7 +149,7 @@ class Camera:
         self.mmc.loadDevice('Camera', 'HamamatsuHam', 'HamamatsuHam_DCAM')
         self.mmc.initializeAllDevices()
         self.mmc.setCameraDevice('Camera')
-
+            
         self.settings = {'binning': '1x1'}
         
 
@@ -144,6 +161,8 @@ class Camera:
 
 
     def acquireSingle(self, save, subdir):
+
+        
         exposure_time = 0.01
         binning = '2x2'
 
@@ -288,8 +307,11 @@ class CameraServer:
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.bind((HOST, PORT))
         self.socket.listen(1)
-        
-        self.cam = Camera()
+
+        try:
+            self.cam = Camera()
+        except:
+            self.cam = DummyCamera()
         self.functions = {'acquireSeries': self.cam.acquireSeries,
                           'setSavingDirectory': self.cam.setSavingDirectory,
                           'acquireSingle': self.cam.acquireSingle,

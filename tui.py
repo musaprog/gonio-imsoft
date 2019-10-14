@@ -26,6 +26,7 @@ class TextUI:
     def _readKey():
         if msvcrt.kbhit():
             key = ord(msvcrt.getwch())
+            print(chr(key), end='')
             return chr(key)
         return ''
 
@@ -61,7 +62,7 @@ class TextUI:
                 except ValueError:
                     print('Invalid input')
                     selection = ''
-                except KeyError:
+                except IndexError:
                     print('Invalid input')
                     selection = ''
         return items[selection]
@@ -93,7 +94,7 @@ class TextUI:
                 lines.append('')
 
             if key == ' ':
-                self.dynamic.image_Series()
+                self.dynamic.image_series()
             elif key == '0':
                 self.dynamic.set_zero()
             elif key == 's':
@@ -151,6 +152,9 @@ class TextUI:
                     else:
                         self.dynamic.run_macro(command[1])
 
+                if command[0] == 'stop':
+                    for motor in self.dynamic.motors:
+                        motor.stop()
 
             elif key == '':
                 # When there's no input just update the live feed

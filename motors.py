@@ -31,6 +31,7 @@ class Motor:
         # maxmis = Maximum allowed error when using move_to
         self.maxmis = 6
         self.thread = None
+        self._stop = False
         
         atexit.register(self.move_to, 0)
 
@@ -95,8 +96,10 @@ class Motor:
             
                 self.thread = threading.Thread(target=self._move_to_thread,
                                                args=(degrees2steps(motor_position), callable_getpos))
+                self._stop = False
                 self.thread.start()
                 print('started thread')
+
 
     def _move_to_thread(self, target, callable_getpos):
         '''
@@ -106,7 +109,7 @@ class Motor:
         '''
         print('got to thread')
         
-        while True:
+        while not self._stop:
 
             pos = callable_getpos()
 
@@ -123,6 +126,9 @@ class Motor:
             time.sleep(0.095)
 
         self.thread = None
+
+    def stop(self):
+        self._stop = True
 
     def reached_target(self):
         '''
