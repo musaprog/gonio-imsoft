@@ -56,8 +56,12 @@ class TextUI:
             if selection.endswith('\r') or selection.endswith('\n'):
                 try:
                     selection = int(selection)
+                    items[selection]
                     break
                 except ValueError:
+                    print('Invalid input')
+                    selection = ''
+                except KeyError:
                     print('Invalid input')
                     selection = ''
         return items[selection]
