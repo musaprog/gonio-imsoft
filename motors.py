@@ -29,7 +29,7 @@ class Motor:
         
         # Moving motor specific place using a sensor
         # maxmis = Maximum allowed error when using move_to
-        self.maxmis = 2
+        self.maxmis = 6
         self.thread = None
         
         atexit.register(self.move_to, 0)

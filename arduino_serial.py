@@ -60,7 +60,7 @@ class ArduinoReader:
         '''
         Sets the current angle pair value to (0,0)
         '''
-        self.offset = self.get_latest()
+        self.offset = self.latest_angle
 
     
     def move_motor(self, i_motor, direction, time=1):

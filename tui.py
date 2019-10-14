@@ -140,7 +140,12 @@ class TextUI:
                     self.dynamic.motors[int(command[1])].move_to(float(command[2]))
                 
                 if command[0] == 'macro':
-                    self.dynamic.run_macro()
+                    if len(command) == 1:
+                        print('Following macros are available')
+                        for line in self.dynamic.list_macros():
+                            print(line)
+                    else:
+                        self.dynamic.run_macro(command[1])
 
 
             elif key == '':

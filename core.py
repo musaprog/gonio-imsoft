@@ -16,7 +16,7 @@ from arduino_serial import ArduinoReader
 from camera_client import CameraClient
 from motors import Motor
 from imaging_parameters import DEFAULT_DYNAMIC_PARAMETERS, ParameterEditor, getModifiedParameters
-
+import macro
 
 class Static:
     '''
@@ -65,6 +65,7 @@ class Dynamic:
         # For more details see the tick method of this class.
         self.macro = None
         self.i_macro = 0
+        self.waittime = 0
 
 
 
@@ -242,8 +243,11 @@ class Dynamic:
                     self.motors[0].move_to(action[0])
                     self.motors[1].move_to(action[1])
                     next_macro_step = True
-                    
-            if next_macro_step:
+            if 'wait' in action:
+                self.waittime = time.time() + float(action.split(' ')[-1])
+                next_macro_step = True
+            
+            if next_macro_step and self.waittime < time.time():
                 self.i_macro += 1
                 if self.i_macro == len(self.macro):
                     self.macro = None
@@ -274,10 +278,13 @@ class Dynamic:
     #
     # PROTOCOL QUEUE / MACRO
     #
-    
-    def run_macro(self):
-        points = [(0,0), (10,0), (10,10), (0,0)]
-        self.macro = points
+
+    @staticmethod
+    def list_macros():
+        return macro.list_macros()
+        
+    def run_macro(self, macro_name):
+        self.macro = macro.load(macro_name)
         self.i_macro = 0
 
 
