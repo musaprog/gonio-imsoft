@@ -30,7 +30,6 @@ class TextUI:
     def _readKey():
         if msvcrt.kbhit():
             key = ord(msvcrt.getwch())
-            print(chr(key), end='')
             return chr(key)
         return ''
 
@@ -53,15 +52,18 @@ class TextUI:
         Select an item from a list.
         '''
         for i, item in enumerate(items):
-            print('{}) {}'.format(i, item))
+            print('{}) {}'.format(i+1, item))
         
         selection = ''
         while True:
-            selection += self._readKey()
+            new_char = self._readKey()
+            if new_char:
+                selection += new_char
+                print(selection)
             if selection.endswith('\r') or selection.endswith('\n'):
                 try:
                     selection = int(selection)
-                    items[selection]
+                    items[selection-1]
                     break
                 except ValueError:
                     print('Invalid input')
@@ -69,7 +71,7 @@ class TextUI:
                 except IndexError:
                     print('Invalid input')
                     selection = ''
-        return items[selection]
+        return items[selection-1]
 
 
     def loop_static(self):
@@ -83,7 +85,7 @@ class TextUI:
         '''
         Running the dynamic imaging protocol.
         '''
-        self.dynamic.set_savedir(os.path.join('D:\imaging_data_'+self.experimenter))
+        self.dynamic.set_savedir(os.path.join('imaging_data_'+self.experimenter))
         self.dynamic.initialize(input('Name >> '), input('Sex >> '), input('Age >> '))
 
         upper_lines = ['-','Dynamic imaging', '-', 'Help F1', 'Space ']
@@ -179,7 +181,7 @@ class TextUI:
         '''
 
         print('\nSelect experimenter')
-        self.experimeter = self._selectItem(self.experimeters)
+        self.experimenter = self._selectItem(self.experimenters).lower()
         self._clearScreen()
 
         self.quit = False

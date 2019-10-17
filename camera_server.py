@@ -25,6 +25,7 @@ from matplotlib.widgets import RectangleSelector
 import tifffile
 
 
+SAVING_DRIVE = 'D:\\'
 DEFAULT_SAVING_DIRECTORY = "D:\imaging_data"
 
 
@@ -269,6 +270,7 @@ class Camera:
         Sets where images are saved and if the directory
         does not yet exist, creates it.
         '''
+        saving_directory = os.path.join(SAVING_DRIVE, saving_directory)
         if not os.path.isdir(saving_directory):
             os.makedirs(saving_directory)
             
