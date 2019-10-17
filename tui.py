@@ -12,9 +12,13 @@ class TextUI:
 
     def __init__(self):
         self.dynamic = core.Dynamic()
+        
+        # Initial selection of the experimenter
+        self.experimenters = ['Andra', 'James', 'Joni']
 
+        # Main menu
         self.menutext = "Pupil Imsoft TUI (Text user interface)"
-
+    
         self.choices = {'Static imaging': self.loop_static,
                 'Dynamic imaging': self.loop_dynamic,
                 'Quit': self.quit}
@@ -79,7 +83,7 @@ class TextUI:
         '''
         Running the dynamic imaging protocol.
         '''
-
+        self.dynamic.set_savedir(os.path.join('D:\imaging_data_'+self.experimenter))
         self.dynamic.initialize(input('Name >> '), input('Sex >> '), input('Age >> '))
 
         upper_lines = ['-','Dynamic imaging', '-', 'Help F1', 'Space ']
@@ -173,7 +177,11 @@ class TextUI:
         '''
         Run TUI until user quitting.
         '''
-        
+
+        print('\nSelect experimenter')
+        self.experimeter = self._selectItem(self.experimeters)
+        self._clearScreen()
+
         self.quit = False
         while not self.quit:
             print(self.menutext)

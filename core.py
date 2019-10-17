@@ -195,6 +195,12 @@ class Dynamic:
         self.set_led(self.dynamic_parameters['ir_channel'], self.dynamic_parameters['ir_livefeed'])
         print('DONE!')
     
+
+    def set_savedir(self, savedir):
+        '''
+        Set the directory where the taken images are saved.
+        '''
+        self.camera.setSavingDirectory(savedir)
  
 
     def initialize(self, name, sex, age):
