@@ -91,6 +91,23 @@ class Dynamic:
                 task.timing.cfg_samp_clk_timing(10000)
                 task.triggers.start_trigger.cfg_dig_edge_start_trig("/Dev1/PFI0", trigger_edge=nidaqmx.constants.Edge.FALLING)
             task.write(value)
+
+
+    def wait_for_trigger(self):
+        '''
+        Doesn't return until trigger signal is received.
+        '''
+        with nidaqmx.Task() as task:
+            device = nidaqmx.system.device.Device('Dev1')
+            
+            task.ai_channels.add_ai_voltage_chan('Dev1/ai0' )
+            
+            task.timing.cfg_samp_clk_timing(10000)
+            
+            task.triggers.start_trigger.cfg_dig_edge_start_trig("/Dev1/PFI0", trigger_edge=nidaqmx.constants.Edge.FALLING)
+            task.read(number_of_samples_per_channel=1)
+            #task.wait_until_done()
+        
     
     #
     # IMAGING METHODS
@@ -127,7 +144,6 @@ class Dynamic:
         
         print('Starting dynamic imaging')
 
-        self.angles.append(self.reader.get_latest())
 
         # To speed things up, for the last repeat we didn't wait the ISI. Now here, if the user
         # is very fast, we wait the ISI time.
@@ -159,7 +175,7 @@ class Dynamic:
             
             self.camera.acquireSeries(frame_length, 0, N_frames, label, os.path.join(self.preparation['name'], 'pos{}'.format(imaging_angle)))
             
-            self.waitForTrigger()
+            self.wait_for_trigger()
             time.sleep(self.dynamic_parameters['pre_stim'])
             
             self.set_led(self.dynamic_parameters['flash_channel'], self.dynamic_parameters['flash_on'])
@@ -176,8 +192,6 @@ class Dynamic:
             else:
                 time.sleep(self.dynamic_parameters['isi'][i]-0.5)
 
-            #self.angles.extend([imaging_angle]*N_frames)
-
         self.set_led(self.dynamic_parameters['ir_channel'], self.dynamic_parameters['ir_livefeed'])
         print('DONE!')
     
@@ -191,6 +205,8 @@ class Dynamic:
         self.preparation['name'] = name
         self.preparation['sex'] = sex
         self.preparation['age'] = age
+
+        self.dynamic_parameters = getModifiedParameters()
         
         print('Preparation name set as {}, sex {}, age {} days.'.format(self.preparation['name'], self.preparation['sex'], self.preparation['age']))
 
@@ -205,6 +221,7 @@ class Dynamic:
         
         self.set_led(self.dynamic_parameters['ir_channel'], self.dynamic_parameters['ir_livefeed'])
         self.set_led(self.dynamic_parameters['flash_channel'], self.dynamic_parameters['flash_off'])
+
 
 
 
@@ -263,8 +280,15 @@ class Dynamic:
 
 
     def finalize(self):
+        '''
+        Finalising the experiments, houskeeping stuff.
+        '''
         self.set_led(self.dynamic_parameters['ir_channel'], 0)
         self.set_led(self.dynamic_parameters['flash_channel'], 0)
+
+        for motor in self.motors:
+            motor.move_to(0)
+
     
 
     #
