@@ -88,7 +88,12 @@ class ImageShower:
         
         if self.selection:
             x,y,w,h = self.selection
-            inspect_area = data[y:y+h, x:x+w]
+            if w<1 or h<1:
+                # If selection box empty (accidental click on the image)
+                # use the whole image instead
+                inspect_area = data
+            else:
+                inspect_area = data[y:y+h, x:x+w]
         else:
             inspect_area = data
         
