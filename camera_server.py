@@ -288,9 +288,10 @@ class Camera:
     def saveDescription(self, filename, string):
         '''
         Allows saving a small descriptive text file into the main saving directory.
+        Filename should be the same as the folder where it's saved.
         '''
-        fn = os.path.join(self.saving_directory, filename)
-
+        fn = os.path.join(self.saving_directory, filename, filename)
+        
         if os.path.exists(fn):
             #raise OSError('File {} already exsits'.format(fn))
             pass
