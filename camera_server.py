@@ -40,8 +40,6 @@ class ImageShower:
 
         #self.cid = self.fig.canvas.mpl_connect('key_press_event', self.callbackButtonPressed)
         
-        self.im = 
-        
         self.image_brightness = 0
         self.image_maxval = 1
 
@@ -293,9 +291,9 @@ class Camera:
         '''
         fn = os.path.join(self.saving_directory, filename, filename)
         
-        if os.path.exists(fn):
+        if not os.path.exists(os.path.dirname(fn)):
             #raise OSError('File {} already exsits'.format(fn))
-            pass
+            os.makedirs(os.path.dirname(fn))
         
         with open(fn+'.txt', 'w') as fp:
             fp.write(string)
