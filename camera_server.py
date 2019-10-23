@@ -263,7 +263,7 @@ class Camera:
             fn = '{}_{}.tiff'.format(label, i)
             tifffile.imsave(os.path.join(savedir, fn), image, metadata=metadata)
             
-
+    
 
     def setSavingDirectory(self, saving_directory):
         '''

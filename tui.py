@@ -127,6 +127,9 @@ class TextUI:
             elif key == '`':
                 command = input("Type command >> ").split(' ')
                 
+                if command[0] == 'suffix':
+                    self.dynamic.set_subfolder_suffix(command[1])
+
                 # Setting and getting motor limits
                 if command[0] == 'limit':
                     if command[1] == 'set':

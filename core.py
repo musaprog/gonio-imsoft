@@ -50,6 +50,9 @@ class Dynamic:
         
         self.previous_angle = None
 
+        # Suffix to be appended in the subfolders, see set_subfolder_suffix method
+        self.suffix = ''
+
         # Set up motors followingly
         # 0)    Horizontal + sensor
         # 1)    Vertical + sensor
@@ -173,7 +176,8 @@ class Dynamic:
             self.set_led(self.dynamic_parameters['ir_channel'], self.dynamic_parameters['ir_imaging'])
             time.sleep(0.5)
             
-            self.camera.acquireSeries(frame_length, 0, N_frames, label, os.path.join(self.preparation['name'], 'pos{}'.format(imaging_angle)))
+            # Subfolder suffix so if experimenter takes many images from the same position in different conditions
+            self.camera.acquireSeries(frame_length, 0, N_frames, label, os.path.join(self.preparation['name'], 'pos{}{}'.format(imaging_angle, self.suffix)))
             
             self.wait_for_trigger()
             time.sleep(self.dynamic_parameters['pre_stim'])
@@ -202,6 +206,16 @@ class Dynamic:
         '''
         self.camera.setSavingDirectory(savedir)
  
+    def set_subfolder_suffix(suffix):
+        '''
+        Set any suffix to a data folder containing the images.
+        For example
+            pos(-14,0) would become pos(-14,0)_highmag if suffix == "highmag"
+        '''
+        if self.suffix:
+            self.suffix = '_'+suffix
+        else:
+            self.suffix = ''
 
     def initialize(self, name, sex, age):
         '''
