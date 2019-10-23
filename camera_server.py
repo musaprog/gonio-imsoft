@@ -39,7 +39,8 @@ class ImageShower:
         self.exit = False
 
         #self.cid = self.fig.canvas.mpl_connect('key_press_event', self.callbackButtonPressed)
-
+        
+        self.im = 
         
         self.image_brightness = 0
         self.image_maxval = 1
@@ -79,14 +80,14 @@ class ImageShower:
         self.selection = [x, y, width, height]
         
     def updateImage(self, i):
-
-        while True:
-            try:
-                data = self.queue.get(True, timeout=0.01)
-                break
-            except:
-                plt.pause(0.05)
         
+        data = None
+        while not self.queue.empty():
+            # Get the latest image in the queue
+            data = self.queue.get(True, timeout=0.01)
+        if data is None:
+            return self.im, ''
+
         if self.selection:
             x,y,w,h = self.selection
             if w<1 or h<1:
