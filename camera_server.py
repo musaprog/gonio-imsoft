@@ -247,7 +247,10 @@ class Camera:
 
         save_thread = threading.Thread(target=self.saveImages, args=(images,label,metadata,os.path.join(self.saving_directory, subdir)))
         save_thread.start()
-
+        
+        with open(self.description_file, 'a') as fp:
+            fp.write(subdiri+'\n')
+        
         print('acquired')
         
     @staticmethod
@@ -291,13 +294,15 @@ class Camera:
         '''
         fn = os.path.join(self.saving_directory, filename, filename)
         
+        # Check if the folder exists
         if not os.path.exists(os.path.dirname(fn)):
             #raise OSError('File {} already exsits'.format(fn))
             os.makedirs(os.path.dirname(fn))
         
-        with open(fn+'.txt', 'w') as fp:
+        with open(fn+'.txt', 'a') as fp:
             fp.write(string)
-            
+        
+        self.description_file = fn + '.txt'
 
 class CameraServer:
     '''
