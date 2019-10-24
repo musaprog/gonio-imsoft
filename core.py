@@ -162,7 +162,10 @@ class Dynamic:
         # make a list where the single number is repeated repeats times
         if type(self.dynamic_parameters['isi']) != type([]):
             self.dynamic_parameters['isi'] = [self.dynamic_parameters['isi']] * self.dynamic_parameters['repeats']
-                    
+        elif len(self.dynamic_parameters['isi']) != int(self.dynamic_parameters['repeats']):
+            # or to fix a bug, if isi is a list but not right length:
+            self.dynamic_parameters['isi'] = [self.dynamic_parameters['isi'][0]] * self.dynamic_parameters['repeats'] 
+        
         for i in range(self.dynamic_parameters['repeats']):
 
             imaging_angle = self.reader.get_latest()      
