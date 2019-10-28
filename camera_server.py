@@ -249,7 +249,7 @@ class Camera:
         save_thread.start()
         
         with open(self.description_file, 'a') as fp:
-            fp.write(subdiri+'\n')
+            fp.write(subdir+'\n')
         
         print('acquired')
         

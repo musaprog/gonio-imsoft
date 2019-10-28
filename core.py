@@ -209,13 +209,13 @@ class Dynamic:
         '''
         self.camera.setSavingDirectory(savedir)
  
-    def set_subfolder_suffix(suffix):
+    def set_subfolder_suffix(self, suffix):
         '''
         Set any suffix to a data folder containing the images.
         For example
             pos(-14,0) would become pos(-14,0)_highmag if suffix == "highmag"
         '''
-        if self.suffix:
+        if suffix:
             self.suffix = '_'+suffix
         else:
             self.suffix = ''
