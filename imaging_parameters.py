@@ -68,11 +68,27 @@ def getRightType(parameter_name, string_value):
                 return string_value
 
     raise NotImplementedError('Add {} correctly to DYNAMIC_PARAMETER_TYPES in dynamic_parameters.py')
-    
+
+def load_parameters(fn):
+    '''
+    Loading imaging parameters, saved as a json file.
+    '''
+    with open(fn, 'r') as fp:
+        data = json.load(fp)
+    return data
+
+def save_parameters(fn, parameters):
+    '''
+    Loading imaging parameters, saved as a json file.
+    '''
+    with open(fn, 'w') as fp:
+        json.dump(parameters, fp)
+
+
 
 class ParameterEditor:
     '''
-    Dictionary editor on command line.
+    Dictionary editor on command line with ability to load and save presets.
     '''
     def __init__(self, dynamic_parameters):
         '''
@@ -81,17 +97,40 @@ class ParameterEditor:
         self.dynamic_parameters = dynamic_parameters
         self.parameter_names = sorted(self.dynamic_parameters.keys())
 
+        self.presets_savedir = 'presets'
+        self.presets = self.load_presets()
 
-    def printCurrent(self):
+    
+    def load_presets(self, directory):
+        
+        presets = {}
+
+        files = [os.path.join(directory, fn) for fn in os.listdir(directory)]
+        
+        for afile in files:
+            try:
+                preset = load_parameters(afile)
+            except:
+                print("Couldn't load preset {}".format(afile))
+                continue
+            
+            if sorted(preset.keys()) == self.parameter_names:
+                presets[os.path.basename(afile)] = preset
+
+        return presets
+
+    def print_preset(self, preset):
         '''
         Prints the current parameters and the help strings.
         '''
-        
+                 
+        parameter_names = sorted(self.dynamic_parameters.keys())
+
         print()
         
         print('{:<20} {:<40} {}'.format('PARAMETER NAME', 'VALUE', 'DESCRIPTION'))
-        for parameter in self.parameter_names:
-            print('{:<20} {:<40} {}'.format(parameter, str(self.dynamic_parameters[parameter]), DYNAMIC_PARAMETERS_HELP[parameter]))
+        for parameter in parameter_names:
+            print('{:<20} {:<40} {}'.format(parameter, str(preset[parameter]), DYNAMIC_PARAMETERS_HELP[parameter]))
         print()
 
     def getModified(self):
@@ -100,15 +139,30 @@ class ParameterEditor:
         the parameters.
         '''
         
-
         while True:
-            print('MODIFYING DYMAIC IMAGING PARAMETERS')
-            self.printCurrent()
-            parameter = input('Parameter name (Enter to continue) >> ')
-
+            print('MODIFYING IMAGING PARAMETERS')
+            self.print_preset(self.dynamic_parameters)
+            parameter = input('Parameter name or load preset (Enter to continue) >> ')
+            
+            # If breaking free
             if parameter == '':
                 break
             
+            # If saving preset
+            if parameter.lower() == 'save':
+                name = input('Save current parameters under preset name >> ')
+                save_parameters(os.path.join(self.preset_dir, name), self.dynamic_parameters)                
+                
+
+
+            # If parameter is actually a preset
+            if parameter in self.presets.keys():
+                print_preset(self.presets[parameter])
+                
+                if input('Load this (y/n)>> ').lower()[0] == 'y':
+                    self.dynamic_parameters = self.presets[parameter]
+                continue
+
             try:
                 self.dynamic_parameters[parameter]
             except KeyError:
