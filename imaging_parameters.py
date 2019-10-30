@@ -2,9 +2,10 @@
 Default dynamic parameters and ParameterEditor for letting the user
 modify them in the program.
 '''
+import os
 import time
 import ast
-
+import json
 
 DEFAULT_STATIC_PARAMETERS = {''}
 
@@ -98,7 +99,7 @@ class ParameterEditor:
         self.parameter_names = sorted(self.dynamic_parameters.keys())
 
         self.presets_savedir = 'presets'
-        self.presets = self.load_presets()
+        self.presets = self.load_presets(self.presets_savedir)
 
     
     def load_presets(self, directory):
@@ -148,16 +149,20 @@ class ParameterEditor:
             if parameter == '':
                 break
             
+
+            self.presets = self.load_presets(self.presets_savedir)
+
+            
             # If saving preset
             if parameter.lower() == 'save':
                 name = input('Save current parameters under preset name >> ')
-                save_parameters(os.path.join(self.preset_dir, name), self.dynamic_parameters)                
-                
+                save_parameters(os.path.join(self.presets_savedir, name), self.dynamic_parameters)                
+                continue        
 
 
             # If parameter is actually a preset
             if parameter in self.presets.keys():
-                print_preset(self.presets[parameter])
+                self.print_preset(self.presets[parameter])
                 
                 if input('Load this (y/n)>> ').lower()[0] == 'y':
                     self.dynamic_parameters = self.presets[parameter]
