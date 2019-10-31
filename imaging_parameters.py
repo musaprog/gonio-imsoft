@@ -83,6 +83,8 @@ def getRightType(parameter_name, string_value):
 
     raise NotImplementedError('Add {} correctly to DYNAMIC_PARAMETER_TYPES in dynamic_parameters.py')
 
+
+
 def load_parameters(fn):
     '''
     Loading imaging parameters, saved as a json file.
@@ -90,6 +92,7 @@ def load_parameters(fn):
     with open(fn, 'r') as fp:
         data = json.load(fp)
     return data
+
 
 def save_parameters(fn, parameters):
     '''
@@ -156,7 +159,7 @@ class ParameterEditor:
         while True:
             print('MODIFYING IMAGING PARAMETERS')
             self.print_preset(self.dynamic_parameters)
-            parameter = input('Parameter name or load preset (Enter to continue) >> ')
+            parameter = input('Parameter name or (list/save) (Enter to continue) >> ')
             
             # If breaking free
             if parameter == '':
@@ -168,18 +171,41 @@ class ParameterEditor:
             
             # If saving preset
             if parameter.lower() == 'save':
-                name = input('Save current parameters under preset name >> ')
+                name = input('Save current parameters under preset name (if empty == suffix) >> ')
+                if name == '' and self.dynamic_parameters['suffix'] != '':
+                    name = self.dynamic_parameters['suffix']
                 save_parameters(os.path.join(self.presets_savedir, name), self.dynamic_parameters)                
                 continue        
 
 
-            # If parameter is actually a preset
+            if parameter.lower() == 'load':
+                # If parameter is actually a preset
+                
+                while True:
+                    
+                    preset_names = sorted(self.presets.keys())
+
+                    for i, name in enumerate(preset_names):
+                        print('{}) {}'.format(i+1, name))
+                    
+                    sel = input('>> ')
+
+                    try:
+                        to_load = preset_names[int(sel)-1]
+                        break
+                    except:
+                        print('Invalid preset.')
+
+                parameter = to_load
+
             if parameter in self.presets.keys():
                 self.print_preset(self.presets[parameter])
                 
                 if input('Load this (y/n)>> ').lower()[0] == 'y':
                     self.dynamic_parameters = self.presets[parameter]
                 continue
+            
+    
 
             try:
                 self.dynamic_parameters[parameter]
