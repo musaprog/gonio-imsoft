@@ -157,49 +157,55 @@ class Dynamic:
                 print('READY')
         except AttributeError:
             pass
-
-        # If isi is not a list of isi times but a single number,
-        # make a list where the single number is repeated repeats times
-        if type(self.dynamic_parameters['isi']) != type([]):
-            self.dynamic_parameters['isi'] = [self.dynamic_parameters['isi']] * self.dynamic_parameters['repeats']
-        elif len(self.dynamic_parameters['isi']) != int(self.dynamic_parameters['repeats']):
-            # or to fix a bug, if isi is a list but not right length:
-            self.dynamic_parameters['isi'] = [self.dynamic_parameters['isi'][0]] * self.dynamic_parameters['repeats'] 
         
-        for i in range(self.dynamic_parameters['repeats']):
 
-            imaging_angle = self.reader.get_latest()      
-            frame_length = self.dynamic_parameters['frame_length']
-            N_frames = int((self.dynamic_parameters['pre_stim']+self.dynamic_parameters['stim']+self.dynamic_parameters['post_stim'])/frame_length)
+        # Create a copy of the dynamic parameters because some of the parameters we tranform to lists
+        dynamic_parameters = copy.deepcopy(self.dynamic_parameters)
+
+        # Check that certain variables are actually lists (used for intensity series etc.)
+        for param in ['isi', 'flash_on']:
+            if type(dynamic_parameters[param]) != type([]):
+                # If not a list make it REPEATS lenght list
+                dynamic_parameters[param] = [dynamic_parameters[param]] * dynamic_parameters['repeats']
+            elif len(dynamic_parameters[param]) != int(dynamic_parameters['repeats']):
+                # If a wrong length list (not REPEATS)
+                dynamic_parameters[param] = [dynamic_parameters[param][0]] * dynamic_parameters['repeats'] 
+        
+
+        for i in range(dynamic_parameters['repeats']):
+
+            imaging_angle = self.reader.get_latest()
+            frame_length = dynamic_parameters['frame_length']
+            N_frames = int((dynamic_parameters['pre_stim']+dynamic_parameters['stim']+dynamic_parameters['post_stim'])/frame_length)
 
             label = 'im_pos{}_rep{}'.format(imaging_angle, i)
             print('  Imaging {}'.format(label))
 
             
-            self.set_led(self.dynamic_parameters['ir_channel'], self.dynamic_parameters['ir_imaging'])
+            self.set_led(dynamic_parameters['ir_channel'], dynamic_parameters['ir_imaging'])
             time.sleep(0.5)
             
             # Subfolder suffix so if experimenter takes many images from the same position in different conditions
             self.camera.acquireSeries(frame_length, 0, N_frames, label, os.path.join(self.preparation['name'], 'pos{}{}'.format(imaging_angle, self.suffix)))
             
             self.wait_for_trigger()
-            time.sleep(self.dynamic_parameters['pre_stim'])
+            time.sleep(dynamic_parameters['pre_stim'])
             
-            self.set_led(self.dynamic_parameters['flash_channel'], self.dynamic_parameters['flash_on'])
-            time.sleep(self.dynamic_parameters['stim'])
+            self.set_led(dynamic_parameters['flash_channel'], dynamic_parameters['flash_on'][i])
+            time.sleep(dynamic_parameters['stim'])
 
-            self.set_led(self.dynamic_parameters['flash_channel'], self.dynamic_parameters['flash_off'])
+            self.set_led(dynamic_parameters['flash_channel'], dynamic_parameters['flash_off'])
             
-            time.sleep(self.dynamic_parameters['post_stim'])
+            time.sleep(dynamic_parameters['post_stim'])
             
-            self.set_led(self.dynamic_parameters['ir_channel'], self.dynamic_parameters['ir_waiting'])
+            self.set_led(dynamic_parameters['ir_channel'], dynamic_parameters['ir_waiting'])
             
-            if i+1 == self.dynamic_parameters['repeats']:
-                self.isi_slept_time = time.time() + self.dynamic_parameters['isi'][i]
+            if i+1 == dynamic_parameters['repeats']:
+                self.isi_slept_time = time.time() + dynamic_parameters['isi'][i]
             else:
-                time.sleep(self.dynamic_parameters['isi'][i]-0.5)
+                time.sleep(dynamic_parameters['isi'][i]-0.5)
 
-        self.set_led(self.dynamic_parameters['ir_channel'], self.dynamic_parameters['ir_livefeed'])
+        self.set_led(dynamic_parameters['ir_channel'], dynamic_parameters['ir_livefeed'])
         print('DONE!')
     
 
