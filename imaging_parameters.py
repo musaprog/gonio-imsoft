@@ -15,12 +15,14 @@ DEFAULT_DYNAMIC_PARAMETERS = {'isi': 20.0, 'repeats': 1, 'pre_stim': 0.000,
         'stim': 0.200, 'post_stim': 0.00, 'frame_length' : 0.010,
         'ir_imaging': 5, 'ir_waiting': 0, 'ir_livefeed': 1,
         'flash_on': 10, 'flash_off': 0,
-        'ir_channel': ["Dev2/ao0", "Dev2/ao1"], 'flash_channel': "Dev1/ao0"}
+        'ir_channel': ["Dev2/ao0", "Dev2/ao1"], 'flash_channel': "Dev1/ao0",
+        'suffix': ''}
 
 DYNAMIC_PARAMETERS_TYPES = {'seconds': ['isi', 'pre_stim', 'stim', 'post_stim', 'frame_length'],
         'voltage': ['ir_imaging', 'ir_waiting', 'ir_livefeed', 'flash_on', 'flash_off'],
         'channel': ['ir_channel', 'flash_channel'],
-        'integer': ['repeats']}
+        'integer': ['repeats'],
+        'string': ['suffix']}
 
 
 DYNAMIC_PARAMETERS_HELP = {'isi': 'Inter stimulus intervali[s]',
@@ -35,7 +37,8 @@ DYNAMIC_PARAMETERS_HELP = {'isi': 'Inter stimulus intervali[s]',
         'flash_on': 'Flash brightness during stim',
         'flash_off':' Flash brightness during image acqustition',
         'ir_channel': 'NI channel for IR',
-        'flash_channel': 'NI channel for Flash'}
+        'flash_channel': 'NI channel for Flash',
+        'suffix': 'Tag added to the saved folders'}
 
 
 def getRightType(parameter_name, string_value):
@@ -56,10 +59,17 @@ def getRightType(parameter_name, string_value):
         return seconds
 
     if parameter_name in  DYNAMIC_PARAMETERS_TYPES['voltage']:
-        voltage = float(string_value)
-        if not -10<=voltage<=10:
-            raise ValueError('Voltage value range -10 to 10 V exceeded.')
-        return voltage
+        if string_value.startswith('[') and string_value.endswith(']'):
+            voltages = ast.literal_eval(string_value)
+            for voltage in voltages:
+                if not -10<=voltage<=10:
+                    raise ValueError('Voltage value range -10 to 10 V exceeded.')
+            return voltages
+        else:
+            voltage = float(string_value)
+            if not -10<=voltage<=10:
+                raise ValueError('Voltage value range -10 to 10 V exceeded.')
+            return voltage
 
     if parameter_name in  DYNAMIC_PARAMETERS_TYPES['channel']:
         if type(string_value) == type(''):
@@ -67,6 +77,9 @@ def getRightType(parameter_name, string_value):
                 return ast.literal_eval(string_value)
             else:
                 return string_value
+    
+    if parameter_name in DYNAMIC_PARAMETERS_TYPES['string']:
+        return str(string_value)
 
     raise NotImplementedError('Add {} correctly to DYNAMIC_PARAMETER_TYPES in dynamic_parameters.py')
 
