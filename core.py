@@ -71,6 +71,21 @@ class Dynamic:
         self.i_macro = 0
         self.waittime = 0
 
+    def analog_output(channels, stimuli, fs):
+        '''
+
+        channels    List of channel names
+        stimuli     List of 1D numpy arrays
+        fs          Sampling frequency of the stimuli
+
+        '''
+        with nidaqmx.Task() as task:
+            for channel in cannels:
+                task.ao_channels.add_ao_voltage_chan(dynamic_parameters[channel])
+                
+            task.timing.cfg_samp_clk_timing(fs)
+            stimulus = np.vstack(*stimuli)
+            task.write(stimulus)
 
 
     def set_led(self, device, value, wait_trigger=False):
@@ -112,7 +127,8 @@ class Dynamic:
             task.read(number_of_samples_per_channel=1)
             #task.wait_until_done()
         
-    
+
+
     #
     # IMAGING METHODS
     #
@@ -132,6 +148,7 @@ class Dynamic:
         else:
             self.camera.acquireSingle(False, '')
             time.sleep(0.1)
+
 
 
     
@@ -187,7 +204,7 @@ class Dynamic:
             time.sleep(0.5)
             
             # Subfolder suffix so if experimenter takes many images from the same position in different conditions
-            self.camera.acquireSeries(frame_length, 0, N_frames, label, os.path.join(self.preparation['name'], 'pos{}{}'.format(imaging_angle, dynamic_parameters['suffix']+self.suffix)))
+            self.camera.acquireSeries(frame_length, 0, N_frames, label, os.path.join(self.preparation['name'], 'pos{}{}'.format(imaging_angle, dynamic_parameters['suffix']+self.suffix)), 'send')
             
             self.wait_for_trigger()
             time.sleep(dynamic_parameters['pre_stim'])
@@ -208,7 +225,76 @@ class Dynamic:
 
         self.set_led(dynamic_parameters['ir_channel'], dynamic_parameters['ir_livefeed'])
         print('DONE!')
-    
+
+
+    def image_series2(self)
+         
+        print('Starting dynamic imaging')
+
+
+        # To speed things up, for the last repeat we didn't wait the ISI. Now here, if the user
+        # is very fast, we wait the ISI time.
+        try:
+            if time.time() < self.isi_slept_time: 
+                print('Waiting ISI to be fullfilled from the last run...')
+                time.sleep(self.isi_slept_time - time.time())
+                print('READY')
+        except AttributeError:
+            pass
+        
+
+        # Create a copy of the dynamic parameters because some of the parameters we tranform to lists
+        dynamic_parameters = copy.deepcopy(self.dynamic_parameters)
+
+        # Check that certain variables are actually lists (used for intensity series etc.)
+        for param in ['isi', 'flash_on']:
+            if type(dynamic_parameters[param]) != type([]):
+                # If not a list make it REPEATS lenght list
+                dynamic_parameters[param] = [dynamic_parameters[param]] * dynamic_parameters['repeats']
+            elif len(dynamic_parameters[param]) != int(dynamic_parameters['repeats']):
+                # If a wrong length list (not REPEATS)
+                dynamic_parameters[param] = [dynamic_parameters[param][0]] * dynamic_parameters['repeats'] 
+        
+
+        for i in range(dynamic_parameters['repeats']):
+
+            imaging_angle = self.reader.get_latest()
+            frame_length = dynamic_parameters['frame_length']
+            N_frames = int((dynamic_parameters['pre_stim']+dynamic_parameters['stim']+dynamic_parameters['post_stim'])/frame_length)
+
+            label = 'im_pos{}_rep{}'.format(imaging_angle, i)
+            print('  Imaging {}'.format(label))
+            
+            fs = 10000
+
+            stimulus, illumination, camera = get_pulse_stimulus(dynamic_parameters['stim'],
+                    dynamic_parameters['pre_stim'], dynamic_parameters['post_stim'],
+                    dynamic_parameters['frame_length'], dynamic_parameters['flash_on'],
+                    dynamic_parameters['flash_off'], fs,
+                    stimulus_finalval=dynamic_parameters['flash_off'],
+                    illumination_finalval=dynamic_parameters['ir_waiting'])
+            
+
+
+            # Subfolder suffix so if experimenter takes many images from the same position in different conditions
+            self.camera.acquireSeries(frame_length, 0, N_frames, label, os.path.join(self.preparation['name'], 'pos{}{}'.format(imaging_angle, dynamic_parameters['suffix']+self.suffix)), 'receive')
+            
+            time.sleep(1)
+            
+            self.analog_output([dynamic_parameters['flash_channel'],
+                    dynamic_parameters['ir_channel'],
+                    dynamic_parameters['trigger_channel']],
+                    [stimulus, illumination, camera], fs)
+                    
+            if i+1 == dynamic_parameters['repeats']:
+                self.isi_slept_time = time.time() + dynamic_parameters['isi'][i]
+            else:
+                time.sleep(dynamic_parameters['isi'][i]-0.5)
+
+        self.set_led(dynamic_parameters['ir_channel'], dynamic_parameters['ir_livefeed'])
+        print('DONE!')
+
+       
 
     def set_savedir(self, savedir):
         '''
