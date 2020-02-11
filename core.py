@@ -108,7 +108,7 @@ class Dynamic:
             
             task.timing.cfg_samp_clk_timing(10000)
             
-            task.triggers.start_trigger.cfg_dig_edge_start_trig("/Dev1/PFI0", trigger_edge=nidaqmx.constants.Edge.FALLING)
+            task.triggers.start_trigger.cfg_dig_edge_start_trig("/Dev1/PFI0", trigger_edge=nidaqmx.constants.Edge.RISING)
             task.read(number_of_samples_per_channel=1)
             #task.wait_until_done()
         
