@@ -223,6 +223,7 @@ class Camera:
             self.mmc.setProperty('Camera', "OUTPUT TRIGGER POLARITY[0]","NEGATIVE")
         elif trigger_direction== 'receive':
             self.mmc.setProperty('Camera', "TRIGGER SOURCE","EXTERNAL")
+            self.mmc.setProperty('Camera', "TriggerPolarity","POSITIVE")
         else:
             raise ValueError('trigger_direction has to be {} or {}, not {}'.format('receive', 'send', trigger_direction))
 
@@ -256,7 +257,8 @@ class Camera:
         
         with open(self.description_file, 'a') as fp:
             fp.write(subdir+'\n')
-        
+
+        self.mmc.setProperty('Camera', "TRIGGER SOURCE","INTERNAL")
         print('acquired')
 
     
