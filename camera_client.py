@@ -56,7 +56,7 @@ class CameraClient:
                 
             s.sendall(command_string.encode())
 
-    def acquireSeries(self, exposure_time, image_interval, N_frames, label, subdir):
+    def acquireSeries(self, exposure_time, image_interval, N_frames, label, subdir, trigger_direction):
         '''
         Acquire a time series of images.
         For more see camera_server.py.
@@ -66,7 +66,7 @@ class CameraClient:
         each other (or error raised).
         '''
         function = 'acquireSeries;'
-        parameters = "{}:{}:{}:{}:{}".format(exposure_time, image_interval, N_frames, label, subdir)
+        parameters = "{}:{}:{}:{}:{}:{}".format(exposure_time, image_interval, N_frames, label, subdir, trigger_direction)
         message = function+parameters
         
         self.sendCommand(message)
