@@ -227,7 +227,7 @@ class Dynamic:
         print('DONE!')
 
 
-    def image_series2(self)
+    def image_series2(self):
          
         print('Starting dynamic imaging')
 
