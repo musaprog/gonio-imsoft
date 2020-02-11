@@ -17,6 +17,7 @@ from arduino_serial import ArduinoReader
 from camera_client import CameraClient
 from motors import Motor
 from imaging_parameters import DEFAULT_DYNAMIC_PARAMETERS, ParameterEditor, getModifiedParameters
+from imaging_nidaq_stimulus import get_pulse_stimulus
 import macro
 
 class Static:
@@ -71,7 +72,7 @@ class Dynamic:
         self.i_macro = 0
         self.waittime = 0
 
-    def analog_output(channels, stimuli, fs):
+    def analog_output(self, channels, stimuli, fs):
         '''
 
         channels    List of channel names
@@ -80,11 +81,19 @@ class Dynamic:
 
         '''
         with nidaqmx.Task() as task:
-            for channel in cannels:
-                task.ao_channels.add_ao_voltage_chan(dynamic_parameters[channel])
-                
+            for i_channel, channel in enumerate(channels):
+                if type(channel) == type('string'):
+                    task.ao_channels.add_ao_voltage_chan(channel)
+                else:
+                    stimuli.pop(i_channel)
+                    for subchan in channel:
+                        task.ao_channels.add_ao_voltage_chan(subchan)
+                        stimuli.insert(i_channel, stimuli[i_channel])
+                        
             task.timing.cfg_samp_clk_timing(fs)
-            stimulus = np.vstack(*stimuli)
+            stimulus = stimuli[0]
+            for s in stimuli[1:]:
+                stimulus = np.vstack((stimulus, s))
             task.write(stimulus)
 
 
@@ -280,6 +289,7 @@ class Dynamic:
             self.camera.acquireSeries(frame_length, 0, N_frames, label, os.path.join(self.preparation['name'], 'pos{}{}'.format(imaging_angle, dynamic_parameters['suffix']+self.suffix)), 'receive')
             
             time.sleep(1)
+
             
             self.analog_output([dynamic_parameters['flash_channel'],
                     dynamic_parameters['ir_channel'],

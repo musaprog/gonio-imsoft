@@ -129,7 +129,7 @@ class DummyCamera:
     '''
     def acquire_single(self, save, subdir):
         pass
-    def acquire_series(self, exposure_time, image_interval, N_frames, label, subdir):
+    def acquire_series(self, exposure_time, image_interval, N_frames, label, subdir, trigger_direction):
         pass
     def save_images(images, label, metadata, savedir):
         pass

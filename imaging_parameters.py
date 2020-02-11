@@ -15,12 +15,12 @@ DEFAULT_DYNAMIC_PARAMETERS = {'isi': 20.0, 'repeats': 1, 'pre_stim': 0.000,
         'stim': 0.200, 'post_stim': 0.00, 'frame_length' : 0.010,
         'ir_imaging': 5, 'ir_waiting': 0, 'ir_livefeed': 1,
         'flash_on': 10, 'flash_off': 0,
-        'ir_channel': ["Dev2/ao0", "Dev2/ao1"], 'flash_channel': "Dev1/ao0",
-        'suffix': ''}
+        'ir_channel': ["Dev2/ao0", "Dev2/ao1"], 'flash_channel': "Dev2/ao3",
+        'suffix': '', 'trigger_channel': "Dev2/ao4"}
 
 DYNAMIC_PARAMETERS_TYPES = {'seconds': ['isi', 'pre_stim', 'stim', 'post_stim', 'frame_length'],
         'voltage': ['ir_imaging', 'ir_waiting', 'ir_livefeed', 'flash_on', 'flash_off'],
-        'channel': ['ir_channel', 'flash_channel'],
+        'channel': ['ir_channel', 'flash_channel', 'trigger_channel'],
         'integer': ['repeats'],
         'string': ['suffix']}
 
@@ -38,6 +38,7 @@ DYNAMIC_PARAMETERS_HELP = {'isi': 'Inter stimulus intervali[s]',
         'flash_off':' Flash brightness during image acqustition',
         'ir_channel': 'NI channel for IR',
         'flash_channel': 'NI channel for Flash',
+        'trigger_channel': 'Camera trigger channel (square wave)',
         'suffix': 'Tag added to the saved folders'}
 
 
