@@ -127,17 +127,17 @@ class DummyCamera:
     A dummy camera class, used when unable to load the real Camera class
     due to camera being off or something similar.
     '''
-    def acquireSingle(self, save, subdir):
+    def acquire_single(self, save, subdir):
         pass
-    def acquireSeries(self, exposure_time, image_interval, N_frames, label, subdir):
+    def acquire_series(self, exposure_time, image_interval, N_frames, label, subdir):
         pass
-    def saveImages(images, label, metadata, savedir):
+    def save_images(images, label, metadata, savedir):
         pass
-    def setSavingDirectory(self, saving_directory):
+    def set_saving_directory(self, saving_directory):
         pass
-    def setBinning(self, binning):
+    def set_binning(self, binning):
         pass
-    def saveDescription(self, filename, string):
+    def save_description(self, filename, string):
         pass
     
 class Camera:
@@ -165,7 +165,7 @@ class Camera:
 
 
 
-    def acquireSingle(self, save, subdir):
+    def acquire_single(self, save, subdir):
 
         
         exposure_time = 0.01
@@ -196,12 +196,13 @@ class Camera:
 
 
 
-    def acquireSeries(self, exposure_time, image_interval, N_frames, label, subdir):
+    def acquire_series(self, exposure_time, image_interval, N_frames, label, subdir, trigger_direction):
         '''
-        exposure_time  How many seconds to expose each image
-        image_interval How many seconds to wait in between the exposures
-        N_frames       How many images to take
-        label          Label for saving the images (part of the filename later)
+        exposure_time       How many seconds to expose each image
+        image_interval      How many seconds to wait in between the exposures
+        N_frames            How many images to take
+        label               Label for saving the images (part of the filename later)
+        trigger_direction   "send" (camera sends a trigger pulse when it's ready) or "receive" (camera takes an image for every trigger pulse)
         '''
         print 'Now imagin'
         
@@ -217,9 +218,14 @@ class Camera:
 
         self.setBinning('2x2')
 
-        #self.mmc.setProperty('Camera', "TRIGGER SOURCE","EXTERNAL")
-        self.mmc.setProperty('Camera', "OUTPUT TRIGGER KIND[0]","EXPOSURE")
-        self.mmc.setProperty('Camera', "OUTPUT TRIGGER POLARITY[0]","NEGATIVE")
+        if trigger_direction == 'send':
+            self.mmc.setProperty('Camera', "OUTPUT TRIGGER KIND[0]","EXPOSURE")
+            self.mmc.setProperty('Camera', "OUTPUT TRIGGER POLARITY[0]","NEGATIVE")
+        elif trigger_direction== 'receive':
+            self.mmc.setProperty('Camera', "TRIGGER SOURCE","EXTERNAL")
+        else:
+            raise ValueError('trigger_direction has to be {} or {}, not {}'.format('receive', 'send', trigger_direction))
+
         self.mmc.setExposure(exposure_time*1000)
 
         start_time = str(datetime.datetime.now())
@@ -252,9 +258,10 @@ class Camera:
             fp.write(subdir+'\n')
         
         print('acquired')
-        
+
+    
     @staticmethod
-    def saveImages(images, label, metadata, savedir):
+    def save_images(images, label, metadata, savedir):
         '''
         Save given images as grayscale tiff images.
         '''
@@ -267,7 +274,7 @@ class Camera:
             
     
 
-    def setSavingDirectory(self, saving_directory):
+    def set_saving_directory(self, saving_directory):
         '''
         Sets where images are saved and if the directory
         does not yet exist, creates it.
@@ -279,7 +286,7 @@ class Camera:
         self.saving_directory = saving_directory
 
 
-    def setBinning(self, binning):
+    def set_binning(self, binning):
         '''
         Binning '2x2' for example.
         '''
@@ -287,7 +294,7 @@ class Camera:
             self.mmc.setProperty('Camera', 'Binning', binning)
             self.settings['binning'] =  binning
 
-    def saveDescription(self, filename, string):
+    def save_description(self, filename, string):
         '''
         Allows saving a small descriptive text file into the main saving directory.
         Filename should be the same as the folder where it's saved.
@@ -324,10 +331,10 @@ class CameraServer:
             self.cam = Camera()
         except:
             self.cam = DummyCamera()
-        self.functions = {'acquireSeries': self.cam.acquireSeries,
-                          'setSavingDirectory': self.cam.setSavingDirectory,
-                          'acquireSingle': self.cam.acquireSingle,
-                          'saveDescription': self.cam.saveDescription,
+        self.functions = {'acquireSeries': self.cam.acquire_series,
+                          'setSavingDirectory': self.cam.set_saving_directory,
+                          'acquireSingle': self.cam.acquire_single,
+                          'saveDescription': self.cam.save_description,
                           'ping': self.ping}
 
     def ping(self, message):
@@ -372,7 +379,7 @@ def test_camera():
 
 
 
-def runServer():
+def run_server():
     '''
     Running the server.
     '''
@@ -381,4 +388,4 @@ def runServer():
             
         
 if __name__ == "__main__":
-    runServer()
+    run_server()
