@@ -331,7 +331,9 @@ class CameraServer:
 
         try:
             self.cam = Camera()
-        except:
+        except Exception as e:
+            print e
+            print "Using DUMMY camera instead"
             self.cam = DummyCamera()
         self.functions = {'acquireSeries': self.cam.acquire_series,
                           'setSavingDirectory': self.cam.set_saving_directory,
