@@ -103,7 +103,7 @@ class TextUI:
                 lines.append('')
 
             if key == ' ':
-                self.dynamic.image_series2()
+                self.dynamic.image_series3()
             elif key == '0':
                 self.dynamic.set_zero()
             elif key == 's':
