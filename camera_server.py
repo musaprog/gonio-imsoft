@@ -148,7 +148,7 @@ class Camera:
 
     def __init__(self, saving_directory=DEFAULT_SAVING_DIRECTORY):
 
-        self.setSavingDirectory(saving_directory)
+        self.set_saving_directory(saving_directory)
         
         self.mmc = MMCorePy.CMMCore() 
         self.mmc.loadDevice('Camera', 'HamamatsuHam', 'HamamatsuHam_DCAM')
@@ -171,7 +171,7 @@ class Camera:
         exposure_time = 0.01
         binning = '2x2'
 
-        self.setBinning(binning)
+        self.set_binning(binning)
         self.mmc.setExposure(exposure_time*1000)
 
         start_time = str(datetime.datetime.now())
@@ -191,7 +191,7 @@ class Camera:
         if save == 'True':
             metadata = {'exposure_time_s': exposure_time, 'binning': binning, 'function': 'acquireSingle', 'start_time': start_time}
 
-            save_thread = threading.Thread(target=self.saveImages,args=([image],'snap_{}'.format(start_time.replace(':','.').replace(' ','_')), metadata,os.path.join(self.saving_directory, subdir)))
+            save_thread = threading.Thread(target=self.save_images,args=([image],'snap_{}'.format(start_time.replace(':','.').replace(' ','_')), metadata,os.path.join(self.saving_directory, subdir)))
             save_thread.start()
 
 
@@ -216,7 +216,7 @@ class Camera:
         print image_interval
         print N_frames
 
-        self.setBinning('2x2')
+        self.set_binning('2x2')
 
         if trigger_direction == 'send':
             self.mmc.setProperty('Camera', "OUTPUT TRIGGER KIND[0]","EXPOSURE")
@@ -252,7 +252,7 @@ class Camera:
                     'N_frames': N_frames, 'label': label, 'function': 'acquireSeries', 'start_time': start_time}
         metadata.update(self.settings)
 
-        save_thread = threading.Thread(target=self.saveImages, args=(images,label,metadata,os.path.join(self.saving_directory, subdir)))
+        save_thread = threading.Thread(target=self.save_images, args=(images,label,metadata,os.path.join(self.saving_directory, subdir)))
         save_thread.start()
         
         with open(self.description_file, 'a') as fp:
