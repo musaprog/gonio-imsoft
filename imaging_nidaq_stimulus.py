@@ -28,6 +28,7 @@ def get_pulse_stimulus(stim_time, prestim_time, poststim_time, frame_length,
     samples_per_frame = int(frame_length * fs /2)
     N_frames = int(round((stim_time+prestim_time+poststim_time)/frame_length))
     camera = np.concatenate( ( np.ones((samples_per_frame, N_frames)), np.zeros((samples_per_frame, N_frames)) ) ).T.flatten()
+    camera = 5*camera
     
     stimulus[-1] = stimulus_finalval
     illumination[-1] = illumination_finalval
