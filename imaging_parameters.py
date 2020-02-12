@@ -11,12 +11,12 @@ DEFAULT_STATIC_PARAMETERS = {''}
 
 
 
-DEFAULT_DYNAMIC_PARAMETERS = {'isi': 20.0, 'repeats': 1, 'pre_stim': 0.000,
+DEFAULT_DYNAMIC_PARAMETERS = {'isi': 10.0, 'repeats': 1, 'pre_stim': 0.000,
         'stim': 0.200, 'post_stim': 0.00, 'frame_length' : 0.010,
         'ir_imaging': 5, 'ir_waiting': 0, 'ir_livefeed': 1,
-        'flash_on': 10, 'flash_off': 0,
-        'ir_channel': ["Dev2/ao0", "Dev2/ao1"], 'flash_channel': "Dev2/ao3",
-        'suffix': '', 'trigger_channel': "Dev2/ao4"}
+        'flash_on': 8, 'flash_off': 0,
+        'ir_channel': ["Dev2/ao0", "Dev2/ao1"], 'flash_channel': "Dev1/ao0",
+        'suffix': '', 'trigger_channel': "Dev2/ao3"}
 
 DYNAMIC_PARAMETERS_TYPES = {'seconds': ['isi', 'pre_stim', 'stim', 'post_stim', 'frame_length'],
         'voltage': ['ir_imaging', 'ir_waiting', 'ir_livefeed', 'flash_on', 'flash_off'],
