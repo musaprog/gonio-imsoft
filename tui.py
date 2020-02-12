@@ -86,7 +86,10 @@ class TextUI:
         Running the dynamic imaging protocol.
         '''
         self.dynamic.set_savedir(os.path.join('imaging_data_'+self.experimenter))
-        self.dynamic.initialize(input('Name >> '), input('Sex >> '), input('Age >> '))
+        name = input('Name ({})>> '.format(self.dynamic.preparation['name']))
+        sex = input('Sex ({})>> '.format(self.dynamic.preparation['sex']))
+        age = input('Age ({})>> '.format(self.dynamic.preparation['age']))
+        self.dynamic.initialize(name, sex, age)
 
         upper_lines = ['-','Dynamic imaging', '-', 'Help F1', 'Space ']
 

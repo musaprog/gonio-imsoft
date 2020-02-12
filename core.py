@@ -46,7 +46,7 @@ class Dynamic:
             self.camera.startServer()
         
         # Details about preparation (name, sex, age) are saved in this
-        self.preparation = {}
+        self.preparation = {'name': 'test', 'sex': '', 'age': ''}
 
         self.dynamic_parameters = dynamic_parameters
         
@@ -326,17 +326,21 @@ class Dynamic:
     def initialize(self, name, sex, age):
         '''
         Call this to initialize the experiments.
+
+        name, sex age       Can be '' (empty string)
         '''
         # Preparations, ask droso name
-        self.preparation['name'] = name
-        self.preparation['sex'] = sex
-        self.preparation['age'] = age
+        if name != '':
+            self.preparation['name'] = name
+        if sex != '':
+            self.preparation['sex'] = sex
+        if age != '':
+            self.preparation['age'] = age
 
         self.dynamic_parameters = getModifiedParameters()
-        
         print('Preparation name set as {}, sex {}, age {} days.'.format(self.preparation['name'], self.preparation['sex'], self.preparation['age']))
 
-
+        
         # Saving description file
         desc_string = "name {}\nsex {}\nage {}".format(self.preparation['name'], self.preparation['sex'], self.preparation['age'])
         desc_string += "\n\n#DYNAMIC PROTOCOL PARAMETERS\n"
