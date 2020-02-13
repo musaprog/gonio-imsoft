@@ -212,7 +212,7 @@ class TextUI:
             self._clearScreen()
 
 
-    def quit():
+    def quit(self):
         self.quit = True
 
 def main():
