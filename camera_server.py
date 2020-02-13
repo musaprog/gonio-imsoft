@@ -255,8 +255,8 @@ class Camera:
         save_thread = threading.Thread(target=self.save_images, args=(images,label,metadata,os.path.join(self.saving_directory, subdir)))
         save_thread.start()
         
-        with open(self.description_file, 'a') as fp:
-            fp.write(subdir+'\n')
+        #with open(self.description_file, 'a') as fp:
+        #    fp.write(subdir+'\n')
 
         self.mmc.setProperty('Camera', "TRIGGER SOURCE","INTERNAL")
         print('acquired')

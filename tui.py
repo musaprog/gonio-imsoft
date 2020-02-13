@@ -80,6 +80,18 @@ class TextUI:
         '''
         raise NotImplementedError('Static imaging UI not yet implemeted in TUI')
 
+    def image_series_callback(self, i_repeat):
+        '''
+        Callback passed to image_series
+        '''
+        key = self._readKey()
+
+        if key == '\r':
+            # If Enter presed return False, stopping the imaging
+            print('User pressed enter, stopping imaging')
+            return False
+        else:
+            return True
 
     def loop_dynamic(self):
         '''
@@ -103,7 +115,7 @@ class TextUI:
                 lines.append('')
 
             if key == ' ':
-                self.dynamic.image_series3()
+                self.dynamic.image_series3(inter_loop_callback=self.image_series_callback)
             elif key == '0':
                 self.dynamic.set_zero()
             elif key == 's':
