@@ -90,6 +90,13 @@ class CameraClient:
     def startServer(self):
         subprocess.Popen(['C:\Python27\python.exe', 'camera_server.py'], stdout=open(os.devnull, 'w'))
 
+    def close_server(self):
+        try:
+            self.sendCommand('exit;'+'None', retries=0)
+        except ConnectionRefusedError:
+            pass
+        
+
 def test():
     cam = CameraClient()
     cam.acquireSeries(0.01, 0, 5, 'test')

@@ -339,7 +339,8 @@ class CameraServer:
                           'setSavingDirectory': self.cam.set_saving_directory,
                           'acquireSingle': self.cam.acquire_single,
                           'saveDescription': self.cam.save_description,
-                          'ping': self.ping}
+                          'ping': self.ping,
+                          'exit': self.stop}
 
     def ping(self, message):
         print message
@@ -366,7 +367,7 @@ class CameraServer:
                 parameters = parameters.split(':')
                 target=self.functions[func](*parameters)
             
-    def stop(self):
+    def stop(self, placeholder):
         '''
         Stop running the camera server.
         '''

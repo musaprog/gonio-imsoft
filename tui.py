@@ -21,7 +21,9 @@ class TextUI:
     
         self.choices = {'Static imaging': self.loop_static,
                 'Dynamic imaging': self.loop_dynamic,
-                'Quit': self.quit}
+                'Quit': self.quit,
+                'Start camera server': self.dynamic.camera.startServer,
+                'Stop camera server': self.dynamic.camera.close_server}
 
         self.quit = False
 
@@ -211,6 +213,8 @@ class TextUI:
 
             self._clearScreen()
 
+        self.core.exit()
+        time.sleep(1)
 
     def quit(self):
         self.quit = True
