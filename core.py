@@ -178,6 +178,8 @@ class Dynamic:
             self.camera.acquireSingle(True, os.path.join(self.preparation['name'], 'snaps'))
             self.set_led(self.dynamic_parameters['ir_channel'], self.dynamic_parameters['ir_livefeed'])
             time.sleep(0.2)
+
+            print('A snap image taken')
         else:
             self.camera.acquireSingle(False, '')
             time.sleep(0.1)
