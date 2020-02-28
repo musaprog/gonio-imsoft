@@ -4,6 +4,20 @@ import msvcrt
 
 import core
 
+help_string = """List of commands and their options\n
+GENERAL
+ help                       Prints this message
+ suffix [SUFFIX]            Add a suffix SUFFIX to saved image folders
+MOTORS
+ where [i_motor]            Prints the coordinates of motor that has index i_motor
+ drive [i_motor] [pos]      Drive i_motor to coordinates (float)
+
+
+"""
+
+help_limit = """Usage of limit command
+limit []"""
+
 
 class TextUI:
     '''
@@ -144,11 +158,42 @@ class TextUI:
             elif key == '`':
                 command = input("Type command >> ").split(' ')
                 
+
+                if command[0] == 'help':
+                    print(help_string)
+                
+
+                # Setting a suffix
                 if command[0] == 'suffix':
-                    self.dynamic.set_subfolder_suffix(command[1])
+                    # Check if a suffix is given
+                    try:
+                        suffix = command[1]
+                    except IndexError:
+                        suffix = input('Give suffix: ')
+
+                    # Replaces spaces by underscores
+                    if ' ' in suffix:
+                        suffix = suffix.replace(' ', '_')
+                        print('Info: Replaced spaces in the suffix with underscores')
+                    
+                    # Replace illegal characters by x
+                    legal_suffix = ""
+                    for letter in suffix:
+                        if letter in string.ascii_letters+'_()-':
+                            legal_suffix += letter:
+                        else:
+                            print('Replacing illegal character {} with x'.format(letter))
+                            legal_suffix += 'x'
+                    
+                    print('Setting suffix {}'.format(legal_suffix))
+                    self.dynamic.set_subfolder_suffix(legal_suffix)
+                    
 
                 # Setting and getting motor limits
-                if command[0] == 'limit':
+                elif command[0] == 'limit':
+                    if len(command) < 2:
+                        print(help_limit)
+                    
                     if command[1] == 'set':
                         if command[2] == 'upper':
                             self.dynamic.motors[int(command[3])].set_upper_limit()
@@ -161,16 +206,16 @@ class TextUI:
 
 
                 # Getting motor's position
-                if command[0] == 'where':
+                elif command[0] == 'where':
                     mpos = self.dynamic.motors[int(command[1])].get_position()
                     print('  Motor {} at {}'.format(command[1], mpos))
 
 
                 # Driving a motor to specific position
-                if command[0] == 'drive':
+                elif command[0] == 'drive':
                     self.dynamic.motors[int(command[1])].move_to(float(command[2]))
                 
-                if command[0] == 'macro':
+                elif command[0] == 'macro':
                     if len(command) == 1:
                         print('Following macros are available')
                         for line in self.dynamic.list_macros():
@@ -178,9 +223,12 @@ class TextUI:
                     else:
                         self.dynamic.run_macro(command[1])
 
-                if command[0] == 'stop':
+                elif command[0] == 'stop':
                     for motor in self.dynamic.motors:
                         motor.stop()
+                
+                else:
+                    print('Unkown command! Type help for list of commands')
 
             elif key == '':
                 # When there's no input just update the live feed
