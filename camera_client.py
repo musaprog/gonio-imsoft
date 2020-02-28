@@ -9,7 +9,7 @@ import time
 import os
 import subprocess
 
-MAX_RETRIES = 10
+MAX_RETRIES = 100
 RETRY_INTERVAL = 1
 
 class CameraClient:
