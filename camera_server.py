@@ -36,7 +36,7 @@ class ImageShower:
     def __init__(self):
         self.fig = plt.figure()
         self.ax = self.fig.add_subplot(111)
-        self.exit = False
+        self.close = False
 
         #self.cid = self.fig.canvas.mpl_connect('key_press_event', self.callbackButtonPressed)
         
@@ -85,6 +85,9 @@ class ImageShower:
             data = self.queue.get(True, timeout=0.01)
         if data is None:
             return self.im, ''
+        elif data == 'close':
+            self.close = True
+            return self.im, ''
 
         if self.selection:
             x,y,w,h = self.selection
@@ -120,7 +123,11 @@ class ImageShower:
         self.im = plt.imshow(1000*image/np.max(image), cmap='gray', vmin=0, vmax=1, interpolation='none', aspect='auto')
         self.ani = FuncAnimation(plt.gcf(), self.updateImage, frames=range(100), interval=5, blit=False)
 
-        plt.show()
+        plt.show(block=False)
+        
+        while not self.close:
+            plt.pause(1)
+
 
 class DummyCamera:
     '''
@@ -139,7 +146,10 @@ class DummyCamera:
         pass
     def save_description(self, filename, string):
         pass
-    
+    def close(self):
+        pass
+
+
 class Camera:
     '''
     Controlling ORCA FLASH 4.0 camera using Micro-Manager's
@@ -183,8 +193,8 @@ class Camera:
             self.live_queue = multiprocessing.Queue()
             self.live_queue.put(image)
             
-            p = multiprocessing.Process(target=self.shower.loop, args=(self.live_queue,))
-            p.start()
+            self.livep = multiprocessing.Process(target=self.shower.loop, args=(self.live_queue,))
+            self.livep.start()
             
         self.live_queue.put(image)
 
@@ -313,6 +323,10 @@ class Camera:
         
         self.description_file = fn + '.txt'
 
+    def close(self):
+        self.live_queue.put('close')
+        self.lifep.join()
+
 class CameraServer:
     '''
     Camera server listens incoming connections and
@@ -371,6 +385,7 @@ class CameraServer:
         '''
         Stop running the camera server.
         '''
+        self.camera.close()
         self.running = False
 
 
