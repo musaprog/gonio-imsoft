@@ -99,7 +99,6 @@ class Dynamic:
                 for s in stimuli[1:]:
                     stimulus = np.vstack((stimulus, s))
             else:
-                print('reshaping')
                 stimulus = stimuli[0]
                 #stimulus = np.reshape(stimulus, (stimulus.shape[0], 1))
             #print(stimulus)
@@ -117,7 +116,7 @@ class Dynamic:
 
             
             task.start()
-            task.wait_until_done()
+            task.wait_until_done(timeout=len(stimuli[0])*fs*1.5)
 
 
     def set_led(self, device, value, wait_trigger=False):
