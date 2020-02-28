@@ -533,7 +533,8 @@ class Dynamic:
         for motor in self.motors:
             motor.move_to(0)
 
-    
+    def exit(self):
+        self.camera.close_server()
 
     #
     # CONTROLLING LEDS, MOTORS ETC
@@ -554,5 +555,7 @@ class Dynamic:
     def run_macro(self, macro_name):
         self.macro = macro.load(macro_name)
         self.i_macro = 0
+
+        
 
 
