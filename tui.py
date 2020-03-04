@@ -19,6 +19,116 @@ help_limit = """Usage of limit command
 limit []"""
 
 
+class Console:
+    '''
+    Operation console for TUI or other user interfaces.
+
+    Capabilities:
+    - changing imaging parameters
+    - setting save suffix
+    - controlling motors and setting their limits
+    
+    In tui, this console can be opened by pressing ` (the keyboard button next to 1)
+    '''
+    def __init__(self, core_dynamic):
+        '''
+        core_dynamic        An instance of core.Dynamic class.
+        '''
+        self.dynamic = core_dynamic
+
+
+    def enter(self, command_name, args):
+        '''
+        Calling a command 
+        '''
+
+        if hasattr(self, command_name):
+            method = getattr(self, command_name)
+            try:
+                method(*args)
+            except TypeError:
+                self.help()
+        else:
+            print('Command {} does not exit'.format(command_name))
+            self.help()
+    
+
+    def help(self):
+        '''
+        Print the help string on screen.
+        '''
+        print(help_string)
+    
+
+    def suffix(self, suffix):
+        '''
+        Set suffix to the image folders being saved
+        '''
+        # Replaces spaces by underscores
+        if ' ' in suffix:
+            suffix = suffix.replace(' ', '_')
+            print('Info: Replaced spaces in the suffix with underscores')
+        
+        # Replace illegal characters by x
+        legal_suffix = ""
+        for letter in suffix:
+            if letter in string.ascii_letters+'_()-':
+                legal_suffix += letter:
+            else:
+                print('Replacing illegal character {} with x'.format(letter))
+                legal_suffix += 'x'
+        
+        print('Setting suffix {}'.format(legal_suffix))
+        self.dynamic.set_subfolder_suffix(legal_suffix)
+
+
+    def limitset(self, side, i_motor):
+        '''
+        Sets the current position as a limit.
+
+        action      "set" or "get"
+        side        "upper" or "lower"
+        i_motor     0, 1, 2, ...
+        '''
+        
+        if side == 'upper':
+            self.dynamic.motors[i_motor].set_upper_limit()
+        elif side == 'lower':
+            self.dynamic.motors[i_motor].set_lower_limit()
+   
+
+   def limitget(self, i_motor):
+        '''
+        Gets the current limits of a motor
+        '''
+        mlim = self.dynamic.motors[i_motor].get_limits()
+        print('  Motor {} limited at {} lower and {} upper'.format(i_motor, *mlim))
+
+
+    def where(self, i_motor)
+        # Getting motor's position
+        mpos = self.dynamic.motors[motor].get_position()
+        print('  Motor {} at {}'.format(motor, mpos))
+
+    def drive(self, i_motor, position):
+        self.dynamic.motors[i_motor].move_to(position)
+        
+
+                # Driving a motor to specific position
+    def macro(self, macro_name):
+
+        self.dynamic.run_macro(macro_name)
+        
+                    if len(command) == 1:
+                        print('Following macros are available')
+                        for line in self.dynamic.list_macros():
+                            print(line)
+                    else:
+
+                elif command[0] == 'stop':
+                    for motor in self.dynamic.motors:
+                        motor.stop()
+ 
 class TextUI:
     '''
     A simple text based user interface pseudopupil imaging.
@@ -156,79 +266,8 @@ class TextUI:
                 self.dynamic.motors[2].move_raw(1)
 
             elif key == '`':
-                command = input("Type command >> ").split(' ')
-                
-
-                if command[0] == 'help':
-                    print(help_string)
-                
-
-                # Setting a suffix
-                if command[0] == 'suffix':
-                    # Check if a suffix is given
-                    try:
-                        suffix = command[1]
-                    except IndexError:
-                        suffix = input('Give suffix: ')
-
-                    # Replaces spaces by underscores
-                    if ' ' in suffix:
-                        suffix = suffix.replace(' ', '_')
-                        print('Info: Replaced spaces in the suffix with underscores')
-                    
-                    # Replace illegal characters by x
-                    legal_suffix = ""
-                    for letter in suffix:
-                        if letter in string.ascii_letters+'_()-':
-                            legal_suffix += letter:
-                        else:
-                            print('Replacing illegal character {} with x'.format(letter))
-                            legal_suffix += 'x'
-                    
-                    print('Setting suffix {}'.format(legal_suffix))
-                    self.dynamic.set_subfolder_suffix(legal_suffix)
-                    
-
-                # Setting and getting motor limits
-                elif command[0] == 'limit':
-                    if len(command) < 2:
-                        print(help_limit)
-                    
-                    if command[1] == 'set':
-                        if command[2] == 'upper':
-                            self.dynamic.motors[int(command[3])].set_upper_limit()
-                        elif command[2] == 'lower':
-                            self.dynamic.motors[int(command[3])].set_lower_limit()
-                    
-                    if command[1] == 'get':
-                        mlim = self.dynamic.motors[int(command[2])].get_limits()
-                        print('  Motor {} limited at {} lower and {} upper'.format(command[2], *mlim))
-
-
-                # Getting motor's position
-                elif command[0] == 'where':
-                    mpos = self.dynamic.motors[int(command[1])].get_position()
-                    print('  Motor {} at {}'.format(command[1], mpos))
-
-
-                # Driving a motor to specific position
-                elif command[0] == 'drive':
-                    self.dynamic.motors[int(command[1])].move_to(float(command[2]))
-                
-                elif command[0] == 'macro':
-                    if len(command) == 1:
-                        print('Following macros are available')
-                        for line in self.dynamic.list_macros():
-                            print(line)
-                    else:
-                        self.dynamic.run_macro(command[1])
-
-                elif command[0] == 'stop':
-                    for motor in self.dynamic.motors:
-                        motor.stop()
-                
-                else:
-                    print('Unkown command! Type help for list of commands')
+                user_input = input("Type command >> ").split(' ')
+                self.console.enter(user_input)
 
             elif key == '':
                 # When there's no input just update the live feed
