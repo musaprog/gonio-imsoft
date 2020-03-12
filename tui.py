@@ -1,6 +1,12 @@
 
 import os
-import msvcrt
+import platform
+
+OS = platform.system()
+if OS == 'Windows':
+    import msvcrt
+else:
+    pass
 
 import core
 
@@ -73,7 +79,7 @@ class Console:
         legal_suffix = ""
         for letter in suffix:
             if letter in string.ascii_letters+'_()-':
-                legal_suffix += letter:
+                legal_suffix += letter
             else:
                 print('Replacing illegal character {} with x'.format(letter))
                 legal_suffix += 'x'
@@ -97,7 +103,7 @@ class Console:
             self.dynamic.motors[i_motor].set_lower_limit()
    
 
-   def limitget(self, i_motor):
+    def limitget(self, i_motor):
         '''
         Gets the current limits of a motor
         '''
@@ -105,7 +111,7 @@ class Console:
         print('  Motor {} limited at {} lower and {} upper'.format(i_motor, *mlim))
 
 
-    def where(self, i_motor)
+    def where(self, i_motor):
         # Getting motor's position
         mpos = self.dynamic.motors[motor].get_position()
         print('  Motor {} at {}'.format(motor, mpos))
@@ -115,20 +121,24 @@ class Console:
         
 
                 # Driving a motor to specific position
-    def macro(self, macro_name):
+    def macro(self, command, macro_name):
+        '''
+        Running and setting macros (automated imaging sequences.)
+        '''
+        if command == 'run':
+            self.dynamic.run_macro(macro_name)
+        elif command == 'list':
 
-        self.dynamic.run_macro(macro_name)
-        
-                    if len(command) == 1:
-                        print('Following macros are available')
-                        for line in self.dynamic.list_macros():
-                            print(line)
-                    else:
+            print('Following macros are available')
+            for line in self.dynamic.list_macros():
+                print(line)
 
-                elif command[0] == 'stop':
-                    for motor in self.dynamic.motors:
-                        motor.stop()
- 
+        elif command == 'stop':
+            for motor in self.dynamic.motors:
+                motor.stop()
+
+
+
 class TextUI:
     '''
     A simple text based user interface pseudopupil imaging.
@@ -154,11 +164,13 @@ class TextUI:
 
     @staticmethod
     def _readKey():
-        if msvcrt.kbhit():
-            key = ord(msvcrt.getwch())
-            return chr(key)
-        return ''
-
+        if OS == 'Windows':
+            if msvcrt.kbhit():
+                key = ord(msvcrt.getwch())
+                return chr(key)
+            return ''
+        else:
+            raise NotImplementedError("Linux nonblocking read not yet implemented")
 
     @staticmethod
     def _clearScreen():
