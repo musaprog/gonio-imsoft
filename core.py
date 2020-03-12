@@ -74,6 +74,8 @@ class Dynamic:
         self.i_macro = 0
         self.waittime = 0
 
+
+
     def analog_output(self, channels, stimuli, fs, wait_trigger):
         '''
 
@@ -119,6 +121,7 @@ class Dynamic:
             
             task.start()
             task.wait_until_done(timeout=len(stimuli[0])*fs*1.5)
+
 
 
     def set_led(self, device, value, wait_trigger=False):
@@ -440,6 +443,7 @@ class Dynamic:
         else:
             self.suffix = ''
 
+
     def initialize(self, name, sex, age):
         '''
         Call this to initialize the experiments.
@@ -468,8 +472,6 @@ class Dynamic:
         
         self.set_led(self.dynamic_parameters['ir_channel'], self.dynamic_parameters['ir_livefeed'])
         self.set_led(self.dynamic_parameters['flash_channel'], self.dynamic_parameters['flash_off'])
-
-
 
 
 
@@ -536,6 +538,7 @@ class Dynamic:
         for motor in self.motors:
             motor.move_to(0)
 
+
     def exit(self):
         self.camera.close_server()
 
@@ -551,10 +554,12 @@ class Dynamic:
     # PROTOCOL QUEUE / MACRO
     #
 
+
     @staticmethod
     def list_macros():
         return macro.list_macros()
-        
+
+
     def run_macro(self, macro_name):
         self.macro = macro.load(macro_name)
         self.i_macro = 0
