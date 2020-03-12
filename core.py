@@ -104,16 +104,8 @@ class Dynamic:
                     stimulus = np.vstack((stimulus, s))
             else:
                 stimulus = stimuli[0]
-                #stimulus = np.reshape(stimulus, (stimulus.shape[0], 1))
-            #print(stimulus)
 
-            #import matplotlib.pyplot as plt
-            #for stim in stimulus:
-            #    plt.plot(stim)
-            #    print(len(stim))
-            #plt.show()
-            print(stimulus.shape)
-            task.write(stimulus)#, auto_start=True)
+            task.write(stimulus)
 
             if wait_trigger:
                 task.triggers.start_trigger.cfg_dig_edge_start_trig("/Dev1/PFI0", trigger_edge=nidaqmx.constants.Edge.RISING)
@@ -162,7 +154,6 @@ class Dynamic:
             
             task.triggers.start_trigger.cfg_dig_edge_start_trig("/Dev1/PFI0", trigger_edge=nidaqmx.constants.Edge.RISING)
             task.read(number_of_samples_per_channel=1)
-            #task.wait_until_done()
         
 
 
