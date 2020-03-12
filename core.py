@@ -29,8 +29,9 @@ class Static:
 
 class Dynamic:
     '''
-    Dynamic imaging procedures.
+    Dynamic imaging procedure.
     '''
+
 
     def __init__(self, dynamic_parameters=DEFAULT_DYNAMIC_PARAMETERS):
         '''
@@ -43,7 +44,8 @@ class Dynamic:
         # Initiate camera client/server
         self.camera = CameraClient()
         if not self.camera.isServerRunning():
-            self.camera.startServer()
+            print('Camera server not running')
+        #    self.camera.startServer()
         
         # Details about preparation (name, sex, age) are saved in this
         self.preparation = {'name': 'test', 'sex': '', 'age': ''}
