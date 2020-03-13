@@ -14,24 +14,38 @@ import socket
 import threading
 import multiprocessing
 
-import numpy as np
-
 import MMCorePy
-
+import tifffile
+import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 from matplotlib.widgets import RectangleSelector
 
-import tifffile
-
+import camera_communication as cac
 
 SAVING_DRIVE = 'D:\\'
 DEFAULT_SAVING_DIRECTORY = "D:\imaging_data"
 
 
+
 class ImageShower:
     '''
-    Liveimage to the screen
+    Showing images on the screen on its own window.
+
+    In future, may be used to select ROIs as well to allow
+    higher frame rate imaging / less data.
+    
+    ------------------
+    Working principle
+    ------------------
+    Image shower works so that self.loop is started as a separate process
+    using multiprocessing library
+    
+    -------
+    Methods
+    -------
+    self.loop       Set this as multiprocessing target
+
     '''
     def __init__(self):
         self.fig = plt.figure()
@@ -49,18 +63,18 @@ class ImageShower:
         
         if event.key == 'z':
             self.image_maxval -= 0.05
-            self.updateImage(strong=True)
+            self._updateImage(strong=True)
         
         elif event.key == 'x':
             self.image_maxval += 0.05
-            self.updateImage(strong=True)
+            self._updateImage(strong=True)
         
         elif event.key == 'a':
             self.image_brightness += 0.1
-            self.updateImage(strong=True)
+            self._updateImage(strong=True)
         elif event.key == 'c':
             self.image_brightness += -0.1
-            self.updateImage(strong=True)
+            self._updateImage(strong=True)
             
 
     def __onSelectRectangle(self, eclick, erelease):
@@ -77,7 +91,7 @@ class ImageShower:
         
         self.selection = [x, y, width, height]
         
-    def updateImage(self, i):
+    def _updateImage(self, i):
         
         data = None
         while not self.queue.empty():
@@ -116,12 +130,18 @@ class ImageShower:
            
          
     def loop(self, queue):
+        '''
+        Runs the ImageShower by reading images from the given queue.
+        Set this as a multiprocessing target.
+
+        queue           Multiprocessing queue with a get method.
+        '''
         self.queue = queue
         self.rectangle = RectangleSelector(self.ax, self.__onSelectRectangle, useblit=True)
         
         image = queue.get()
         self.im = plt.imshow(1000*image/np.max(image), cmap='gray', vmin=0, vmax=1, interpolation='none', aspect='auto')
-        self.ani = FuncAnimation(plt.gcf(), self.updateImage, frames=range(100), interval=5, blit=False)
+        self.ani = FuncAnimation(plt.gcf(), self._updateImage, frames=range(100), interval=5, blit=False)
 
         plt.show(block=False)
         
@@ -167,7 +187,6 @@ class Camera:
             
         self.settings = {'binning': '1x1'}
         
-
         self.mmc.prepareSequenceAcquisition('Camera')
         self.live_queue= False
 
@@ -176,7 +195,12 @@ class Camera:
 
 
     def acquire_single(self, save, subdir):
+        '''
+        Acquire a single image.
 
+        save        'True' or 'False'
+        subdir      Subdirectory for saving
+        '''
         
         exposure_time = 0.01
         binning = '2x2'
@@ -208,10 +232,13 @@ class Camera:
 
     def acquire_series(self, exposure_time, image_interval, N_frames, label, subdir, trigger_direction):
         '''
+        Acquire a series of images
+
         exposure_time       How many seconds to expose each image
         image_interval      How many seconds to wait in between the exposures
         N_frames            How many images to take
         label               Label for saving the images (part of the filename later)
+        subdir
         trigger_direction   "send" (camera sends a trigger pulse when it's ready) or "receive" (camera takes an image for every trigger pulse)
         '''
         print 'Now imagin'
@@ -241,7 +268,7 @@ class Camera:
 
         start_time = str(datetime.datetime.now())
         self.mmc.startSequenceAcquisition(N_frames, image_interval, False)
-
+        
         while self.mmc.isSequenceRunning():
             time.sleep(exposure_time)
 
@@ -265,9 +292,6 @@ class Camera:
         save_thread = threading.Thread(target=self.save_images, args=(images,label,metadata,os.path.join(self.saving_directory, subdir)))
         save_thread.start()
         
-        #with open(self.description_file, 'a') as fp:
-        #    fp.write(subdir+'\n')
-
         self.mmc.setProperty('Camera', "TRIGGER SOURCE","INTERNAL")
         print('acquired')
 
@@ -306,6 +330,7 @@ class Camera:
             self.mmc.setProperty('Camera', 'Binning', binning)
             self.settings['binning'] =  binning
 
+
     def save_description(self, filename, string):
         '''
         Allows saving a small descriptive text file into the main saving directory.
@@ -323,9 +348,11 @@ class Camera:
         
         self.description_file = fn + '.txt'
 
+
     def close(self):
         self.live_queue.put('close')
         self.lifep.join()
+
 
 class CameraServer:
     '''
@@ -334,8 +361,8 @@ class CameraServer:
     '''
     def __init__(self):
 
-        PORT = 50071
-        HOST = ''
+        PORT = cac.PORT
+        HOST = ''           # This is not cac.SERVER_HOSTNAME, leave empty
 
         self.running = False
 
@@ -349,6 +376,7 @@ class CameraServer:
             print e
             print "Using DUMMY camera instead"
             self.cam = DummyCamera()
+        
         self.functions = {'acquireSeries': self.cam.acquire_series,
                           'setSavingDirectory': self.cam.set_saving_directory,
                           'acquireSingle': self.cam.acquire_single,

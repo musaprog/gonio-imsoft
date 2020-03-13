@@ -8,6 +8,9 @@ import socket
 import time
 import os
 import subprocess
+import platfrom
+
+import camera_communication as cac
 
 MAX_RETRIES = 100
 RETRY_INTERVAL = 1
@@ -21,11 +24,12 @@ class CameraClient:
     '''
     def __init__(self):
         '''
-        Initialization of the Camera Client 
+        Initialization of the CameraClient 
         '''
-        self.host = '127.0.0.1'
-        self.port = 50071
-        
+        self.host = cac.SERVER_HOSTNAME
+        self.port = cac.PORT
+
+
     def sendCommand(self, command_string, retries=MAX_RETRIES):
         '''
         Send an arbitrary command to the CameraServer.
@@ -56,6 +60,7 @@ class CameraClient:
                 
             s.sendall(command_string.encode())
 
+
     def acquireSeries(self, exposure_time, image_interval, N_frames, label, subdir, trigger_direction):
         '''
         Acquire a time series of images.
@@ -71,14 +76,18 @@ class CameraClient:
         
         self.sendCommand(message)
 
+
     def acquireSingle(self, save, subdir):
         self.sendCommand('acquireSingle;{}:{}'.format(str(save), subdir))
 
+    
     def setSavingDirectory(self, saving_directory):
         self.sendCommand('setSavingDirectory;'+saving_directory)
 
+
     def saveDescription(self, filename, string):
         self.sendCommand('saveDescription;'+filename+':'+string)
+
 
     def isServerRunning(self):
         try:
@@ -87,19 +96,34 @@ class CameraClient:
             return False
         return True
 
+
     def startServer(self):
-        subprocess.Popen(['C:\Python27\python.exe', 'camera_server.py'], stdout=open(os.devnull, 'w'))
+        '''
+        Start a local camera server instance.
+        '''
+        if platform.system() == 'Windows':
+            subprocess.Popen(['C:\Python27\python.exe', 'camera_server.py'], stdout=open(os.devnull, 'w'))
+        else:
+            # On Linux and other platfroms
+            subprocess.Popen(['python2', 'camera_server.py'], stdout=open(os.devnull, 'w'))
+
 
     def close_server(self):
+        '''
+        Sends an exit message to the server, to which the server should respond
+        by closing itself down.
+        '''
         try:
             self.sendCommand('exit;'+'None', retries=0)
         except ConnectionRefusedError:
             pass
         
 
+
 def test():
     cam = CameraClient()
     cam.acquireSeries(0.01, 0, 5, 'test')
+
 
 if __name__ == "__main__":
     test()
