@@ -8,7 +8,7 @@ import socket
 import time
 import os
 import subprocess
-import platfrom
+import platform
 
 import camera_communication as cac
 

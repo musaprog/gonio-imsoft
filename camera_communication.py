@@ -6,7 +6,7 @@ Common settings for camera_sever.py (Python2) and camera_client.py (Python3)
 # tries to connect to
 SERVER_HOSTNAME = '127.0.0.1'
 
-PORT = 50071
+PORT = 50075
 
 # If for some reason the default port is in use / does not work,
 # try in order some other from this list

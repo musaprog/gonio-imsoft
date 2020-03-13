@@ -116,7 +116,7 @@ class Dynamic:
 
 
 
-    def set_led(self, device, value, wait_trigger=False, wait_until_done=False):
+    def set_led(self, device, value, wait_trigger=False):
         '''
         Set an output channel to a specific voltage value.
 
@@ -139,8 +139,6 @@ class Dynamic:
                 task.triggers.start_trigger.cfg_dig_edge_start_trig("/Dev1/PFI0", trigger_edge=nidaqmx.constants.Edge.FALLING)
             task.write(value)
             
-            if wait_until_done:
-                task.wait_until_done()
 
 
     def wait_for_trigger(self):
@@ -245,7 +243,7 @@ class Dynamic:
 
       
 
-    def image_series(trigger=None, inter_loop_callback=None):
+    def image_series(self, trigger='hard_cameramaster', inter_loop_callback=None):
         '''
         Contains common steps for all image_series methods.
         
@@ -294,7 +292,7 @@ class Dynamic:
         
         # Prepare some variables that stay constant over imaging
         image_directory = os.path.join(self.preparation['name'], 'pos{}{}'.format(imaging_angle, dynamic_parameters['suffix']+self.suffix))
-        N_frames = int((dynamic_parameters['pre_stim']+dynamic_parameters['stim']+dynamic_parameters['post_stim'])/frame_length)
+        N_frames = int((dynamic_parameters['pre_stim']+dynamic_parameters['stim']+dynamic_parameters['post_stim'])/dynamic_parameters['frame_length'])
         
         # Write info about the imaging to the descriptions file
         self.camera.saveDescription(self.preparation['name'], image_directory)
@@ -309,7 +307,8 @@ class Dynamic:
             if exit_imaging:
                 break
             
-            builder = StimulusBuilder = (dynamic_parameters['stim'],
+            fs = 1000
+            builder = StimulusBuilder(dynamic_parameters['stim'],
                 dynamic_parameters['pre_stim'], dynamic_parameters['post_stim'],
                 dynamic_parameters['frame_length'], dynamic_parameters['flash_on'][i],
                 dynamic_parameters['ir_imaging'], fs,
@@ -336,7 +335,7 @@ class Dynamic:
 
 
 
-    def image_trigger_hard_cameramaster(self, dynamic_parameters, builder, label, N_frames, frame_length, image_directory):
+    def image_trigger_hard_cameramaster(self, dynamic_parameters, builder, label, N_frames, image_directory):
         '''
         Where camera when starting imaging sends trigger to NI board setting the stimulus (hardware triggering).
         Illumination light is brightnened up slightly (0.5 s) before.
@@ -344,16 +343,15 @@ class Dynamic:
             
         fs = 1000
         
-        self.set_led(dynamic_parameters['ir_channel'], dynamic_parameters['ir_imaging'], wait_until_done=True)
+        self.set_led(dynamic_parameters['ir_channel'], dynamic_parameters['ir_imaging'])
       
         stimulus = builder.get_stimulus_pulse()
 
+        self.camera.acquireSeries(dynamic_parameters['frame_length'], 0, N_frames, label, image_directory, 'send')
         
         self.analog_output([dynamic_parameters['flash_channel']], [stimulus], fs, wait_trigger=True)
         
-        self.camera.acquireSeries(dynamic_parameters['frame_length'], 0, N_frames, label, image_directory, 'send')
-        
-        self.set_led(dynamic_parameters['ir_channel'], dynamic_parameters['ir_waiting'], wait_until_done=False)
+        self.set_led(dynamic_parameters['ir_channel'], dynamic_parameters['ir_waiting'])
 
 
 

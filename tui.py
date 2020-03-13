@@ -218,10 +218,13 @@ class TextUI:
         '''
         raise NotImplementedError('Static imaging UI not yet implemeted in TUI')
 
-    def image_series_callback(self, i_repeat):
+    def image_series_callback(self, label, i_repeat):
         '''
         Callback passed to image_series
         '''
+
+        print(label)
+        
         key = self._readKey()
 
         if key == '\r':
@@ -253,7 +256,7 @@ class TextUI:
                 lines.append('')
 
             if key == ' ':
-                self.dynamic.image_series3(inter_loop_callback=self.image_series_callback)
+                self.dynamic.image_series(inter_loop_callback=self.image_series_callback)
             elif key == '0':
                 self.dynamic.set_zero()
             elif key == 's':

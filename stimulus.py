@@ -27,7 +27,7 @@ class StimulusBuilder:
 
             self.stim_time = stim_time
             self.prestim_time = prestim_time
-            self.poststim_time = posttime_time
+            self.poststim_time = poststim_time
             self.frame_length = frame_length
             self.stimulus_intensity = stimulus_intensity
             self.illumination_intensity = illumination_intensity
