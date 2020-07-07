@@ -337,22 +337,25 @@ class Dynamic:
 
     def image_trigger_hard_cameramaster(self, dynamic_parameters, builder, label, N_frames, image_directory):
         '''
-        Where camera when starting imaging sends trigger to NI board setting the stimulus (hardware triggering).
-        Illumination light is brightnened up slightly (0.5 s) before.
-        '''
-            
-        fs = 1000
+        When starting the imaging, the camera sends a trigger pulse to NI board, leading to onset
+        of the stimulus (hardware triggering by the camera).
         
+        Illumination IR light is hardware triggered together with the stimulus.
+        '''
         self.set_led(dynamic_parameters['ir_channel'], dynamic_parameters['ir_imaging'])
-      
+        time.sleep(0.5)
+        
+        fs = 1000
+          
         stimulus = builder.get_stimulus_pulse()
 
-        self.camera.acquireSeries(dynamic_parameters['frame_length'], 0, N_frames, label, image_directory, 'send')
-        
-        self.analog_output([dynamic_parameters['flash_channel']], [stimulus], fs, wait_trigger=True)
-        
-        self.set_led(dynamic_parameters['ir_channel'], dynamic_parameters['ir_waiting'])
+        irwave = dynamic_parameters['ir_imaging'] * np.ones(stimulus.shape)
+        irwave[-1] = dynamic_parameters['ir_waiting']
 
+        self.camera.acquireSeries(dynamic_parameters['frame_length'], 0, N_frames, label, image_directory, 'send')
+
+        self.analog_output([dynamic_parameters['flash_channel'], dynamic_parameters['ir_channel']], [stimulus,irwave], fs, wait_trigger=True)
+        
 
 
     def set_savedir(self, savedir):
