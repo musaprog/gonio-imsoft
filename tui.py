@@ -1,6 +1,7 @@
 
 import os
 import platform
+import string
 
 OS = platform.system()
 if OS == 'Windows':
@@ -43,10 +44,12 @@ class Console:
         self.dynamic = core_dynamic
 
 
-    def enter(self, command_name, args):
+    def enter(self, command):
         '''
         Calling a command 
         '''
+        command_name = command.split(' ')[0]
+        args = command.split(' ')[1:]
 
         if hasattr(self, command_name):
             method = getattr(self, command_name)
@@ -54,6 +57,7 @@ class Console:
                 method(*args)
             except TypeError:
                 self.help()
+                
         else:
             print('Command {} does not exit'.format(command_name))
             self.help()
@@ -161,6 +165,8 @@ class TextUI:
 
         self.quit = False
 
+        self.console = Console(self.dynamic)
+
 
     @staticmethod
     def _readKey():
@@ -222,8 +228,8 @@ class TextUI:
         '''
         Callback passed to image_series
         '''
-
-        print(label)
+        if label:
+            print(label)
         
         key = self._readKey()
 
@@ -281,7 +287,7 @@ class TextUI:
                 self.dynamic.motors[2].move_raw(1)
 
             elif key == '`':
-                user_input = input("Type command >> ").split(' ')
+                user_input = input("Type command >> ")
                 self.console.enter(user_input)
 
             elif key == '':
