@@ -325,7 +325,7 @@ class Dynamic:
                 wakeup_time = time.time() + dynamic_parameters['isi'][i]-0.5
                 #time.sleep(dynamic_parameters['isi'][i]-0.5)
                 while wakeup_time > time.time():
-                    if callable(inter_loop_callback) and inter_loop_callback(i) == False:
+                    if callable(inter_loop_callback) and inter_loop_callback(None, i) == False:
                         exit_imaging = True
                         break
                     time.sleep(0.01)
