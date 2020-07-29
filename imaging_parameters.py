@@ -167,7 +167,7 @@ class ParameterEditor:
         while True:
             print('MODIFYING IMAGING PARAMETERS')
             self.print_preset(self.dynamic_parameters)
-            parameter = input('Parameter name or (list/save) (Enter to continue) >> ')
+            parameter = input('Parameter name or (list/save/load) (Enter to continue) >> ')
             
             # If breaking free
             if parameter == '':
@@ -185,6 +185,15 @@ class ParameterEditor:
                 save_parameters(os.path.join(self.presets_savedir, name), self.dynamic_parameters)                
                 continue        
 
+            if parameter.lower() == 'list':
+                if self.presets is {}:
+                    print('There are no existing presets!')
+                else:
+                    print('These are the existing presets:')
+                    for preset in self.presets.keys():
+                        print('  '+preset)
+                    print('')
+                continue
 
             if parameter.lower() == 'load':
                 # If parameter is actually a preset
