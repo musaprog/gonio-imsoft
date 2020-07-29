@@ -54,9 +54,16 @@ def getRightType(parameter_name, string_value):
 
    
     if parameter_name in DYNAMIC_PARAMETERS_TYPES['seconds']:
-        seconds = float(string_value)
-        if seconds < 0:
-            raise ValueError('Here time is required to be strictly positive.')
+        if string_value.startswith('[') and string_value.endswith(']'):
+            seconds = ast.literal_eval(string_value)
+
+            for s in seconds:
+                if s < 0:
+                    raise ValueError('Here time is required to be strictly positive.')
+        else:
+            seconds = float(string_value)
+            if seconds < 0:
+                raise ValueError('Here time is required to be strictly positive.')
         return seconds
 
     if parameter_name in  DYNAMIC_PARAMETERS_TYPES['voltage']:
