@@ -282,7 +282,7 @@ class Dynamic:
             
             elif len(dynamic_parameters[param]) != int(dynamic_parameters['repeats']):
                 print('Warning! Dynamic parameter {} length is {} but repeats is set to {}'.format(param,
-                    len(dynamic_parameters[param]), len(dynamic_parameters['repeats']) ))
+                    len(dynamic_parameters[param]), dynamic_parameters['repeats'] ))
                 dynamic_parameters[param] = [dynamic_parameters[param][0]] * dynamic_parameters['repeats'] 
 
 
