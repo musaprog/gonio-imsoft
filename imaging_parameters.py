@@ -218,8 +218,11 @@ class ParameterEditor:
             if parameter in self.presets.keys():
                 self.print_preset(self.presets[parameter])
                 
-                if input('Load this (y/n)>> ').lower()[0] == 'y':
+                confirm = input('Load this (y/n)>> ').lower()
+                if confirm and confirm[0] == 'y':
                     self.dynamic_parameters = self.presets[parameter]
+                else:
+                    print('Answer not yes, loading of the preset cancelled')
                 continue
             
     
