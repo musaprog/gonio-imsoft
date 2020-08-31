@@ -197,7 +197,7 @@ class Dynamic:
         time.sleep(0.5)
         
         # Subfolder suffix so if experimenter takes many images from the same position in different conditions
-        self.camera.acquireSeries(frame_length, 0, N_frames, label, os.path.join(self.preparation['name'], 'pos{}{}'.format(imaging_angle, dynamic_parameters['suffix']+self.suffix)), 'send')
+        self.camera.acquireSeries(frame_length, 0, N_frames, label, os.path.join(self.preparation['name'], 'pos{}_{}'.format(imaging_angle, dynamic_parameters['suffix']+self.suffix)), 'send')
         
         self.wait_for_trigger()
         time.sleep(dynamic_parameters['pre_stim'])
