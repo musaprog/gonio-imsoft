@@ -36,6 +36,10 @@ def toDegrees(angles):
         angles[i][1] *= (360/1024)
 
 
+def step2degree(step):
+    return step * (360/1024)
+
+
 def degrees2steps(angle):
     '''
     Transform an angle (degrees) to corresponging rotary encoder steps.
