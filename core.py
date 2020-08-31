@@ -293,9 +293,7 @@ class Dynamic:
         # Prepare some variables that stay constant over imaging
         image_directory = os.path.join(self.preparation['name'], 'pos{}{}'.format(imaging_angle, dynamic_parameters['suffix']+self.suffix))
         N_frames = int((dynamic_parameters['pre_stim']+dynamic_parameters['stim']+dynamic_parameters['post_stim'])/dynamic_parameters['frame_length'])
-        
-        # Write info about the imaging to the descriptions file
-        self.camera.saveDescription(self.preparation['name'], image_directory)
+       
 
         for i in range(dynamic_parameters['repeats']):
 

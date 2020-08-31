@@ -192,6 +192,8 @@ class Camera:
 
         self.shower = ImageShower()
 
+        # Description file string
+        self.description_string = ''
 
 
     def acquire_single(self, save, subdir):
@@ -307,12 +309,13 @@ class Camera:
         for i, image in enumerate(images):
             fn = '{}_{}.tiff'.format(label, i)
             tifffile.imsave(os.path.join(savedir, fn), image, metadata=metadata)
-            
-    
+        
+        self.save_description(os.path.join(savedir, 'description'), self.description_string, internal=True)
+
 
     def set_saving_directory(self, saving_directory):
         '''
-        Sets where images are saved and if the directory
+        Sets where the specimen folders are saved and if the directory
         does not yet exist, creates it.
         '''
         saving_directory = os.path.join(SAVING_DRIVE, saving_directory)
@@ -320,6 +323,7 @@ class Camera:
             os.makedirs(saving_directory)
             
         self.saving_directory = saving_directory
+
 
 
     def set_binning(self, binning):
@@ -331,12 +335,22 @@ class Camera:
             self.settings['binning'] =  binning
 
 
-    def save_description(self, filename, string):
+    def save_description(self, specimen_name, desc_string, internal=False):
         '''
         Allows saving a small descriptive text file into the main saving directory.
         Filename should be the same as the folder where it's saved.
+
+        Appends to the previous file.
+
+        specimen_name           DrosoM42 for example, name of the specimen folder
+        desc_string             String, what to write in the file
+        internal                If true, specimen_name becomes filename of the file,
+                                    relateive from the self.saving_directory
         '''
-        fn = os.path.join(self.saving_directory, filename, filename)
+        if internal:
+            fn = os.path.join(self.saving_directory, specimen_name)
+        else:
+            fn = os.path.join(self.saving_directory, specimen_name, specimen_name)
         
         # Check if the folder exists
         if not os.path.exists(os.path.dirname(fn)):
@@ -344,9 +358,10 @@ class Camera:
             os.makedirs(os.path.dirname(fn))
         
         with open(fn+'.txt', 'a') as fp:
-            fp.write(string)
+            fp.write(desc_string)
         
-        self.description_file = fn + '.txt'
+        
+        self.description_string = desc_string
 
 
     def close(self):
