@@ -298,8 +298,7 @@ class Camera:
         print('acquired')
 
     
-    @staticmethod
-    def save_images(images, label, metadata, savedir):
+    def save_images(self, images, label, metadata, savedir):
         '''
         Save given images as grayscale tiff images.
         '''
@@ -344,11 +343,10 @@ class Camera:
 
         specimen_name           DrosoM42 for example, name of the specimen folder
         desc_string             String, what to write in the file
-        internal                If true, specimen_name becomes filename of the file,
-                                    relateive from the self.saving_directory
+        internal                If true, specimen_name becomes filename of the file
         '''
         if internal:
-            fn = os.path.join(self.saving_directory, specimen_name)
+            fn = specimen_name
         else:
             fn = os.path.join(self.saving_directory, specimen_name, specimen_name)
         
@@ -357,8 +355,10 @@ class Camera:
             #raise OSError('File {} already exsits'.format(fn))
             os.makedirs(os.path.dirname(fn))
         
-        with open(fn+'.txt', 'a') as fp:
+        with open(fn+'.txt', 'w') as fp:
             fp.write(desc_string)
+
+        print "Wrote file " + fn+'.txt'
         
         
         self.description_string = desc_string
