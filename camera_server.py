@@ -188,6 +188,7 @@ class Camera:
         self.settings = {'binning': '1x1'}
         
         self.mmc.prepareSequenceAcquisition('Camera')
+        self.mmc.setCircularBufferMemoryFootprint(4000)
         self.live_queue= False
 
         self.shower = ImageShower()
@@ -243,30 +244,40 @@ class Camera:
         subdir
         trigger_direction   "send" (camera sends a trigger pulse when it's ready) or "receive" (camera takes an image for every trigger pulse)
         '''
-        print 'Now imagin'
-        
-        
+
         exposure_time = float(exposure_time)
         image_interval = float(image_interval)
         N_frames = int(N_frames)
         label = str(label)
 
-        print exposure_time
-        print image_interval
-        print N_frames
+        print "Now aquire_series with label " + label
+        print "- IMAGING PARAMETERS -"
+        print " exposure time " + str(exposure_time) + " seconds"
+        print " image interval " + str(image_interval) + " seconds"
+        print " N_frames " + str(N_frames)
+        print "- CAMERA SETTINGS"
 
         self.set_binning('2x2')
+        print " Pixel binning 2x2"
 
         if trigger_direction == 'send':
+            print " Camera sending a trigger pulse"
             self.mmc.setProperty('Camera', "OUTPUT TRIGGER KIND[0]","EXPOSURE")
             self.mmc.setProperty('Camera', "OUTPUT TRIGGER POLARITY[0]","NEGATIVE")
         elif trigger_direction== 'receive':
+            print " Camera recieving / waiting for a trigger pulse"
             self.mmc.setProperty('Camera', "TRIGGER SOURCE","EXTERNAL")
             self.mmc.setProperty('Camera', "TriggerPolarity","POSITIVE")
         else:
             raise ValueError('trigger_direction has to be {} or {}, not {}'.format('receive', 'send', trigger_direction))
 
+        
+        print "Circular buffer " + str(self.mmc.getCircularBufferMemoryFootprint()) + " MB"
+
         self.mmc.setExposure(exposure_time*1000)
+
+        
+        
 
         start_time = str(datetime.datetime.now())
         self.mmc.startSequenceAcquisition(N_frames, image_interval, False)
