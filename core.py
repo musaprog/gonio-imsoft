@@ -112,7 +112,7 @@ class Dynamic:
 
             
             task.start()
-            task.wait_until_done(timeout=len(stimuli[0])*fs*1.5)
+            task.wait_until_done(timeout=(len(stimuli[0])/fs)*1.5)
 
 
 
@@ -315,13 +315,19 @@ class Dynamic:
             
             imaging_function(dynamic_parameters, builder, label, N_frames, image_directory)
 
+            # Wait the total imaging period; If ISI is short and imaging period is long, we would
+            # start the second imaging even before the camera is ready
+            # Better would be wait everything clear signal from the camera.
+            total_imaging_time = dynamic_parameters['pre_stim'] + dynamic_parameters['stim'] + dynamic_parameters['post_stim']
+            print("Total imaging time " + str(total_imaging_time))
+            # Do the actual waiting together with ISI, see just below
             
             # WAITING ISI PERIOD
             if i+1 == dynamic_parameters['repeats']:
                 self.isi_slept_time = time.time() + dynamic_parameters['isi'][i]
             else:
-                wakeup_time = time.time() + dynamic_parameters['isi'][i]-0.5
-                #time.sleep(dynamic_parameters['isi'][i]-0.5)
+                wakeup_time = time.time() + dynamic_parameters['isi'][i] + total_imaging_time
+                
                 while wakeup_time > time.time():
                     if callable(inter_loop_callback) and inter_loop_callback(None, i) == False:
                         exit_imaging = True
