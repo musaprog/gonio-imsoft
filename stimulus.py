@@ -1,6 +1,8 @@
 
-import numpy as np
+import os
 
+import numpy as np
+from biosystfiles import extract as bsextract
 
 class StimulusBuilder:
     '''
@@ -36,7 +38,24 @@ class StimulusBuilder:
             self.illumination_finalval = illumination_finalval
 
             self.N_frames = int(round((stim_time+prestim_time+poststim_time)/frame_length))
-    
+
+            self.overload_stimulus = None
+
+
+    def overload_biosyst_stimulus(self, fn, channel=0):
+        '''
+        Loads a Biosyst stimulus that gets returned then at
+        get_stimulus_pulse instead.
+
+        Returns the overload stimulus and new fs
+        '''
+        ffn = os.path.join('biosyst_stimuli', fn)
+        self.overload_stimulus, self.fs = bsextract(ffn, channel)
+        self.overload_stimulus = self.overload_stimulus.flatten()
+        print(self.overload_stimulus.shape)
+        print(np.max(self.overload_stimulus))
+
+        return self.overload_stimulus, self.fs
     
     def get_stimulus_pulse(self):
         '''
@@ -47,6 +66,10 @@ class StimulusBuilder:
         ________|       |__________
         prestim   stim    poststim
         '''
+
+        if self.overload_stimulus is not None:
+            return self.overload_stimulus
+        
         stimulus = np.concatenate( (np.zeros(int(self.prestim_time*self.fs)), np.ones(int(self.stim_time*self.fs)), np.zeros(int(self.poststim_time*self.fs))) )
         stimulus = self.stimulus_intensity * stimulus
 

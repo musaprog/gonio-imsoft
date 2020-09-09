@@ -112,7 +112,7 @@ class Dynamic:
 
             
             task.start()
-            task.wait_until_done(timeout=(len(stimuli[0])/fs)*1.5)
+            task.wait_until_done(timeout=(len(stimuli[0])/fs)*1.5+20)
 
 
 
@@ -295,6 +295,7 @@ class Dynamic:
         N_frames = int((dynamic_parameters['pre_stim']+dynamic_parameters['stim']+dynamic_parameters['post_stim'])/dynamic_parameters['frame_length'])
        
 
+
         for i in range(dynamic_parameters['repeats']):
 
             label = 'im_pos{}_rep{}'.format(imaging_angle, i)
@@ -312,53 +313,68 @@ class Dynamic:
                 dynamic_parameters['ir_imaging'], fs,
                 stimulus_finalval=dynamic_parameters['flash_off'],
                 illumination_finalval=dynamic_parameters['ir_waiting'])
+
+            if dynamic_parameters.get('biosyst_stimulus', ''):
+                bsstim, fs = builder.overload_biosyst_stimulus(dynamic_parameters['biosyst_stimulus'], dynamic_parameters['biosyst_channel'])
+                N_frames = int(round((len(bsstim)/fs) / dynamic_parameters['frame_length']))
+
+            if i==0 and dynamic_parameters['avgint_adaptation']:
+                self.set_led(dynamic_parameters['flash_channel'], np.mean(builder.get_stimulus_pulse()))
+                time.sleep(dynamic_parameters['avgint_adaptation'])
             
-            imaging_function(dynamic_parameters, builder, label, N_frames, image_directory)
+            imaging_function(dynamic_parameters, builder, label, N_frames, image_directory, set_led=bool(dynamic_parameters['isi'][i]))
 
             # Wait the total imaging period; If ISI is short and imaging period is long, we would
             # start the second imaging even before the camera is ready
             # Better would be wait everything clear signal from the camera.
-            total_imaging_time = dynamic_parameters['pre_stim'] + dynamic_parameters['stim'] + dynamic_parameters['post_stim']
-            print("Total imaging time " + str(total_imaging_time))
+            #total_imaging_time = dynamic_parameters['pre_stim'] + dynamic_parameters['stim'] + dynamic_parameters['post_stim']
+            #print("Total imaging time " + str(total_imaging_time))
             # Do the actual waiting together with ISI, see just below
             
             # WAITING ISI PERIOD
             if i+1 == dynamic_parameters['repeats']:
                 self.isi_slept_time = time.time() + dynamic_parameters['isi'][i]
             else:
-                wakeup_time = time.time() + dynamic_parameters['isi'][i] + total_imaging_time
+                wakeup_time = time.time() + dynamic_parameters['isi'][i] #+ total_imaging_time
                 
                 while wakeup_time > time.time():
                     if callable(inter_loop_callback) and inter_loop_callback(None, i) == False:
                         exit_imaging = True
                         break
                     time.sleep(0.01)
-        
+
+        self.set_led(dynamic_parameters['flash_channel'], dynamic_parameters['flash_off'])
         self.set_led(dynamic_parameters['ir_channel'], dynamic_parameters['ir_livefeed'])
         print('DONE!')
 
 
 
-    def image_trigger_hard_cameramaster(self, dynamic_parameters, builder, label, N_frames, image_directory):
+    def image_trigger_hard_cameramaster(self, dynamic_parameters, builder, label, N_frames, image_directory, set_led=True):
         '''
         When starting the imaging, the camera sends a trigger pulse to NI board, leading to onset
         of the stimulus (hardware triggering by the camera).
         
         Illumination IR light is hardware triggered together with the stimulus.
+
+        set_led   Set IR to ir_waiting in between (if long enough ISI)
         '''
-        self.set_led(dynamic_parameters['ir_channel'], dynamic_parameters['ir_imaging'])
-        time.sleep(0.5)
+        if set_led:
+            self.set_led(dynamic_parameters['ir_channel'], dynamic_parameters['ir_imaging'])
+            time.sleep(0.5)
         
-        fs = 1000
+        fs = builder.fs
           
         stimulus = builder.get_stimulus_pulse()
 
         irwave = dynamic_parameters['ir_imaging'] * np.ones(stimulus.shape)
-        irwave[-1] = dynamic_parameters['ir_waiting']
+        if set_led:
+            irwave[-1] = dynamic_parameters['ir_waiting']
+
 
         self.camera.acquireSeries(dynamic_parameters['frame_length'], 0, N_frames, label, image_directory, 'send')
 
         self.analog_output([dynamic_parameters['flash_channel'], dynamic_parameters['ir_channel']], [stimulus,irwave], fs, wait_trigger=True)
+
         
 
 

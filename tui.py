@@ -141,7 +141,8 @@ class Console:
             for motor in self.dynamic.motors:
                 motor.stop()
 
-
+    def set_roi(self, x,y,w,h):
+        self.dynamic.camera.set_roi( (x,y,w,h) )
 
 class TextUI:
     '''

@@ -59,22 +59,18 @@ class ImageShower:
 
         self.selection = None
 
+        self.image_size = None
+
     def callbackButtonPressed(self, event):
         
-        if event.key == 'z':
+        if event.key == 'r':
             self.image_maxval -= 0.05
             self._updateImage(strong=True)
         
-        elif event.key == 'x':
+        elif event.key == 't':
             self.image_maxval += 0.05
             self._updateImage(strong=True)
-        
-        elif event.key == 'a':
-            self.image_brightness += 0.1
-            self._updateImage(strong=True)
-        elif event.key == 'c':
-            self.image_brightness += -0.1
-            self._updateImage(strong=True)
+
             
 
     def __onSelectRectangle(self, eclick, erelease):
@@ -103,6 +99,9 @@ class ImageShower:
             self.close = True
             return self.im, ''
 
+        if self.selection and data.size != self.image_size:
+            self.selection = None
+
         if self.selection:
             x,y,w,h = self.selection
             if w<1 or h<1:
@@ -121,6 +120,8 @@ class ImageShower:
         data = data - np.min(data)
         data_max = np.max(data)
         data = data.astype(float)/data_max
+
+        self.image_size = data.size
        
         
         self.im.set_array(data)
@@ -195,6 +196,8 @@ class Camera:
 
         # Description file string
         self.description_string = ''
+
+
 
 
     def acquire_single(self, save, subdir):
@@ -344,6 +347,21 @@ class Camera:
             self.mmc.setProperty('Camera', 'Binning', binning)
             self.settings['binning'] =  binning
 
+    def set_roi(self, x,y,w,h):
+        '''
+        In binned pixels
+        roi     (x,y,w,h) or None
+        '''
+        x = int(x)
+        y = int(y)
+        w = int(w)
+        h = int(h)
+        
+        if w == 0 or h==0:
+            self.mmc.clearROI()
+        else:
+            self.mmc.setROI(x,y,w,h)
+
 
     def save_description(self, specimen_name, desc_string, internal=False):
         '''
@@ -407,6 +425,7 @@ class CameraServer:
                           'setSavingDirectory': self.cam.set_saving_directory,
                           'acquireSingle': self.cam.acquire_single,
                           'saveDescription': self.cam.save_description,
+                          'set_roi': self.cam.set_roi,
                           'ping': self.ping,
                           'exit': self.stop}
 

@@ -16,13 +16,16 @@ DEFAULT_DYNAMIC_PARAMETERS = {'isi': 10.0, 'repeats': 1, 'pre_stim': 0.000,
         'ir_imaging': 5, 'ir_waiting': 0, 'ir_livefeed': 1,
         'flash_on': 8, 'flash_off': 0,
         'ir_channel': "Dev1/ao1", 'flash_channel': "Dev1/ao0",
-        'suffix': '', 'trigger_channel': "Dev2/ao3"}
+        'suffix': '', 'trigger_channel': "Dev2/ao3",
+        'biosyst_stimulus': '',
+        'biosyst_channel': 2,
+        'avgint_adaptation': 0}
 
-DYNAMIC_PARAMETERS_TYPES = {'seconds': ['isi', 'pre_stim', 'stim', 'post_stim', 'frame_length'],
+DYNAMIC_PARAMETERS_TYPES = {'seconds': ['isi', 'pre_stim', 'stim', 'post_stim', 'frame_length', 'avgint_adaptation'],
         'voltage': ['ir_imaging', 'ir_waiting', 'ir_livefeed', 'flash_on', 'flash_off'],
         'channel': ['ir_channel', 'flash_channel', 'trigger_channel'],
-        'integer': ['repeats'],
-        'string': ['suffix']}
+        'integer': ['repeats', 'biosyst_channel'],
+        'string': ['suffix', 'biosyst_stimulus']}
 
 
 DYNAMIC_PARAMETERS_HELP = {'isi': 'Inter stimulus intervali[s]',
@@ -39,7 +42,10 @@ DYNAMIC_PARAMETERS_HELP = {'isi': 'Inter stimulus intervali[s]',
         'ir_channel': 'NI channel for IR',
         'flash_channel': 'NI channel for Flash',
         'trigger_channel': 'Camera trigger channel (square wave)',
-        'suffix': 'Tag added to the saved folders'}
+        'suffix': 'Tag added to the saved folders',
+        'biosyst_stimulus': 'Override the square pulse by a biosyst stimulus',
+        'biosyst_channel': 'Channel of the biosyst simulus',
+        'avgint_adaptation': 'Time to show stimulus mean value before imaging [s]'}
 
 
 def getRightType(parameter_name, string_value):
@@ -139,8 +145,12 @@ class ParameterEditor:
                 print("Couldn't load preset {}".format(afile))
                 continue
             
-            if sorted(preset.keys()) == self.parameter_names:
-                presets[os.path.basename(afile)] = preset
+            # If older files lack some parameters, use default parameters
+            for key in self.parameter_names:
+                if not key in preset:
+                    preset[key] = DEFAULT_DYNAMIC_PARAMETERS[key]
+                    
+            presets[os.path.basename(afile)] = preset
 
         return presets
 

@@ -88,6 +88,8 @@ class CameraClient:
     def saveDescription(self, filename, string):
         self.sendCommand('saveDescription;'+filename+':'+string)
 
+    def set_roi(self, roi):
+        self.sendCommand('set_roi;{}:{}:{}:{}'.format(*roi))
 
     def isServerRunning(self):
         try:
