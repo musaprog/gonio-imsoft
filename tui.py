@@ -56,7 +56,8 @@ class Console:
             method = getattr(self, command_name)
             try:
                 method(*args)
-            except TypeError:
+            except TypeError as e:
+                print(e)
                 self.help()
                 
         else:
@@ -83,7 +84,7 @@ class Console:
         # Replace illegal characters by x
         legal_suffix = ""
         for letter in suffix:
-            if letter in string.ascii_letters+'_()-':
+            if letter in string.ascii_letters+'_()-'+'0123456789.':
                 legal_suffix += letter
             else:
                 print('Replacing illegal character {} with x'.format(letter))
