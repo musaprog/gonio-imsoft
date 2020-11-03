@@ -189,7 +189,7 @@ class Camera:
         self.settings = {'binning': '1x1'}
         
         self.mmc.prepareSequenceAcquisition('Camera')
-        self.mmc.setCircularBufferMemoryFootprint(4000)
+        #self.mmc.setCircularBufferMemoryFootprint(4000)
         self.live_queue= False
 
         self.shower = ImageShower()
