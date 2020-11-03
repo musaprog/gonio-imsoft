@@ -2,6 +2,7 @@
 import os
 import platform
 import string
+import time
 
 OS = platform.system()
 if OS == 'Windows':
@@ -144,6 +145,31 @@ class Console:
     def set_roi(self, x,y,w,h):
         self.dynamic.camera.set_roi( (x,y,w,h) )
 
+
+    def eternal_repeat(self, isi):
+
+        isi = float(isi)
+        print(isi)
+        
+        suffix = "eternal_repeat_isi{}s".format(isi)
+        suffix = suffix + "_rep{}"
+        i_repeat = 0
+        
+        while True:
+            self.suffix(suffix.format(i_repeat))
+
+            start_time = time.time()
+            
+            if self.dynamic.image_series(inter_loop_callback=self.image_series_callback) == False:
+                break
+            i_repeat += 1
+
+            sleep_time = isi - float(time.time() - start_time)
+            if sleep_time > 0:
+                time.sleep(sleep_time)
+
+            
+
 class TextUI:
     '''
     A simple text based user interface pseudopupil imaging.
@@ -167,6 +193,7 @@ class TextUI:
         self.quit = False
 
         self.console = Console(self.dynamic)
+        self.console.image_series_callback = self.image_series_callback
 
 
     @staticmethod
