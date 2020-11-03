@@ -179,7 +179,7 @@ class TextUI:
         self.dynamic = core.Dynamic()
         
         # Initial selection of the experimenter
-        self.experimenters = ['Andra', 'James', 'Joni']
+        self.experimenters = ['Andra', 'James', 'Joni', 'Joni2']
 
         # Main menu
         self.menutext = "Pupil Imsoft TUI (Text user interface)"
