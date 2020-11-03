@@ -247,7 +247,9 @@ class Dynamic:
         '''
         Contains common steps for all image_series methods.
         
-        triggering_type     "softhard", "hard_cameraslave", "hard_cameramaster" 
+        triggering_type     "softhard", "hard_cameraslave", "hard_cameramaster"
+
+        Returns True if finished properly and False if user cancelled.
         '''
         
         
@@ -294,7 +296,6 @@ class Dynamic:
         image_directory = os.path.join(self.preparation['name'], 'pos{}{}'.format(imaging_angle, dynamic_parameters['suffix']+self.suffix))
         N_frames = int((dynamic_parameters['pre_stim']+dynamic_parameters['stim']+dynamic_parameters['post_stim'])/dynamic_parameters['frame_length'])
        
-
 
         for i in range(dynamic_parameters['repeats']):
 
@@ -347,6 +348,10 @@ class Dynamic:
         self.set_led(dynamic_parameters['ir_channel'], dynamic_parameters['ir_livefeed'])
         print('DONE!')
 
+        if exit_imaging:
+            return False
+        else:
+            return True
 
 
     def image_trigger_hard_cameramaster(self, dynamic_parameters, builder, label, N_frames, image_directory, set_led=True):
