@@ -313,7 +313,8 @@ class Dynamic:
                 dynamic_parameters['frame_length'], dynamic_parameters['flash_on'][i],
                 dynamic_parameters['ir_imaging'], fs,
                 stimulus_finalval=dynamic_parameters['flash_off'],
-                illumination_finalval=dynamic_parameters['ir_waiting'])
+                illumination_finalval=dynamic_parameters['ir_waiting'],
+                wtype=dynamic_parameters['flash_type'])
 
             if dynamic_parameters.get('biosyst_stimulus', ''):
                 bsstim, fs = builder.overload_biosyst_stimulus(dynamic_parameters['biosyst_stimulus'], dynamic_parameters['biosyst_channel'])

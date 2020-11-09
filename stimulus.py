@@ -2,6 +2,8 @@
 import os
 
 import numpy as np
+import scipy.signal
+
 from biosystfiles import extract as bsextract
 
 class StimulusBuilder:
@@ -16,14 +18,15 @@ class StimulusBuilder:
 
     def __init__(self, stim_time, prestim_time, poststim_time, frame_length,
             stimulus_intensity, illumination_intensity, fs,
-            stimulus_finalval=0, illumination_finalval=0):
+            stimulus_finalval=0, illumination_finalval=0,
+            wtype='square'):
             '''
             stim_time               The time stimulus LED is on
             prestim_time            The time the camera is running and illumination is on before the stimulus
             poststim_time           The time the camera is running and illumination is on after the stimulus
             stimulus_intensity      From 0 to 1, the brightness of the stimulus
             illumination_intensity  From 0 to 1, the brightness of the illumination lights
-
+            wtype                   "square" or "sinelogsweep"
 
             '''
 
@@ -37,9 +40,12 @@ class StimulusBuilder:
             self.stimulus_finalval = stimulus_finalval
             self.illumination_finalval = illumination_finalval
 
+            self.wtype = wtype
+
             self.N_frames = int(round((stim_time+prestim_time+poststim_time)/frame_length))
 
             self.overload_stimulus = None
+            
 
 
     def overload_biosyst_stimulus(self, fn, channel=0):
@@ -69,8 +75,20 @@ class StimulusBuilder:
 
         if self.overload_stimulus is not None:
             return self.overload_stimulus
+
+        N0_samples = int(self.prestim_time*self.fs)
+        N1_samples = int(self.stim_time*self.fs)
+        N2_samples = int(self.poststim_time*self.fs)
         
-        stimulus = np.concatenate( (np.zeros(int(self.prestim_time*self.fs)), np.ones(int(self.stim_time*self.fs)), np.zeros(int(self.poststim_time*self.fs))) )
+        if self.wtype == 'square':
+            stimulus = np.concatenate( (np.zeros(N0_samples), np.ones(N1_samples), np.zeros(N2_samples)) )
+        elif self.wtype == 'sinelogsweep':
+            times = np.linspace(0, self.stim_time, N1_samples)
+            active = (scipy.signal.chirp(times, f0=0.5, f1=100, t1=self.stim_time, phi=-90, method='logarithmic')+1)/2
+            stimulus = np.concatenate( (np.ones(N0_samples)/2, active, np.ones(N2_samples)/2) )
+        else:
+            raise ValueError('Invalid wtype given, has to be s"quare" or "sinelogsweep"')
+
         stimulus = self.stimulus_intensity * stimulus
 
    

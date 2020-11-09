@@ -19,13 +19,14 @@ DEFAULT_DYNAMIC_PARAMETERS = {'isi': 10.0, 'repeats': 1, 'pre_stim': 0.000,
         'suffix': '', 'trigger_channel': "Dev2/ao3",
         'biosyst_stimulus': '',
         'biosyst_channel': 2,
-        'avgint_adaptation': 0}
+        'avgint_adaptation': 0,
+        'flash_type': 'square'}
 
 DYNAMIC_PARAMETERS_TYPES = {'seconds': ['isi', 'pre_stim', 'stim', 'post_stim', 'frame_length', 'avgint_adaptation'],
         'voltage': ['ir_imaging', 'ir_waiting', 'ir_livefeed', 'flash_on', 'flash_off'],
         'channel': ['ir_channel', 'flash_channel', 'trigger_channel'],
         'integer': ['repeats', 'biosyst_channel'],
-        'string': ['suffix', 'biosyst_stimulus']}
+        'string': ['suffix', 'biosyst_stimulus', 'flash_type']}
 
 
 DYNAMIC_PARAMETERS_HELP = {'isi': 'Inter stimulus intervali[s]',
@@ -45,7 +46,8 @@ DYNAMIC_PARAMETERS_HELP = {'isi': 'Inter stimulus intervali[s]',
         'suffix': 'Tag added to the saved folders',
         'biosyst_stimulus': 'Override the square pulse by a biosyst stimulus',
         'biosyst_channel': 'Channel of the biosyst simulus',
-        'avgint_adaptation': 'Time to show stimulus mean value before imaging [s]'}
+        'avgint_adaptation': 'Time to show stimulus mean value before imaging [s]',
+        'flash_type': '"square" or sinelogsweep'}
 
 
 def getRightType(parameter_name, string_value):
