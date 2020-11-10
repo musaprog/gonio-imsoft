@@ -279,11 +279,13 @@ class Camera:
 
         self.mmc.setExposure(exposure_time*1000)
 
-        
+
+        self.wait_for_client()
         
 
         start_time = str(datetime.datetime.now())
         self.mmc.startSequenceAcquisition(N_frames, image_interval, False)
+        
         
         while self.mmc.isSequenceRunning():
             time.sleep(exposure_time)
@@ -397,6 +399,9 @@ class Camera:
         self.live_queue.put('close')
         self.lifep.join()
 
+    def wait_for_client(self):
+        pass
+
 
 class CameraServer:
     '''
@@ -416,6 +421,7 @@ class CameraServer:
 
         try:
             self.cam = Camera()
+            self.cam.wait_for_client = self.wait_for_client
         except Exception as e:
             print e
             print "Using DUMMY camera instead"
@@ -431,6 +437,23 @@ class CameraServer:
 
     def ping(self, message):
         print message
+
+
+
+    def wait_for_client(self):
+        '''
+        Waits until client confirms that it is ready
+        '''
+        conn, addr = self.socket.accept()
+        string = ''
+        while True:
+            data = conn.recv(1024)
+            if not data: break
+            string += data
+        conn.close()
+        print "Client ready"
+        
+
 
     def run(self):
         '''

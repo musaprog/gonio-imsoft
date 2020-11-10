@@ -112,6 +112,9 @@ class Dynamic:
 
             
             task.start()
+            
+            self.camera.sendCommand('ready')
+                
             task.wait_until_done(timeout=(len(stimuli[0])/fs)*1.5+20)
 
 
