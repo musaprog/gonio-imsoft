@@ -26,7 +26,7 @@ class StimulusBuilder:
             poststim_time           The time the camera is running and illumination is on after the stimulus
             stimulus_intensity      From 0 to 1, the brightness of the stimulus
             illumination_intensity  From 0 to 1, the brightness of the illumination lights
-            wtype                   "square" or "sinelogsweep"
+            wtype                   "square" or "sinelogsweep" or "squarelogsweep"
 
             '''
 
@@ -82,10 +82,22 @@ class StimulusBuilder:
         
         if self.wtype == 'square':
             stimulus = np.concatenate( (np.zeros(N0_samples), np.ones(N1_samples), np.zeros(N2_samples)) )
-        elif self.wtype == 'sinelogsweep':
+        elif 'logsweep' in self.wtype:
+            try:
+                f0, f1 = self.wtype.split(',')[1:]
+                f0 = float(f0)
+                f1 = float(f1)
+            except:
+                print("Doing logsweep from 0.5 Hz to 100 Hz")
+                f0=0.5
+                f1=100
+            
             times = np.linspace(0, self.stim_time, N1_samples)
-            active = (scipy.signal.chirp(times, f0=0.5, f1=100, t1=self.stim_time, phi=-90, method='logarithmic')+1)/2
+            active = (scipy.signal.chirp(times, f0=f0, f1=f1, t1=self.stim_time, phi=-90, method='logarithmic')+1)/2
             stimulus = np.concatenate( (np.ones(N0_samples)/2, active, np.ones(N2_samples)/2) )
+            if self.wtype == 'squarelogsweep':
+                stimulus[stimulus>0.5] = 1
+                stimulus[stimulus<0.5] = 0
         else:
             raise ValueError('Invalid wtype given, has to be s"quare" or "sinelogsweep"')
 
