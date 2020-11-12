@@ -16,7 +16,7 @@ from anglepairs import saveAnglePairs, loadAnglePairs, toDegrees
 from arduino_serial import ArduinoReader
 from camera_client import CameraClient
 from motors import Motor
-from imaging_parameters import DEFAULT_DYNAMIC_PARAMETERS, ParameterEditor, getModifiedParameters
+from imaging_parameters import DEFAULT_DYNAMIC_PARAMETERS, load_parameters, getModifiedParameters
 from stimulus import StimulusBuilder
 import macro
 
@@ -434,6 +434,11 @@ class Dynamic:
         
         self.set_led(self.dynamic_parameters['ir_channel'], self.dynamic_parameters['ir_livefeed'])
         self.set_led(self.dynamic_parameters['flash_channel'], self.dynamic_parameters['flash_off'])
+
+
+    def load_preset(self, preset_name):
+        fn = os.path.join('presets', preset_name)
+        self.dynamic_parameters = load_parameters(fn)
 
 
 

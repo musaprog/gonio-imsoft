@@ -1,5 +1,6 @@
 
 import os
+import copy
 import platform
 import string
 import time
@@ -168,6 +169,31 @@ class Console:
             sleep_time = isi - float(time.time() - start_time)
             if sleep_time > 0:
                 time.sleep(sleep_time)
+
+    def chain_presets(self, delay, *preset_names):
+        '''
+        Running multiple presets all one after each other,
+        in a fixed (horizonta, vertical) location.
+
+        delay       In seconds, how long to wait between presets
+        '''
+        delay = float(delay)
+        original_parameters = copy.copy(self.dynamic.dynamic_parameters)
+
+        
+        print('Repeating presets {}'.format(preset_names))
+        for preset_name in preset_names:
+            print('Preset {}'.format(preset_name))
+            
+            self.dynamic.load_preset(preset_name)
+            
+            if self.dynamic.image_series(inter_loop_callback=self.image_series_callback) == False:
+                break
+
+            time.sleep(delay)
+
+        print('Finished repeating presets')
+        self.dynamic.dynamic_parameters = original_parameters
 
             
 
