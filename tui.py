@@ -196,6 +196,13 @@ class Console:
         self.dynamic.dynamic_parameters = original_parameters
 
             
+    def set_rotation(self, horizontal, vertical):
+        ho = int(horizontal)
+        ve = int(vertical)
+        cho, cve = self.dynamic.reader.latest_angle
+        
+        self.dynamic.reader.offset = (cho-ho, cve-ve)
+        
 
 class TextUI:
     '''
