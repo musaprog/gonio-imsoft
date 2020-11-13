@@ -197,6 +197,7 @@ class Camera:
         # Description file string
         self.description_string = ''
 
+        self.save_stacks = False
 
 
 
@@ -321,9 +322,15 @@ class Camera:
         if not os.path.isdir(savedir):
             os.makedirs(savedir)
 
-        for i, image in enumerate(images):
-            fn = '{}_{}.tiff'.format(label, i)
-            tifffile.imsave(os.path.join(savedir, fn), image, metadata=metadata)
+        if self.save_stack == False:
+            # Save separate images
+            for i, image in enumerate(images):
+                fn = '{}_{}.tiff'.format(label, i)
+                tifffile.imsave(os.path.join(savedir, fn), image, metadata=metadata)
+        else:
+            # Save a stack
+            fn = '{}_stack.tiff'.format(label)
+            tifffile.imsave(os.path.join(savedir, fn), np.asarray(images), metadata=metadata)
         
         self.save_description(os.path.join(savedir, 'description'), self.description_string, internal=True)
 
@@ -340,6 +347,16 @@ class Camera:
         self.saving_directory = saving_directory
 
 
+    def set_save_stack(self, boolean):
+        '''
+        If boolean == "True", save images as stacks instead of separate images.
+        '''
+        if boolean == 'True':
+            self.save_stack = True
+        elif boolean == 'False':
+            self.save_stack = False
+        else:
+            print("Did not understand wheter to save stacks. Given {}".format(boolean))
 
     def set_binning(self, binning):
         '''
@@ -432,6 +449,7 @@ class CameraServer:
                           'acquireSingle': self.cam.acquire_single,
                           'saveDescription': self.cam.save_description,
                           'set_roi': self.cam.set_roi,
+                          'set_save_stack': self.cam.set_save_stack,
                           'ping': self.ping,
                           'exit': self.stop}
 

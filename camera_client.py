@@ -91,6 +91,9 @@ class CameraClient:
     def set_roi(self, roi):
         self.sendCommand('set_roi;{}:{}:{}:{}'.format(*roi))
 
+    def set_save_stack(self, boolean):
+        self.sendCommand('set_save_stack;{}'.format(boolean))
+
     def isServerRunning(self):
         try:
             self.sendCommand('ping;Client wants to know if server is running', retries=0)
