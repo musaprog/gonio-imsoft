@@ -408,6 +408,15 @@ class Dynamic:
         else:
             self.suffix = ''
 
+    def _update_descriptions_file(self):
+        # Saving description file
+        desc_string = "name {}\nsex {}\nage {}".format(self.preparation['name'], self.preparation['sex'], self.preparation['age'])
+        desc_string += "\n\n#DYNAMIC PROTOCOL PARAMETERS\n"
+        for name, value in self.dynamic_parameters.items():
+            desc_string += '{} {}\n'.format(name, value)
+        print(desc_string)
+        self.camera.saveDescription(self.preparation['name'], desc_string)
+        
 
     def initialize(self, name, sex, age):
         '''
@@ -426,14 +435,8 @@ class Dynamic:
         self.dynamic_parameters = getModifiedParameters()
         print('Preparation name set as {}, sex {}, age {} days.'.format(self.preparation['name'], self.preparation['sex'], self.preparation['age']))
 
-        
-        # Saving description file
-        desc_string = "name {}\nsex {}\nage {}".format(self.preparation['name'], self.preparation['sex'], self.preparation['age'])
-        desc_string += "\n\n#DYNAMIC PROTOCOL PARAMETERS\n"
-        for name, value in self.dynamic_parameters.items():
-            desc_string += '{} {}\n'.format(name, value)
-        print(desc_string)
-        self.camera.saveDescription(self.preparation['name'], desc_string)
+        self._update_descriptions_file()
+
         
         self.set_led(self.dynamic_parameters['ir_channel'], self.dynamic_parameters['ir_livefeed'])
         self.set_led(self.dynamic_parameters['flash_channel'], self.dynamic_parameters['flash_off'])
@@ -442,6 +445,7 @@ class Dynamic:
     def load_preset(self, preset_name):
         fn = os.path.join('presets', preset_name)
         self.dynamic_parameters = load_parameters(fn)
+        self._update_descriptions_file()
 
 
 
