@@ -84,22 +84,38 @@ class StimulusBuilder:
             stimulus = np.concatenate( (np.zeros(N0_samples), np.ones(N1_samples), np.zeros(N2_samples)) )
         elif 'logsweep' in self.wtype:
             try:
-                f0, f1 = self.wtype.split(',')[1:]
+                wtype, f0, f1 = self.wtype.split(',')
                 f0 = float(f0)
                 f1 = float(f1)
             except:
                 print("Doing logsweep from 0.5 Hz to 100 Hz")
                 f0=0.5
                 f1=100
+                wtype = self.wtype
             
             times = np.linspace(0, self.stim_time, N1_samples)
-            active = (scipy.signal.chirp(times, f0=f0, f1=f1, t1=self.stim_time, phi=-90, method='logarithmic')+1)/2
-            stimulus = np.concatenate( (np.ones(N0_samples)/2, active, np.ones(N2_samples)/2) )
-            if self.wtype == 'squarelogsweep':
-                stimulus[stimulus>0.5] = 1
-                stimulus[stimulus<0.5] = 0
+            active = scipy.signal.chirp(times, f0=f0, f1=f1, t1=self.stim_time, phi=-90, method='logarithmic')
+            
+            if wtype == 'squarelogsweep':
+                active[active>0] = 1
+                active[active<0] = -1
+            elif wtype == '3steplogsweep':
+                cstep = np.sin(np.pi/4)
+                active[np.abs(active) <= cstep] = 0
+                active[active > cstep] = 1
+                active[active < -cstep] = -1
+                
+            elif wtype == 'sinelogsweep':
+                pass
+            else:
+                raise ValueError('Unkown flash_type'.format(wtype))
+                
+            # Join with pre and post 0.5 values
+            # and move and scale between 0 and 1 (from - 1 and 1)
+            stimulus = np.concatenate( (np.ones(N0_samples)/2, (active+1)/2, np.ones(N2_samples)/2) )
+            
         else:
-            raise ValueError('Invalid wtype given, has to be s"quare" or "sinelogsweep"')
+            raise ValueError('Invalid wtype given, has to be "square" or "sinelogsweep" or "3steplogsweep"')
 
         stimulus = self.stimulus_intensity * stimulus
 
