@@ -284,7 +284,8 @@ class TextUI:
         '''
         Running the static imaging protocol.
         '''
-        raise NotImplementedError('Static imaging UI not yet implemeted in TUI')
+        self.loop_dynamic(static=True)
+        
 
     def image_series_callback(self, label, i_repeat):
         '''
@@ -302,10 +303,12 @@ class TextUI:
         else:
             return True
 
-    def loop_dynamic(self):
+    def loop_dynamic(self, static=False):
         '''
         Running the dynamic imaging protocol.
         '''
+        trigger = False
+            
         self.dynamic.set_savedir(os.path.join('imaging_data_'+self.experimenter))
         name = input('Name ({})>> '.format(self.dynamic.preparation['name']))
         sex = input('Sex ({})>> '.format(self.dynamic.preparation['sex']))
@@ -319,12 +322,20 @@ class TextUI:
             lines = upper_lines
 
             key = self._readKey()
+
+            if static:
+                if trigger and self.dynamic.trigger_rotation:
+                    self.dynamic.image_series(inter_loop_callback=self.image_series_callback)
+                if key == ' ':
+                    trigger = not trigger
+                    print('Rotation triggering now set to {}'.format(trigger))
+            else:
+                if key == ' ':
+                    self.dynamic.image_series(inter_loop_callback=self.image_series_callback)
+                
             
             if key == 112:
                 lines.append('')
-
-            if key == ' ':
-                self.dynamic.image_series(inter_loop_callback=self.image_series_callback)
             elif key == '0':
                 self.dynamic.set_zero()
             elif key == 's':
@@ -352,7 +363,7 @@ class TextUI:
                 user_input = input("Type command >> ")
                 self.console.enter(user_input)
 
-            elif key == '':
+            elif key == '' and not (static and self.dynamic.trigger_rotation):
                 # When there's no input just update the live feed
                 self.dynamic.take_snap(save=False)
             

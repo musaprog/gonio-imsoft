@@ -20,11 +20,6 @@ from imaging_parameters import DEFAULT_DYNAMIC_PARAMETERS, load_parameters, getM
 from stimulus import StimulusBuilder
 import macro
 
-class Static:
-    '''
-    Static imaging core Class.
-    '''
-    pass
 
 
 class Dynamic:
@@ -73,6 +68,8 @@ class Dynamic:
         self.macro = None
         self.i_macro = 0
         self.waittime = 0
+
+        self.trigger_rotation = False
 
 
 
@@ -455,6 +452,8 @@ class Dynamic:
         
         Call this once while in a loop that the angles have to be updated.
         '''
+
+        change = False
         
         while True:
             
@@ -465,8 +464,15 @@ class Dynamic:
             if self.previous_angle != current_angle:
                 print("Horizontal-vertical is {}".format(current_angle[0]))
                 self.previous_angle = current_angle
+                change = True
             else:
                 break
+
+        # For static imaging
+        if change:
+            self.trigger_rotation = True
+        else:
+            self.trigger_rotation = False
 
         # Run macro if set
         if self.macro:
@@ -538,6 +544,6 @@ class Dynamic:
         self.macro = macro.load(macro_name)
         self.i_macro = 0
 
-        
+
 
 
