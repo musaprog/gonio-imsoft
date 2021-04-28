@@ -18,7 +18,7 @@ class ArduinoReader:
                     are addded or removed?
         '''
         
-        self.serial = serial.Serial(port=port, baudrate=9600, timeout=0.1)
+        self.serial = serial.Serial(port=port, baudrate=9600, timeout=0.01)
 
         self.latest_angle = (0,0)
         self.offset = (0,0)
