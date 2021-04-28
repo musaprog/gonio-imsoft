@@ -197,7 +197,7 @@ class Camera:
         # Description file string
         self.description_string = ''
 
-        self.save_stacks = False
+        self.save_stack = False
 
 
 
