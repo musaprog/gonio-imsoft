@@ -22,8 +22,8 @@ from matplotlib.animation import FuncAnimation
 from matplotlib.widgets import RectangleSelector
 
 import camera_communication as cac
+from camera_communication import SAVING_DRIVE
 
-SAVING_DRIVE = 'D:\\'
 DEFAULT_SAVING_DIRECTORY = "D:\imaging_data"
 
 

@@ -15,6 +15,7 @@ import nidaqmx
 from anglepairs import saveAnglePairs, loadAnglePairs, toDegrees
 from arduino_serial import ArduinoReader
 from camera_client import CameraClient
+from camera_communication import SAVING_DRIVE
 from motors import Motor
 from imaging_parameters import DEFAULT_DYNAMIC_PARAMETERS, load_parameters, getModifiedParameters
 from stimulus import StimulusBuilder
@@ -71,15 +72,20 @@ class Dynamic:
 
         self.trigger_rotation = False
 
+        self.trigger_signal = np.array([5,5,5,0])
+        self.triggered_anglepairs = None
 
+        self.data_savedir = None
+        
 
-    def analog_output(self, channels, stimuli, fs, wait_trigger):
+    def analog_output(self, channels, stimuli, fs, wait_trigger, camera=True):
         '''
 
         channels    List of channel names
         stimuli     List of 1D numpy arrays
         fs          Sampling frequency of the stimuli
-
+        camera : bool
+            If True, send the camera server a "ready" command
         '''
         with nidaqmx.Task() as task:
             for i_channel, channel in enumerate(channels):
@@ -109,11 +115,29 @@ class Dynamic:
 
             
             task.start()
-            
-            self.camera.sendCommand('ready')
+
+            if camera:
+                self.camera.sendCommand('ready')
                 
             task.wait_until_done(timeout=(len(stimuli[0])/fs)*1.5+20)
 
+
+    def send_trigger(self):
+        '''
+        Sending trigger.
+        '''
+        chan = self.dynamic_parameters.get('trigger_out_channel', None)
+        if chan:
+            with nidaqmx.Task() as task:
+                task.ao_channels.add_ao_voltage_chan(chan)
+                task.timing.cfg_samp_clk_timing(1000., samps_per_chan=4)
+                task.write(self.trigger_signal)
+                task.start()
+                task.wait_until_done(timeout=1.)
+        else:
+            print('trigger_out_channel not specified, no trigger out')
+
+        self.triggered_anglepairs.append(self.reader.get_latest())
 
 
     def set_led(self, device, value, wait_trigger=False):
@@ -387,12 +411,17 @@ class Dynamic:
         
 
 
-    def set_savedir(self, savedir):
+    def set_savedir(self, savedir, camera=True):
         '''
         Set the directory where the taken images are saved.
+
+        camera : bool
+            If False, do not attempt to update save folder to the camera server
         '''
-        self.camera.setSavingDirectory(savedir)
- 
+        if camera:
+            self.camera.setSavingDirectory(savedir)
+        self.data_savedir = savedir
+
 
     def set_subfolder_suffix(self, suffix):
         '''
@@ -415,7 +444,7 @@ class Dynamic:
         self.camera.saveDescription(self.preparation['name'], desc_string)
         
 
-    def initialize(self, name, sex, age):
+    def initialize(self, name, sex, age, camera=False):
         '''
         Call this to initialize the experiments.
 
@@ -432,8 +461,10 @@ class Dynamic:
         self.dynamic_parameters = getModifiedParameters()
         print('Preparation name set as {}, sex {}, age {} days.'.format(self.preparation['name'], self.preparation['sex'], self.preparation['age']))
 
-        self._update_descriptions_file()
-
+        if camera:
+            self._update_descriptions_file()
+        else:
+            self.triggered_anglepairs = []
         
         self.set_led(self.dynamic_parameters['ir_channel'], self.dynamic_parameters['ir_livefeed'])
         self.set_led(self.dynamic_parameters['flash_channel'], self.dynamic_parameters['flash_off'])
@@ -517,6 +548,18 @@ class Dynamic:
 
         for motor in self.motors:
             motor.move_to(0)
+
+        if self.triggered_anglepairs:
+            fn = os.path.join(SAVING_DRIVE, self.data_savedir, self.preparation['name'], 'anglepairs.txt')
+            os.makedirs(os.path.dirname(fn), exist_ok=True)
+
+            print(fn)
+            
+            with open(fn, 'w') as fp:
+                for line in self.triggered_anglepairs:
+                    fp.write(str(line).strip('()').replace(' ', '')+'\n')
+
+            self.triggered_anglepairs = None
 
 
     def exit(self):

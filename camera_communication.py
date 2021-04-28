@@ -12,3 +12,7 @@ PORT = 50075
 # try in order some other from this list
 # FIXME NOT IMPLEMENTED YET
 # ALTERNATIVE_PORTS = list(range(50071, 50080))
+
+
+
+SAVING_DRIVE = 'D:\\'

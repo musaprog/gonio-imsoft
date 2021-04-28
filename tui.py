@@ -220,6 +220,7 @@ class TextUI:
     
         self.choices = {'Static imaging': self.loop_static,
                 'Dynamic imaging': self.loop_dynamic,
+                'Trigger only (external software for camera)': self.loop_trigger,
                 'Quit': self.quit,
                 'Start camera server': self.dynamic.camera.startServer,
                 'Stop camera server': self.dynamic.camera.close_server}
@@ -279,6 +280,15 @@ class TextUI:
                     selection = ''
         return items[selection-1]
 
+    def loop_trigger(self):
+        '''
+        Simply NI trigger when change in rotatory encoders, leaving camera control
+        to an external software (the original loop static).
+        
+        Space to toggle triggering.
+        '''
+        self.loop_dynamic(static=True, camera=False)
+                
 
     def loop_static(self):
         '''
@@ -286,6 +296,7 @@ class TextUI:
         '''
         self.loop_dynamic(static=True)
         
+
 
     def image_series_callback(self, label, i_repeat):
         '''
@@ -303,17 +314,24 @@ class TextUI:
         else:
             return True
 
-    def loop_dynamic(self, static=False):
+    def loop_dynamic(self, static=False, camera=True):
         '''
         Running the dynamic imaging protocol.
+
+        static : bool
+            If False, run normal imaging where pressing space runs the imaging protocol.
+            If True, run imaging when change in rotary encoders (space-key toggled)
+        camera : bool
+            If True, control camera.
+            If False, assume that external program is controlling the camera, and send trigger
         '''
         trigger = False
-            
-        self.dynamic.set_savedir(os.path.join('imaging_data_'+self.experimenter))
+
+        self.dynamic.set_savedir(os.path.join('imaging_data_'+self.experimenter), camera=camera)
         name = input('Name ({})>> '.format(self.dynamic.preparation['name']))
         sex = input('Sex ({})>> '.format(self.dynamic.preparation['sex']))
         age = input('Age ({})>> '.format(self.dynamic.preparation['age']))
-        self.dynamic.initialize(name, sex, age)
+        self.dynamic.initialize(name, sex, age, camera=camera)
 
         upper_lines = ['-','Dynamic imaging', '-', 'Help F1', 'Space ']
 
@@ -325,21 +343,27 @@ class TextUI:
 
             if static:
                 if trigger and self.dynamic.trigger_rotation:
-                    self.dynamic.image_series(inter_loop_callback=self.image_series_callback)
+                    if camera:
+                        self.dynamic.image_series(inter_loop_callback=self.image_series_callback)
+                    else:
+                        self.dynamic.send_trigger()
                 if key == ' ':
                     trigger = not trigger
                     print('Rotation triggering now set to {}'.format(trigger))
             else:
                 if key == ' ':
-                    self.dynamic.image_series(inter_loop_callback=self.image_series_callback)
-                
+                    if camera:
+                        self.dynamic.image_series(inter_loop_callback=self.image_series_callback)
+                    else:
+                        self.dynamic.send_trigger()
             
             if key == 112:
                 lines.append('')
             elif key == '0':
                 self.dynamic.set_zero()
             elif key == 's':
-                self.dynamic.take_snap(save=True)
+                if camera:
+                    self.dynamic.take_snap(save=True)
             elif key == '\r':
                 # If user hits enter we'll exit
                 break
@@ -364,8 +388,9 @@ class TextUI:
                 self.console.enter(user_input)
 
             elif key == '' and not (static and self.dynamic.trigger_rotation):
-                # When there's no input just update the live feed
-                self.dynamic.take_snap(save=False)
+                if camera:
+                    # When there's no input just update the live feed
+                    self.dynamic.take_snap(save=False)
             
             
             #self._clearScreen()
