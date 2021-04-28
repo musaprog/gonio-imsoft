@@ -477,7 +477,7 @@ class Dynamic:
 
 
 
-    def tick(self):
+    def tick(self, horizontal_trigger=True, vertical_trigger=False):
         '''
         Updates the current angle. In the future may do other houskeeping functions also.
         
@@ -493,16 +493,18 @@ class Dynamic:
             toDegrees(current_angle)
 
             if self.previous_angle != current_angle:
+                horchanged = self.previous_angle and self.previous_angle[0][0] != current_angle[0][0]
+                verchanged = self.previous_angle and self.previous_angle[0][1] != current_angle[0][1]
+                if (horizontal_trigger and horchanged) or (vertical_trigger and verchanged):
+                    self.trigger_rotation = True
+
                 print("Horizontal-vertical is {}".format(current_angle[0]))
                 self.previous_angle = current_angle
                 change = True
             else:
                 break
 
-        # For static imaging
-        if change:
-            self.trigger_rotation = True
-        else:
+        if not change:
             self.trigger_rotation = False
 
         # Run macro if set
