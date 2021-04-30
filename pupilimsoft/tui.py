@@ -4,6 +4,7 @@ import copy
 import platform
 import string
 import time
+import json
 
 OS = platform.system()
 if OS == 'Windows':
@@ -214,8 +215,15 @@ class TextUI:
     def __init__(self):
         self.dynamic = core.Dynamic()
         
-        # Initial selection of the experimenter
-        self.experimenters = ['Andra', 'James', 'Joni', 'Joni2']
+        # Get experimenters list or if not present, use default
+        self.expfn = os.path.join(PUPILDIR, 'experimenters.json')
+        if os.path.exists(self.expfn):
+            try:
+                with open(self.expfn, 'r') as fp: self.experimenters = json.load(fp)
+            except:
+                self.experimenters = ['pupilims']
+        else:
+            self.experimenters = ['pupilims']
 
         # Main menu
         self.menutext = "Pupil Imsoft TUI (Text user interface)"
@@ -404,7 +412,7 @@ class TextUI:
 
         self.dynamic.finalize()
 
-    
+
     def run(self):
         '''
         Run TUI until user quitting.
@@ -432,10 +440,42 @@ class TextUI:
                 else:
                     print('Whaat? Please try again')
                     time.sleep(1)
+            
+        
+        self._clearScreen()
+        
+        print(self.menutext)
+        
+        print('\nSelect experimenter\n--------------------')
+        while True:
+            extra_options = [' (Add new)', ' (Remove old)', ' (Save current list)']
+            experimenter = self._selectItem(self.experimenters+extra_options).lower()
+            
+            # Select operation
+            if experimenter == '(add new)':
+                name = input('Name >>')
+                self.experimenters.append(name)
 
+            elif experimenter == '(remove old)':
+                print('Select who to remove (data remains)')
+                name = self._selectItem(self.experimenters+['..back (no deletion)'])
 
-        print('\nSelect experimenter')
-        self.experimenter = self._selectItem(self.experimenters).lower()
+                if name in self.experimenters:
+                    self.experimenters.pop(self.experimenters.index(name))
+            elif experimenter == '(save current list)':
+                if os.path.isdir(PUPILDIR):
+                    with open(self.expfn, 'w') as fp: json.dump(self.experimenters, fp)
+                    print('Saved!')
+                else:
+                    print('Saving failed (no {})'.format(PUPILDIR))
+                time.sleep(2)
+            else:
+                # Got a name
+                break
+
+            self._clearScreen()
+
+        self.experimenter = experimenter
         self._clearScreen()
 
         self.quit = False
