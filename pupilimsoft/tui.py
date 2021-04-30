@@ -12,6 +12,7 @@ if OS == 'Windows':
 else:
     import sys
 
+from pupilimsoft.version import __version__
 from pupilimsoft.directories import PUPILDIR
 import pupilimsoft.core as core
 
@@ -126,11 +127,11 @@ class Console:
         mpos = self.dynamic.motors[motor].get_position()
         print('  Motor {} at {}'.format(motor, mpos))
 
+
     def drive(self, i_motor, position):
         self.dynamic.motors[i_motor].move_to(position)
         
 
-                # Driving a motor to specific position
     def macro(self, command, macro_name):
         '''
         Running and setting macros (automated imaging sequences.)
@@ -146,6 +147,7 @@ class Console:
         elif command == 'stop':
             for motor in self.dynamic.motors:
                 motor.stop()
+
 
     def set_roi(self, x,y,w,h):
         self.dynamic.camera.set_roi( (x,y,w,h) )
@@ -172,6 +174,7 @@ class Console:
             sleep_time = isi - float(time.time() - start_time)
             if sleep_time > 0:
                 time.sleep(sleep_time)
+
 
     def chain_presets(self, delay, *preset_names):
         '''
@@ -205,13 +208,13 @@ class Console:
         cho, cve = self.dynamic.reader.latest_angle
         
         self.dynamic.reader.offset = (cho-ho, cve-ve)
-        
+
+
 
 class TextUI:
     '''
     A simple text based user interface pseudopupil imaging.
     '''
-
     def __init__(self):
         self.dynamic = core.Dynamic()
         
@@ -225,9 +228,7 @@ class TextUI:
         else:
             self.experimenters = ['pupilims']
 
-        # Main menu
-        self.menutext = "Pupil Imsoft TUI (Text user interface)"
-    
+   
         self.choices = {'Static imaging': self.loop_static,
                 'Dynamic imaging': self.loop_dynamic,
                 'Trigger only (external software for camera)': self.loop_trigger,
@@ -240,6 +241,38 @@ class TextUI:
         self.console = Console(self.dynamic)
         self.console.image_series_callback = self.image_series_callback
 
+    @property
+    def menutext(self):
+
+        # Check camera server status
+        if self.dynamic.camera.isServerRunning():
+            cs = 'ON'
+        else:
+            cs = 'OFF'
+
+        # Check serial (Arduino) status
+        ser = self.dynamic.reader.serial
+        if ser is None:
+            ar = 'Serial UNAVAIBLE'
+        else:
+            if ser.is_open:
+                ar = 'Serial OPEN ({} @{} Bd)'.format(ser.port)
+            else:
+                ar = 'Serial CLOSED'
+
+        # Check DAQ
+        if core.nidaqmx is None:
+            daq = 'UNAVAILABLE'
+        else:
+            daq = 'AVAILABLE'
+
+        status = "\n CamServer {} | {} | nidaqmx {}".format(cs, ar, daq)
+        
+        menutext = "Pupil Imsoft - Version {}".format(__version__)
+        menutext += "\n" + max(len(menutext), len(status)) * "-"
+        menutext += status
+        return menutext + "\n"
+
 
     @staticmethod
     def _readKey():
@@ -251,13 +284,15 @@ class TextUI:
         else:
             return sys.stdin.read(1)
 
+
     @staticmethod
     def _clearScreen():
         if os.name == 'posix':
             os.system('clear')
         elif os.name == 'nt':
             os.system('cls')
-    
+
+
     @staticmethod
     def _print_lines(lines):
         
@@ -309,7 +344,6 @@ class TextUI:
         self.loop_dynamic(static=True)
         
 
-
     def image_series_callback(self, label, i_repeat):
         '''
         Callback passed to image_series
@@ -325,6 +359,7 @@ class TextUI:
             return False
         else:
             return True
+
 
     def loop_dynamic(self, static=False, camera=True):
         '''
@@ -446,7 +481,7 @@ class TextUI:
         
         print(self.menutext)
         
-        print('\nSelect experimenter\n--------------------')
+        print('Select experimenter\n--------------------')
         while True:
             extra_options = [' (Add new)', ' (Remove old)', ' (Save current list)']
             experimenter = self._selectItem(self.experimenters+extra_options).lower()
@@ -484,6 +519,8 @@ class TextUI:
             
             selection = self._selectItem(list(self.choices.keys()))
             self.choices[selection]()
+            
+            time.sleep(1)
 
             self._clearScreen()
 
