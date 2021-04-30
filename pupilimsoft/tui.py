@@ -9,9 +9,9 @@ OS = platform.system()
 if OS == 'Windows':
     import msvcrt
 else:
-    pass
+    import sys
 
-import core
+import pupilimsoft.core as core
 
 help_string = """List of commands and their options\n
 GENERAL

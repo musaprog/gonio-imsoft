@@ -3,7 +3,10 @@
 2) and controlling stepper motors.
 '''
 
-import serial
+try:
+    import serial
+except ModuleNotFoundError:
+    serial = None
 
 DEFAULT_PORT_NAME = 'COM4'
 
@@ -18,7 +21,10 @@ class ArduinoReader:
                     are addded or removed?
         '''
         
-        self.serial = serial.Serial(port=port, baudrate=9600, timeout=0.01)
+        if serial:
+            self.serial = serial.Serial(port=port, baudrate=9600, timeout=0.01)
+        else:
+            self.serial = None
 
         self.latest_angle = (0,0)
         self.offset = (0,0)
@@ -36,6 +42,9 @@ class ArduinoReader:
 
         Returns angle pair, (horizontal_angle, vertical_angle).
         '''
+        if self.serial is None:
+            return (0,0)
+
         read_string = self.serial.readline().decode("utf-8")
         if read_string:
             angles = read_string.split(',')
@@ -50,11 +59,13 @@ class ArduinoReader:
         '''
         return self._offset_correct(self.latest_angle)
     
+
     def close_connection(self):
         '''
         If it is required to manually close the serial connection.
         '''
-        serial.close()
+        if self.serial:
+            self.serial.close()
 
     def current_as_zero(self):
         '''
@@ -82,6 +93,9 @@ class ArduinoReader:
                         0 makes nothing
         time            In seconds
         '''
+        if self.serial is None:
+            print('Pretending to drive motor {}'.format(i_motor))
+            return None
 
         motor_letters = ['a', 'b', 'c', 'd', 'e']
     

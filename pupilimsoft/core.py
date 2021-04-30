@@ -10,16 +10,22 @@ import copy
 
 import numpy as np
 
-import nidaqmx
+try:
+    import nidaqmx
+except ModuleNotFoundError:
+    nidaqmx = None
 
-from anglepairs import saveAnglePairs, loadAnglePairs, toDegrees
-from arduino_serial import ArduinoReader
-from camera_client import CameraClient
-from camera_communication import SAVING_DRIVE
-from motors import Motor
-from imaging_parameters import DEFAULT_DYNAMIC_PARAMETERS, load_parameters, getModifiedParameters
-from stimulus import StimulusBuilder
-import macro
+from pupilimsoft.anglepairs import saveAnglePairs, loadAnglePairs, toDegrees
+from pupilimsoft.arduino_serial import ArduinoReader
+from pupilimsoft.camera_client import CameraClient
+from pupilimsoft.camera_communication import SAVING_DRIVE
+from pupilimsoft.motors import Motor
+from pupilimsoft.imaging_parameters import (
+        DEFAULT_DYNAMIC_PARAMETERS,
+        load_parameters,
+        getModifiedParameters)
+from pupilimsoft.stimulus import StimulusBuilder
+import pupilimsoft.macro as macro
 
 
 
@@ -87,6 +93,11 @@ class Dynamic:
         camera : bool
             If True, send the camera server a "ready" command
         '''
+        
+        if nidaqmx is None:
+            print('    pretending analog_output on channels {}'.format(channels))
+            return None
+
         with nidaqmx.Task() as task:
             for i_channel, channel in enumerate(channels):
                 if type(channel) == type('string'):

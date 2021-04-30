@@ -4,7 +4,7 @@ import time
 import atexit
 import threading
 
-from anglepairs import degrees2steps
+from pupilimsoft.anglepairs import degrees2steps
 
 class Motor:
     '''

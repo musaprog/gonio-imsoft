@@ -10,7 +10,7 @@ import os
 import subprocess
 import platform
 
-import camera_communication as cac
+import pupilimsoft.camera_communication as cac
 
 MAX_RETRIES = 100
 RETRY_INTERVAL = 1
