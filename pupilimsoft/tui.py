@@ -11,7 +11,9 @@ if OS == 'Windows':
 else:
     import sys
 
+from pupilimsoft.directories import PUPILDIR
 import pupilimsoft.core as core
+
 
 help_string = """List of commands and their options\n
 GENERAL
@@ -281,6 +283,7 @@ class TextUI:
                     selection = ''
         return items[selection-1]
 
+
     def loop_trigger(self):
         '''
         Simply NI trigger when change in rotatory encoders, leaving camera control
@@ -406,6 +409,30 @@ class TextUI:
         '''
         Run TUI until user quitting.
         '''
+        # Check if userdata directory settings exists
+        if not os.path.isdir(PUPILDIR):
+            print('\nFIRST RUN NOTICE\n------------------')
+            print(('Pupil Imsoft needs a location where '
+                'to save user files\n  - list of experimenters\n  - settings'
+                '\n  - created protocol files'))
+            print('This is not the location where imaging data gets saved (no big files)')
+            print('\nCreate {}'.format(PUPILDIR))
+
+            while True:
+                sel = input ('(yes/no) >> ').lower()
+                if sel == 'yes':
+                    os.makedirs(PUPILDIR)
+                    print('Sucess!')
+                    time.sleep(2)
+                    break
+                elif sel == 'no':
+                    print('Warning! Cannot save any changes')
+                    time.sleep(2)
+                    break
+                else:
+                    print('Whaat? Please try again')
+                    time.sleep(1)
+
 
         print('\nSelect experimenter')
         self.experimenter = self._selectItem(self.experimenters).lower()
