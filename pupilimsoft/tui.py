@@ -239,7 +239,7 @@ class TextUI:
                 return chr(key)
             return ''
         else:
-            raise NotImplementedError("Linux nonblocking read not yet implemented")
+            return sys.stdin.read(1)
 
     @staticmethod
     def _clearScreen():
@@ -247,6 +247,7 @@ class TextUI:
             os.system('clear')
         elif os.name == 'nt':
             os.system('cls')
+    
     @staticmethod
     def _print_lines(lines):
         
