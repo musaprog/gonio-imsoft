@@ -10,6 +10,9 @@ install_requires = [
         'numpy',
         'matplotlib',
         'tifffile',
+        'nidaqmx',
+        'pyserial',
+        'python-biosystfiles',
         ]
 
 setuptools.setup(
@@ -27,7 +30,7 @@ setuptools.setup(
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: GNU General Public License v3 (GPLv3) ",
         "Operating System :: Microsoft :: Windows",
-        "Topic :: Scientific/Engineering",
+        'Intended Audience :: Science/Research',
         "Environment :: Console",
     ],
     python_requires='>=3.0',
