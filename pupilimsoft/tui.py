@@ -487,11 +487,14 @@ class TextUI:
 
             self._clearScreen()
 
-        self.core.exit()
+        self.dynamic.exit()
         time.sleep(1)
+
 
     def quit(self):
         self.quit = True
+
+
 
 def main():
     tui = TextUI()
