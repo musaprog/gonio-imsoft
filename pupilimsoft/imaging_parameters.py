@@ -293,7 +293,7 @@ class ParameterEditor:
                 self.dynamic_parameters[parameter] = value
                 break
 
-        return {**self.dynamic_parameters, **self.locked_parameters
+        return {**self.dynamic_parameters, **self.locked_parameters}
 
 
 def getModifiedParameters(**kwargs):
