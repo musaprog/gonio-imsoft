@@ -7,8 +7,7 @@ import time
 import ast
 import json
 
-DEFAULT_STATIC_PARAMETERS = {''}
-
+from pupilimsoft.directories import PUPILDIR
 
 
 DEFAULT_DYNAMIC_PARAMETERS = {'isi': 10.0, 'repeats': 1, 'pre_stim': 0.000,
@@ -136,23 +135,28 @@ class ParameterEditor:
     '''
     Dictionary editor on command line with ability to load and save presets.
     '''
-    def __init__(self, dynamic_parameters):
+    def __init__(self, dynamic_parameters, locked_parameters={}):
         '''
         dynamic_parameters      Dictionary of the dynamic imaging parameters.
         '''
         self.dynamic_parameters = dynamic_parameters
         self.parameter_names = sorted(self.dynamic_parameters.keys())
 
-        self.presets_savedir = 'presets'
+        self.presets_savedir = os.path.join(PUPILDIR, 'presets')
         self.presets = self.load_presets(self.presets_savedir)
+
+        self.locked_parameters = locked_parameters
 
     
     def load_presets(self, directory):
         
         presets = {}
-
-        files = [os.path.join(directory, fn) for fn in os.listdir(directory)]
         
+        if os.path.isdir(directory):
+            files = [os.path.join(directory, fn) for fn in os.listdir(directory)]
+        else:
+            files = []
+
         for afile in files:
             try:
                 preset = load_parameters(afile)
@@ -169,6 +173,7 @@ class ParameterEditor:
 
         return presets
 
+
     def print_preset(self, preset):
         '''
         Prints the current parameters and the help strings.
@@ -180,8 +185,14 @@ class ParameterEditor:
         
         print('{:<20} {:<40} {}'.format('PARAMETER NAME', 'VALUE', 'DESCRIPTION'))
         for parameter in parameter_names:
-            print('{:<20} {:<40} {}'.format(parameter, str(preset[parameter]), DYNAMIC_PARAMETERS_HELP[parameter]))
+            if parameter in self.locked_parameters:
+                lck = ' (LOCKED to {})'.format(self.locked_parameters[parameter])
+            else:
+                lck = ''
+            print('{:<20} {:<40} {}'.format(parameter, str(preset[parameter])+lck,
+                DYNAMIC_PARAMETERS_HELP[parameter]))
         print()
+
 
     def getModified(self):
         '''
@@ -207,7 +218,13 @@ class ParameterEditor:
                 name = input('Save current parameters under preset name (if empty == suffix) >> ')
                 if name == '' and self.dynamic_parameters['suffix'] != '':
                     name = self.dynamic_parameters['suffix']
-                save_parameters(os.path.join(self.presets_savedir, name), self.dynamic_parameters)                
+                
+                if os.path.isdir(PUPILDIR):
+                    os.makedirs(self.presets_savedir, exist_ok=True)
+                    save_parameters(os.path.join(self.presets_savedir, name), self.dynamic_parameters)
+                else:
+                    print('Saving the preset failed, {} does not exist'.format(PUPILDIR))
+
                 continue        
 
             if parameter.lower() == 'list':
@@ -276,20 +293,15 @@ class ParameterEditor:
                 self.dynamic_parameters[parameter] = value
                 break
 
-        return self.dynamic_parameters
+        return {**self.dynamic_parameters, **self.locked_parameters}
 
 
-def getStaticParameters():
-    editor = ParameterEditor(DEFAULT_STATIC_PARAMETERS)
-    return editor.getModified()
-
-
-def getModifiedParameters():
+def getModifiedParameters(**kwargs):
     '''
     Take in the DEFAULT parameters in the beginning of this code file
     and let the user modify them using text based ParameterEditor
     '''
-    editor = ParameterEditor(DEFAULT_DYNAMIC_PARAMETERS)
+    editor = ParameterEditor(DEFAULT_DYNAMIC_PARAMETERS, **kwargs)
     return editor.getModified()
 
 

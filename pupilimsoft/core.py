@@ -10,16 +10,22 @@ import copy
 
 import numpy as np
 
-import nidaqmx
+try:
+    import nidaqmx
+except ModuleNotFoundError:
+    nidaqmx = None
 
-from anglepairs import saveAnglePairs, loadAnglePairs, toDegrees
-from arduino_serial import ArduinoReader
-from camera_client import CameraClient
-from camera_communication import SAVING_DRIVE
-from motors import Motor
-from imaging_parameters import DEFAULT_DYNAMIC_PARAMETERS, load_parameters, getModifiedParameters
-from stimulus import StimulusBuilder
-import macro
+from pupilimsoft.anglepairs import saveAnglePairs, loadAnglePairs, toDegrees
+from pupilimsoft.arduino_serial import ArduinoReader
+from pupilimsoft.camera_client import CameraClient
+from pupilimsoft.camera_communication import SAVING_DRIVE
+from pupilimsoft.motors import Motor
+from pupilimsoft.imaging_parameters import (
+        DEFAULT_DYNAMIC_PARAMETERS,
+        load_parameters,
+        getModifiedParameters)
+from pupilimsoft.stimulus import StimulusBuilder
+import pupilimsoft.macro as macro
 
 
 
@@ -47,7 +53,8 @@ class Dynamic:
         self.preparation = {'name': 'test', 'sex': '', 'age': ''}
 
         self.dynamic_parameters = dynamic_parameters
-        
+        self.locked_parameters = {}
+
         self.previous_angle = None
 
         # Suffix to be appended in the subfolders, see set_subfolder_suffix method
@@ -87,6 +94,11 @@ class Dynamic:
         camera : bool
             If True, send the camera server a "ready" command
         '''
+        
+        if nidaqmx is None:
+            print('    pretending analog_output on channels {}'.format(channels))
+            return None
+
         with nidaqmx.Task() as task:
             for i_channel, channel in enumerate(channels):
                 if type(channel) == type('string'):
@@ -458,7 +470,8 @@ class Dynamic:
         if age != '':
             self.preparation['age'] = age
 
-        self.dynamic_parameters = getModifiedParameters()
+        self.dynamic_parameters = getModifiedParameters(
+                locked_parameters=self.locked_parameters)
         print('Preparation name set as {}, sex {}, age {} days.'.format(self.preparation['name'], self.preparation['sex'], self.preparation['age']))
 
         if camera:
@@ -472,7 +485,7 @@ class Dynamic:
 
     def load_preset(self, preset_name):
         fn = os.path.join('presets', preset_name)
-        self.dynamic_parameters = load_parameters(fn)
+        self.dynamic_parameters = {**load_parameters(fn), **self.locked_parameters}
         self._update_descriptions_file()
 
 

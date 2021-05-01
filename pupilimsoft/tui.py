@@ -4,14 +4,23 @@ import copy
 import platform
 import string
 import time
+import json
+
 
 OS = platform.system()
 if OS == 'Windows':
     import msvcrt
 else:
-    pass
+    import sys
 
-import core
+from pupilimsoft.version import __version__
+from pupilimsoft.directories import PUPILDIR
+import pupilimsoft.core as core
+from pupilimsoft.imaging_parameters import (
+        DEFAULT_DYNAMIC_PARAMETERS,
+        ParameterEditor,
+        )
+
 
 help_string = """List of commands and their options\n
 GENERAL
@@ -123,11 +132,11 @@ class Console:
         mpos = self.dynamic.motors[motor].get_position()
         print('  Motor {} at {}'.format(motor, mpos))
 
+
     def drive(self, i_motor, position):
         self.dynamic.motors[i_motor].move_to(position)
         
 
-                # Driving a motor to specific position
     def macro(self, command, macro_name):
         '''
         Running and setting macros (automated imaging sequences.)
@@ -143,6 +152,7 @@ class Console:
         elif command == 'stop':
             for motor in self.dynamic.motors:
                 motor.stop()
+
 
     def set_roi(self, x,y,w,h):
         self.dynamic.camera.set_roi( (x,y,w,h) )
@@ -169,6 +179,7 @@ class Console:
             sleep_time = isi - float(time.time() - start_time)
             if sleep_time > 0:
                 time.sleep(sleep_time)
+
 
     def chain_presets(self, delay, *preset_names):
         '''
@@ -202,33 +213,102 @@ class Console:
         cho, cve = self.dynamic.reader.latest_angle
         
         self.dynamic.reader.offset = (cho-ho, cve-ve)
-        
+
+
 
 class TextUI:
     '''
     A simple text based user interface pseudopupil imaging.
-    '''
 
+    Attrubutes
+    ----------
+    console : object
+    choices : dict
+        Main menu choices
+    quit : bool
+        If changes to True, quit.
+    expfn : string
+        Filename of the experiments.json file
+    glofn : string
+        Filename of the locked parameters setting name
+
+    '''
     def __init__(self):
         self.dynamic = core.Dynamic()
         
-        # Initial selection of the experimenter
-        self.experimenters = ['Andra', 'James', 'Joni', 'Joni2']
+        # Get experimenters list or if not present, use default
+        self.expfn = os.path.join(PUPILDIR, 'experimenters.json')
+        if os.path.exists(self.expfn):
+            try:
+                with open(self.expfn, 'r') as fp: self.experimenters = json.load(fp)
+            except:
+                self.experimenters = ['pupilims']
+        else:
+            self.experimenters = ['pupilims']
+        
 
-        # Main menu
-        self.menutext = "Pupil Imsoft TUI (Text user interface)"
-    
-        self.choices = {'Static imaging': self.loop_static,
-                'Dynamic imaging': self.loop_dynamic,
-                'Trigger only (external software for camera)': self.loop_trigger,
-                'Quit': self.quit,
-                'Start camera server': self.dynamic.camera.startServer,
-                'Stop camera server': self.dynamic.camera.close_server}
+        # Get locked parameters
+        self.glofn = os.path.join(PUPILDIR, 'locked_parameters.json')
+        if os.path.exists(self.glofn):
+            try:
+                 with open(self.glofn, 'r') as fp: self.locked_parameters = json.load(fp)
+            except:
+                self.locked_parameters = {}
+        else:
+            self.locked_parameters = {}
+            
+
+   
+        self.choices = [['Static imaging', self.loop_static],
+                ['Dynamic imaging', self.loop_dynamic],
+                ['Trigger only (external software for camera)', self.loop_trigger],
+                ['', None],
+                ['Edit locked parameters', self.locked_parameters_edit],
+                ['', None],
+                ['Quit', self.quit],
+                ['', None],
+                ['Start camera server (local)', self.dynamic.camera.startServer],
+                ['Stop camera server', self.dynamic.camera.close_server],
+                ['Set Python2 command (current {})', self.set_python2]]
+
 
         self.quit = False
 
         self.console = Console(self.dynamic)
         self.console.image_series_callback = self.image_series_callback
+
+
+    @property
+    def menutext(self):
+
+        # Check camera server status
+        if self.dynamic.camera.isServerRunning():
+            cs = 'ON'
+        else:
+            cs = 'OFF'
+
+        # Check serial (Arduino) status
+        ser = self.dynamic.reader.serial
+        if ser is None:
+            ar = 'Serial UNAVAIBLE'
+        else:
+            if ser.is_open:
+                ar = 'Serial OPEN ({} @{} Bd)'.format(ser.port)
+            else:
+                ar = 'Serial CLOSED'
+
+        # Check DAQ
+        if core.nidaqmx is None:
+            daq = 'UNAVAILABLE'
+        else:
+            daq = 'AVAILABLE'
+
+        status = "\n CamServer {} | {} | nidaqmx {}".format(cs, ar, daq)
+        
+        menutext = "Pupil Imsoft - Version {}".format(__version__)
+        menutext += "\n" + max(len(menutext), len(status)) * "-"
+        menutext += status
+        return menutext + "\n"
 
 
     @staticmethod
@@ -239,7 +319,8 @@ class TextUI:
                 return chr(key)
             return ''
         else:
-            raise NotImplementedError("Linux nonblocking read not yet implemented")
+            return sys.stdin.read(1)
+
 
     @staticmethod
     def _clearScreen():
@@ -247,6 +328,8 @@ class TextUI:
             os.system('clear')
         elif os.name == 'nt':
             os.system('cls')
+
+
     @staticmethod
     def _print_lines(lines):
         
@@ -257,10 +340,19 @@ class TextUI:
     def _selectItem(self, items):
         '''
         Select an item from a list.
-        '''
-        for i, item in enumerate(items):
-            print('{}) {}'.format(i+1, item))
         
+        Empty string items are converted to a space
+        '''
+        real_items = []
+        i = 0
+        for item in items:
+            if item != '':
+                print('{}) {}'.format(i+1, item))
+                real_items.append(item)
+                i += 1
+            else:
+                print()
+
         selection = ''
         while True:
             new_char = self._readKey()
@@ -270,7 +362,7 @@ class TextUI:
             if selection.endswith('\r') or selection.endswith('\n'):
                 try:
                     selection = int(selection)
-                    items[selection-1]
+                    real_items[selection-1]
                     break
                 except ValueError:
                     print('Invalid input')
@@ -278,7 +370,18 @@ class TextUI:
                 except IndexError:
                     print('Invalid input')
                     selection = ''
-        return items[selection-1]
+        return real_items[selection-1]
+    
+    def set_python2(self):
+        print('Current Python2 command: {}'.format(self.dynamic.camera.python2))
+        sel = input('Change (yes/no)').lower()
+        if sel == 'yes':
+            newp = input('>>')
+            print('Chaning...')
+            self.dynamic.camera.python2 = newp
+            input('press enter to continue')
+        else:
+            print('No changes!')
 
     def loop_trigger(self):
         '''
@@ -297,7 +400,6 @@ class TextUI:
         self.loop_dynamic(static=True)
         
 
-
     def image_series_callback(self, label, i_repeat):
         '''
         Callback passed to image_series
@@ -314,6 +416,7 @@ class TextUI:
         else:
             return True
 
+
     def loop_dynamic(self, static=False, camera=True):
         '''
         Running the dynamic imaging protocol.
@@ -326,7 +429,9 @@ class TextUI:
             If False, assume that external program is controlling the camera, and send trigger
         '''
         trigger = False
-
+        
+        self.dynamic.locked_parameters = self.locked_parameters
+        
         self.dynamic.set_savedir(os.path.join('imaging_data_'+self.experimenter), camera=camera)
         name = input('Name ({})>> '.format(self.dynamic.preparation['name']))
         sex = input('Sex ({})>> '.format(self.dynamic.preparation['sex']))
@@ -400,30 +505,133 @@ class TextUI:
 
         self.dynamic.finalize()
 
-    
+
     def run(self):
         '''
         Run TUI until user quitting.
         '''
+        # Check if userdata directory settings exists
+        if not os.path.isdir(PUPILDIR):
+            print('\nFIRST RUN NOTICE\n------------------')
+            print(('Pupil Imsoft needs a location where '
+                'to save user files\n  - list of experimenters\n  - settings'
+                '\n  - created protocol files'))
+            print('This is not the location where imaging data gets saved (no big files)')
+            print('\nCreate {}'.format(PUPILDIR))
 
-        print('\nSelect experimenter')
-        self.experimenter = self._selectItem(self.experimenters).lower()
+            while True:
+                sel = input ('(yes/no) >> ').lower()
+                if sel == 'yes':
+                    os.makedirs(PUPILDIR)
+                    print('Sucess!')
+                    time.sleep(2)
+                    break
+                elif sel == 'no':
+                    print('Warning! Cannot save any changes')
+                    time.sleep(2)
+                    break
+                else:
+                    print('Whaat? Please try again')
+                    time.sleep(1)
+            
+        
+        self._clearScreen()
+        
+        print(self.menutext)
+        
+        print('Select experimenter\n--------------------')
+        while True:
+            extra_options = [' (Add new)', ' (Remove old)', ' (Save current list)']
+            experimenter = self._selectItem(self.experimenters+extra_options).lower()
+            
+            # Select operation
+            if experimenter == '(add new)':
+                name = input('Name >>')
+                self.experimenters.append(name)
+
+            elif experimenter == '(remove old)':
+                print('Select who to remove (data remains)')
+                name = self._selectItem(self.experimenters+['..back (no deletion)'])
+
+                if name in self.experimenters:
+                    self.experimenters.pop(self.experimenters.index(name))
+            elif experimenter == '(save current list)':
+                if os.path.isdir(PUPILDIR):
+                    with open(self.expfn, 'w') as fp: json.dump(self.experimenters, fp)
+                    print('Saved!')
+                else:
+                    print('Saving failed (no {})'.format(PUPILDIR))
+                time.sleep(2)
+            else:
+                # Got a name
+                break
+
+            self._clearScreen()
+
+        self.experimenter = experimenter
         self._clearScreen()
 
         self.quit = False
         while not self.quit:
             print(self.menutext)
             
-            selection = self._selectItem(list(self.choices.keys()))
-            self.choices[selection]()
+            menuitems = [x[0] for x in self.choices]
+            menuitems[-1] = menuitems[-1].format(self.dynamic.camera.python2)
+
+            selection = self._selectItem(menuitems)
+            self.choices[menuitems.index(selection)][1]()
+            
+            time.sleep(1)
 
             self._clearScreen()
 
-        self.core.exit()
+        self.dynamic.exit()
         time.sleep(1)
+
+
+    def locked_parameters_edit(self):
+        
+        while True:
+            self._clearScreen()
+            print(self.menutext)
+            print('Here, any of the imaging parameters can be made locked,')
+            print('overriding any presets/values setat imaging time.')
+            
+            print('\nCurrent locked are')
+            if not self.locked_parameters:
+                print('  (NONE)')
+            for name in self.locked_parameters:
+                print('  {}'.format(name))
+            print()
+
+            sel = self._selectItem(['Add locked', 'Remove locked', 'Modify values', '.. back (and save)'])
+            
+            if sel == 'Add locked':
+                choices = list(DEFAULT_DYNAMIC_PARAMETERS.keys())
+                sel2 = self._selectItem(choices+[' ..back'])
+                
+                if sel2 in choices:
+                    self.locked_parameters[sel2] = DEFAULT_DYNAMIC_PARAMETERS[sel2]
+            elif sel == 'Remove locked':
+                choices = list(self.locked_parameters.keys())
+                sel2 = self._selectItem(choices+[' ..back'])
+                
+                if sel2 in choices:
+                    del self.locked_parameters[sel2]
+
+            elif sel == 'Modify values':
+                self.locked_parameters = ParameterEditor(self.locked_parameters).getModified()
+
+            elif sel == '.. back (and save)':
+                if os.path.isdir(PUPILDIR):
+                    with open(self.glofn, 'w') as fp: json.dump(self.locked_parameters, fp)
+                break
+
 
     def quit(self):
         self.quit = True
+
+
 
 def main():
     tui = TextUI()
