@@ -15,6 +15,10 @@ else:
 from pupilimsoft.version import __version__
 from pupilimsoft.directories import PUPILDIR
 import pupilimsoft.core as core
+from pupilimsoft.imaging_parameters import (
+        DEFAULT_DYNAMIC_PARAMETERS,
+        ParameterEditor,
+        )
 
 
 help_string = """List of commands and their options\n
@@ -214,6 +218,19 @@ class Console:
 class TextUI:
     '''
     A simple text based user interface pseudopupil imaging.
+
+    Attrubutes
+    ----------
+    console : object
+    choices : dict
+        Main menu choices
+    quit : bool
+        If changes to True, quit.
+    expfn : string
+        Filename of the experiments.json file
+    glofn : string
+        Filename of the locked parameters setting name
+
     '''
     def __init__(self):
         self.dynamic = core.Dynamic()
@@ -227,6 +244,18 @@ class TextUI:
                 self.experimenters = ['pupilims']
         else:
             self.experimenters = ['pupilims']
+        
+
+        # Get locked parameters
+        self.glofn = os.path.join(PUPILDIR, 'locked_parameters.json')
+        if os.path.exists(self.glofn):
+            try:
+                 with open(self.glofn, 'r') as fp: self.locked_parameters = json.load(fp)
+            except:
+                self.locked_parameters = {}
+        else:
+            self.locked_parameters = {}
+            
 
    
         self.choices = {'Static imaging': self.loop_static,
@@ -373,7 +402,9 @@ class TextUI:
             If False, assume that external program is controlling the camera, and send trigger
         '''
         trigger = False
-
+        
+        self.dynamic.locked_parameters = self.locked_parameters
+        
         self.dynamic.set_savedir(os.path.join('imaging_data_'+self.experimenter), camera=camera)
         name = input('Name ({})>> '.format(self.dynamic.preparation['name']))
         sex = input('Sex ({})>> '.format(self.dynamic.preparation['sex']))
@@ -526,6 +557,45 @@ class TextUI:
 
         self.dynamic.exit()
         time.sleep(1)
+
+
+    def locked_parameters_edit(self):
+        
+        while True:
+            self._clearScreen()
+            print(self.menutext)
+            print('Here, any of the imaging parameters can be made locked,')
+            print('overriding any presets/values setat imaging time.')
+            
+            print('\nCurrent locked are')
+            if not self.locked_parameters:
+                print('  (NONE)')
+            for name in self.locked_parameters:
+                print('  {}'.format(name))
+            print()
+
+            sel = self._selectItem(['Add locked', 'Remove locked', 'Modify values', '.. back (and save)'])
+            
+            if sel == 'Add locked':
+                choices = list(DEFAULT_DYNAMIC_PARAMETERS.keys())
+                sel2 = self._selectItem(choices+[' ..back'])
+                
+                if sel2 in choices:
+                    self.locked_parameters[sel2] = DEFAULT_DYNAMIC_PARAMETERS[sel2]
+            elif sel == 'Remove locked':
+                choices = list(self.locked_parameters.keys())
+                sel2 = self._selectItem(choices+[' ..back'])
+                
+                if sel2 in choices:
+                    del self.locked_parameters[sel2]
+
+            elif sel == 'Modify values':
+                self.locked_parameters = ParameterEditor(self.locked_parameters).getModified()
+
+            elif sel == '.. back (and save)':
+                if os.path.isdir(PUPILDIR):
+                    with open(self.glofn, 'w') as fp: json.dump(self.locked_parameters, fp)
+                break
 
 
     def quit(self):

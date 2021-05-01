@@ -53,7 +53,8 @@ class Dynamic:
         self.preparation = {'name': 'test', 'sex': '', 'age': ''}
 
         self.dynamic_parameters = dynamic_parameters
-        
+        self.locked_parameters = {}
+
         self.previous_angle = None
 
         # Suffix to be appended in the subfolders, see set_subfolder_suffix method
@@ -469,7 +470,8 @@ class Dynamic:
         if age != '':
             self.preparation['age'] = age
 
-        self.dynamic_parameters = getModifiedParameters()
+        self.dynamic_parameters = getModifiedParameters(
+                locked_parameters=self.locked_parameters)
         print('Preparation name set as {}, sex {}, age {} days.'.format(self.preparation['name'], self.preparation['sex'], self.preparation['age']))
 
         if camera:
@@ -483,7 +485,7 @@ class Dynamic:
 
     def load_preset(self, preset_name):
         fn = os.path.join('presets', preset_name)
-        self.dynamic_parameters = load_parameters(fn)
+        self.dynamic_parameters = {**load_parameters(fn), **self.locked_parameters}
         self._update_descriptions_file()
 
 
