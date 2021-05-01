@@ -21,6 +21,12 @@ class CameraClient:
 
     No data is transmitted over the socket connection, only commands (strings).
     It's CameraServer's job to store the images.
+
+    Attributes
+    -----------
+    python2 : string
+        In path command to open Python 2. If empty string, use
+        defaults "C:\Python27\python.exe" (Windows) or "python2" (other)
     '''
     def __init__(self):
         '''
@@ -28,6 +34,23 @@ class CameraClient:
         '''
         self.host = cac.SERVER_HOSTNAME
         self.port = cac.PORT
+        
+        self._python2 = ''
+    
+    @property
+    def python2(self):
+        if self._python2:
+            cmd = self._python2
+        else:
+            if platform.system() == 'Windows':
+                cmd = 'C:\Python27\python.exe'
+            else:
+                cmd = 'python2'
+        return cmd 
+
+    @python2.setter
+    def python2(self, string):
+        self._python2 = string
 
 
     def sendCommand(self, command_string, retries=MAX_RETRIES):
@@ -106,11 +129,8 @@ class CameraClient:
         '''
         Start a local camera server instance.
         '''
-        if platform.system() == 'Windows':
-            subprocess.Popen(['C:\Python27\python.exe', 'camera_server.py'], stdout=open(os.devnull, 'w'))
-        else:
-            # On Linux and other platfroms
-            subprocess.Popen(['python2', 'camera_server.py'], stdout=open(os.devnull, 'w'))
+           
+        subprocess.Popen([self.python2, 'camera_server.py'], stdout=open(os.devnull, 'w'))
 
 
     def close_server(self):

@@ -6,6 +6,7 @@ import string
 import time
 import json
 
+
 OS = platform.system()
 if OS == 'Windows':
     import msvcrt
@@ -258,17 +259,24 @@ class TextUI:
             
 
    
-        self.choices = {'Static imaging': self.loop_static,
-                'Dynamic imaging': self.loop_dynamic,
-                'Trigger only (external software for camera)': self.loop_trigger,
-                'Quit': self.quit,
-                'Start camera server': self.dynamic.camera.startServer,
-                'Stop camera server': self.dynamic.camera.close_server}
+        self.choices = [['Static imaging', self.loop_static],
+                ['Dynamic imaging', self.loop_dynamic],
+                ['Trigger only (external software for camera)', self.loop_trigger],
+                ['', None],
+                ['Edit locked parameters', self.locked_parameters_edit],
+                ['', None],
+                ['Quit', self.quit],
+                ['', None],
+                ['Start camera server (local)', self.dynamic.camera.startServer],
+                ['Stop camera server', self.dynamic.camera.close_server],
+                ['Set Python2 command (current {})', self.set_python2]]
+
 
         self.quit = False
 
         self.console = Console(self.dynamic)
         self.console.image_series_callback = self.image_series_callback
+
 
     @property
     def menutext(self):
@@ -332,10 +340,19 @@ class TextUI:
     def _selectItem(self, items):
         '''
         Select an item from a list.
-        '''
-        for i, item in enumerate(items):
-            print('{}) {}'.format(i+1, item))
         
+        Empty string items are converted to a space
+        '''
+        real_items = []
+        i = 0
+        for item in items:
+            if item != '':
+                print('{}) {}'.format(i+1, item))
+                real_items.append(item)
+                i += 1
+            else:
+                print()
+
         selection = ''
         while True:
             new_char = self._readKey()
@@ -345,7 +362,7 @@ class TextUI:
             if selection.endswith('\r') or selection.endswith('\n'):
                 try:
                     selection = int(selection)
-                    items[selection-1]
+                    real_items[selection-1]
                     break
                 except ValueError:
                     print('Invalid input')
@@ -353,8 +370,18 @@ class TextUI:
                 except IndexError:
                     print('Invalid input')
                     selection = ''
-        return items[selection-1]
-
+        return real_items[selection-1]
+    
+    def set_python2(self):
+        print('Current Python2 command: {}'.format(self.dynamic.camera.python2))
+        sel = input('Change (yes/no)').lower()
+        if sel == 'yes':
+            newp = input('>>')
+            print('Chaning...')
+            self.dynamic.camera.python2 = newp
+            input('press enter to continue')
+        else:
+            print('No changes!')
 
     def loop_trigger(self):
         '''
@@ -548,8 +575,11 @@ class TextUI:
         while not self.quit:
             print(self.menutext)
             
-            selection = self._selectItem(list(self.choices.keys()))
-            self.choices[selection]()
+            menuitems = [x[0] for x in self.choices]
+            menuitems[-1] = menuitems[-1].format(self.dynamic.camera.python2)
+
+            selection = self._selectItem(menuitems)
+            self.choices[menuitems.index(selection)][1]()
             
             time.sleep(1)
 
