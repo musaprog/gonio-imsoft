@@ -35,8 +35,7 @@ There are currently some limitations however (to be fixed soon)
   has to be ran with Python 2 and rest of the software with
   Python 3.
 
-1) It only works on Windows. This is because of using
-  nidaqmx and msvcrt modules.
+1) Some parts only work on Windows (nidaqmx and msvcrt modules)
 
 
 ## How to install
@@ -46,8 +45,8 @@ There are currently some limitations however (to be fixed soon)
 We connected two 1024-step rotary encoders to two perpendicular
 rotation stages (goniometers), and used Arduino for readout.
 
-If using similar setup to us, you can flash 
-`arduino/angle_sensors/angle_sensors.ino` and use Serial Monitor
+When using similar setup to us, you can modify and flash 
+`arduino/angle_sensors/angle_sensors.ino`, and use Serial Monitor
 in the Arduino IDE to confirm that the readout work.
 
 Alternatively, any serial device reporting rotations in format "pos1,pos2\n"
@@ -60,7 +59,7 @@ First please make sure that you have
 * MicroManager installation with a working camera
 * National Insturments cards configured with names *Dev1* and *Dev2* for input
   and output, respectively
-* Python 3 and Python 2, in path
+* Python 3 and Python 2
 
 Then, with Python 3's pip
 
