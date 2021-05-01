@@ -10,6 +10,7 @@ import os
 import subprocess
 import platform
 
+from pupilimsoft.directories import CODE_ROOTDIR
 import pupilimsoft.camera_communication as cac
 
 MAX_RETRIES = 100
@@ -129,8 +130,9 @@ class CameraClient:
         '''
         Start a local camera server instance.
         '''
-           
-        subprocess.Popen([self.python2, 'camera_server.py'], stdout=open(os.devnull, 'w'))
+
+        subprocess.Popen([self.python2, os.path.join(CODE_ROOTDIR, 'camera_server.py')],
+            stdout=open(os.devnull, 'w'))
 
 
     def close_server(self):
