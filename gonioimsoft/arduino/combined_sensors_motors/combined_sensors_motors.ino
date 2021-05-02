@@ -1,5 +1,5 @@
 /*
-combined_sensors_motors
+combined_sensors_motors (Part of gonio-imsoft)
 
 Combined reading of 2 rotary encoders' values and
 controlling stepper motors.
@@ -9,8 +9,7 @@ controlling stepper motors.
 
 	Based on brianlow's rotary encoder library for Arduino
 	and its examples.
-		https://github.com/brianlow/Rotary
-		GNU GPL Version 3
+		https://github.com/brianlow/Rotary (GNU GPL Version 3)
 
 
 2) CONTROLLING STEPPER MOTORS (using a middle man)
@@ -25,9 +24,6 @@ controlling stepper motors.
 TODO) Change motor control to use object oriented interface rather than the current
 	if blocks mess.
 
-
-Joni Kemppainen 2019, October
-jjtkemppainen1@sheffield.ac.uk
 */
 
 
