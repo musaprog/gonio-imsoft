@@ -1,6 +1,6 @@
-# Pupil Imsoft
+# Goniometric imaging software
 
-Pupil Imsoft is a command line Python program designed to control the
+Gonio Imsoft is a command line Python program designed to control the
 goniometric high-speed imaging experiments where
 
 * rotary encoder values are read over serial (pySerial)
@@ -64,12 +64,12 @@ First please make sure that you have
 Then, with Python 3's pip
 
 ```
-pip install pupil-imsoft
+pip install gonio-imsoft
 ```
 
 ## How to use
 
 ```
-python -m pupilimsoft.tui
+python -m gonioimsoft.tui
 ```
 
