@@ -9,6 +9,6 @@ CODE_ROOTDIR = os.path.dirname(os.path.realpath(__file__))
 USER_HOMEDIR = os.path.expanduser('~')
 
 if platform.system() == "Windows":
-    PUPILDIR = os.path.join(USER_HOMEDIR, 'PupilImsoft')
+    PUPILDIR = os.path.join(USER_HOMEDIR, 'GonioImsoft')
 else:
-    PUPILDIR = os.path.join(USER_HOMEDIR, '.pupilimsoft')
+    PUPILDIR = os.path.join(USER_HOMEDIR, '.gonioimsoft')

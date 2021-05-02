@@ -15,17 +15,17 @@ try:
 except ModuleNotFoundError:
     nidaqmx = None
 
-from pupilimsoft.anglepairs import saveAnglePairs, loadAnglePairs, toDegrees
-from pupilimsoft.arduino_serial import ArduinoReader
-from pupilimsoft.camera_client import CameraClient
-from pupilimsoft.camera_communication import SAVING_DRIVE
-from pupilimsoft.motors import Motor
-from pupilimsoft.imaging_parameters import (
+from gonioimsoft.anglepairs import saveAnglePairs, loadAnglePairs, toDegrees
+from gonioimsoft.arduino_serial import ArduinoReader
+from gonioimsoft.camera_client import CameraClient
+from gonioimsoft.camera_communication import SAVING_DRIVE
+from gonioimsoft.motors import Motor
+from gonioimsoft.imaging_parameters import (
         DEFAULT_DYNAMIC_PARAMETERS,
         load_parameters,
         getModifiedParameters)
-from pupilimsoft.stimulus import StimulusBuilder
-import pupilimsoft.macro as macro
+from gonioimsoft.stimulus import StimulusBuilder
+import gonioimsoft.macro as macro
 
 
 

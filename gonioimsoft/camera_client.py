@@ -10,8 +10,8 @@ import os
 import subprocess
 import platform
 
-from pupilimsoft.directories import CODE_ROOTDIR
-import pupilimsoft.camera_communication as cac
+from gonioimsoft.directories import CODE_ROOTDIR
+import gonioimsoft.camera_communication as cac
 
 MAX_RETRIES = 100
 RETRY_INTERVAL = 1

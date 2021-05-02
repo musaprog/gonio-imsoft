@@ -13,10 +13,10 @@ if OS == 'Windows':
 else:
     import sys
 
-from pupilimsoft.version import __version__
-from pupilimsoft.directories import PUPILDIR
-import pupilimsoft.core as core
-from pupilimsoft.imaging_parameters import (
+from gonioimsoft.version import __version__
+from gonioimsoft.directories import PUPILDIR
+import gonioimsoft.core as core
+from gonioimsoft.imaging_parameters import (
         DEFAULT_DYNAMIC_PARAMETERS,
         ParameterEditor,
         )
@@ -218,7 +218,7 @@ class Console:
 
 class TextUI:
     '''
-    A simple text based user interface pseudopupil imaging.
+    A simple text based user interface goniometric imaging.
 
     Attrubutes
     ----------
@@ -242,9 +242,9 @@ class TextUI:
             try:
                 with open(self.expfn, 'r') as fp: self.experimenters = json.load(fp)
             except:
-                self.experimenters = ['pupilims']
+                self.experimenters = ['gonioims']
         else:
-            self.experimenters = ['pupilims']
+            self.experimenters = ['gonioims']
         
 
         # Get locked parameters
