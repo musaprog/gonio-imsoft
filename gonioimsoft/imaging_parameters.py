@@ -7,7 +7,7 @@ import time
 import ast
 import json
 
-from pupilimsoft.directories import PUPILDIR
+from gonioimsoft.directories import PUPILDIR
 
 
 DEFAULT_DYNAMIC_PARAMETERS = {'isi': 10.0, 'repeats': 1, 'pre_stim': 0.000,

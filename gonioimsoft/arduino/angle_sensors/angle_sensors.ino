@@ -1,5 +1,5 @@
-/*
-angle_sensors
+/* angle_sensors (Part of gonio-imsoft)
+
 Reading 2 rotary encoders' values and reporting
 them to a computer through serial.
 
@@ -7,11 +7,7 @@ Reporting from: 'pos1,pos2\n'
 
 Based on brianlow's rotary encoder library for Arduino
 and its examples.
-https://github.com/brianlow/Rotary
-GNU GPL Version 3
-
-Joni Kemppainen 2019
-jjtkemppainen1@sheffield.ac.uk
+https://github.com/brianlow/Rotary (GNU GPL Version 3)
 */
 
 

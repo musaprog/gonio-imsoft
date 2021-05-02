@@ -1,4 +1,6 @@
 /*
+focus (part of gonio-imsoft)
+
 Writing with digital pins to control the microcope focus
 through a stepper motor.
 */
