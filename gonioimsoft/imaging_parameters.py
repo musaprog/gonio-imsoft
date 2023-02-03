@@ -1,13 +1,15 @@
-'''
-Default dynamic parameters and ParameterEditor for letting the user
+'''Settting and getting imaging parameters.
+
+Default imaging parameters, and ParameterEditor for letting the user
 modify them in the program.
 '''
+
 import os
 import time
 import ast
 import json
 
-from gonioimsoft.directories import PUPILDIR
+from gonioimsoft.directories import USERDATA_DIR
 
 
 DEFAULT_DYNAMIC_PARAMETERS = {'isi': 10.0, 'repeats': 1, 'pre_stim': 0.000,
@@ -142,7 +144,7 @@ class ParameterEditor:
         self.dynamic_parameters = dynamic_parameters
         self.parameter_names = sorted(self.dynamic_parameters.keys())
 
-        self.presets_savedir = os.path.join(PUPILDIR, 'presets')
+        self.presets_savedir = os.path.join(USERDATA_DIR, 'presets')
         self.presets = self.load_presets(self.presets_savedir)
 
         self.locked_parameters = locked_parameters
@@ -219,11 +221,11 @@ class ParameterEditor:
                 if name == '' and self.dynamic_parameters['suffix'] != '':
                     name = self.dynamic_parameters['suffix']
                 
-                if os.path.isdir(PUPILDIR):
+                if os.path.isdir(USERDATA_DIR):
                     os.makedirs(self.presets_savedir, exist_ok=True)
                     save_parameters(os.path.join(self.presets_savedir, name), self.dynamic_parameters)
                 else:
-                    print('Saving the preset failed, {} does not exist'.format(PUPILDIR))
+                    print('Saving the preset failed, {} does not exist'.format(USERDATA_DIR))
 
                 continue        
 

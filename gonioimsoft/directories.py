@@ -1,5 +1,11 @@
-'''
-Places where to save and load temporary files.
+'''Places for saving and loading files.
+
+Constants
+---------
+USERDATA_DIR : string
+    Path to user data
+PUPILDIR : string
+    Deprecated. Equals to USERDATA_DIR.
 '''
 
 import os
@@ -12,3 +18,5 @@ if platform.system() == "Windows":
     PUPILDIR = os.path.join(USER_HOMEDIR, 'GonioImsoft')
 else:
     PUPILDIR = os.path.join(USER_HOMEDIR, '.gonioimsoft')
+
+USERDATA_DIR = PUPILDIR
