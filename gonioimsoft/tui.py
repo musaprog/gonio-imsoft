@@ -1,45 +1,28 @@
+'''Terminal user interface for GonioImsoft.
+
+It uses gonioimsoft.core to to manage the experiments
+and libtui.SimpleTUI to make the user interface. 
+'''
 
 import os
 import copy
-import platform
 import string
 import time
 import json
-
-
-OS = platform.system()
-if OS == 'Windows':
-    import msvcrt
-else:
-    import sys
+import inspect      # Inspect docs and source code
 
 from gonioimsoft.version import __version__
-from gonioimsoft.directories import PUPILDIR
+from gonioimsoft.directories import USERDATA_DIR
 import gonioimsoft.core as core
 from gonioimsoft.imaging_parameters import (
         DEFAULT_DYNAMIC_PARAMETERS,
         ParameterEditor,
         )
-
-
-help_string = """List of commands and their options\n
-GENERAL
- help                       Prints this message
- suffix [SUFFIX]            Add a suffix SUFFIX to saved image folders
-MOTORS
- where [i_motor]            Prints the coordinates of motor that has index i_motor
- drive [i_motor] [pos]      Drive i_motor to coordinates (float)
-
-
-"""
-
-help_limit = """Usage of limit command
-limit []"""
+from .libtui import SimpleTUI
 
 
 class Console:
-    '''
-    Operation console for TUI or other user interfaces.
+    '''Operation console for TUI or other user interfaces.
 
     Capabilities:
     - changing imaging parameters
@@ -75,17 +58,36 @@ class Console:
             self.help()
     
 
-    def help(self):
-        '''
-        Print the help string on screen.
-        '''
-        print(help_string)
-    
+    def help(self, command_name=None):
+        if command_name is None:
+            print('List of commands and their options')
+            
+            for name, value in inspect.getmembers(self):
+                
+                if not inspect.ismethod(value):
+                    continue
+
+                print(f'{name}')
+
+            print('For more, try retrieving the full help or the source code by')
+            print('  help [command_name]')
+            print('  source [command name]')
+        else:
+            value = getattr(self, command_name, None)
+
+            if value is not None:
+                print(inspect.getdoc(value))
+
+
+    def source(self, command_name):
+        print(f'Source code of the "{command_name}" command (Python)')
+        
+        print('End of source code.')
 
     def suffix(self, suffix):
+        '''Set the suffix to add in the image folders' save name
         '''
-        Set suffix to the image folders being saved
-        '''
+
         # Replaces spaces by underscores
         if ' ' in suffix:
             suffix = suffix.replace(' ', '_')
@@ -128,12 +130,16 @@ class Console:
 
 
     def where(self, i_motor):
+        '''Prints the coordinates of the motor i_motor.
+        '''
         # Getting motor's position
         mpos = self.dynamic.motors[motor].get_position()
         print('  Motor {} at {}'.format(motor, mpos))
 
 
     def drive(self, i_motor, position):
+        '''Drive i_motor to the given coordinates.
+        '''
         self.dynamic.motors[i_motor].move_to(position)
         
 
@@ -216,15 +222,14 @@ class Console:
 
 
 
-class TextUI:
-    '''
-    A simple text based user interface goniometric imaging.
+class GonioImsoftTUI:
+    '''Terminal user interface for goniometric imaging.
 
     Attrubutes
     ----------
     console : object
-    choices : dict
-        Main menu choices
+    main_menu : list
+        Main choices
     quit : bool
         If changes to True, quit.
     expfn : string
@@ -234,10 +239,16 @@ class TextUI:
 
     '''
     def __init__(self):
-        self.dynamic = core.Dynamic()
         
+        self.libui = SimpleTUI()
+        self.dynamic = core.Dynamic()
+
+        self.console = Console(self.dynamic)
+        self.console.image_series_callback = self.image_series_callback
+
+
         # Get experimenters list or if not present, use default
-        self.expfn = os.path.join(PUPILDIR, 'experimenters.json')
+        self.expfn = os.path.join(USERDATA_DIR, 'experimenters.json')
         if os.path.exists(self.expfn):
             try:
                 with open(self.expfn, 'r') as fp: self.experimenters = json.load(fp)
@@ -248,7 +259,7 @@ class TextUI:
         
 
         # Get locked parameters
-        self.glofn = os.path.join(PUPILDIR, 'locked_parameters.json')
+        self.glofn = os.path.join(USERDATA_DIR, 'locked_parameters.json')
         if os.path.exists(self.glofn):
             try:
                  with open(self.glofn, 'r') as fp: self.locked_parameters = json.load(fp)
@@ -257,30 +268,26 @@ class TextUI:
         else:
             self.locked_parameters = {}
             
-
    
-        self.choices = [['Static imaging', self.loop_static],
+        self.main_menu = [['Static imaging', self.loop_static],
                 ['Dynamic imaging', self.loop_dynamic],
                 ['Trigger only (external software for camera)', self.loop_trigger],
-                ['', None],
+                ['\n', None],
                 ['Edit locked parameters', self.locked_parameters_edit],
-                ['', None],
+                ['\n', None],
+                ['Change experimenter', self._run_experimenter_select],
                 ['Quit', self.quit],
-                ['', None],
+                ['\n', None],
                 ['Start camera server (local)', self.dynamic.camera.startServer],
                 ['Stop camera server', self.dynamic.camera.close_server],
                 ['Set Python2 command (current {})', self.set_python2]]
 
-
+        self.experimenter = None    # name of the experimenter
         self.quit = False
-
-        self.console = Console(self.dynamic)
-        self.console.image_series_callback = self.image_series_callback
 
 
     @property
     def menutext(self):
-
         # Check camera server status
         if self.dynamic.camera.isServerRunning():
             cs = 'ON'
@@ -311,67 +318,7 @@ class TextUI:
         return menutext + "\n"
 
 
-    @staticmethod
-    def _readKey():
-        if OS == 'Windows':
-            if msvcrt.kbhit():
-                key = ord(msvcrt.getwch())
-                return chr(key)
-            return ''
-        else:
-            return sys.stdin.read(1)
-
-
-    @staticmethod
-    def _clearScreen():
-        if os.name == 'posix':
-            os.system('clear')
-        elif os.name == 'nt':
-            os.system('cls')
-
-
-    @staticmethod
-    def _print_lines(lines):
-        
-        for text in lines:
-            print(text)
-        
-
-    def _selectItem(self, items):
-        '''
-        Select an item from a list.
-        
-        Empty string items are converted to a space
-        '''
-        real_items = []
-        i = 0
-        for item in items:
-            if item != '':
-                print('{}) {}'.format(i+1, item))
-                real_items.append(item)
-                i += 1
-            else:
-                print()
-
-        selection = ''
-        while True:
-            new_char = self._readKey()
-            if new_char:
-                selection += new_char
-                print(selection)
-            if selection.endswith('\r') or selection.endswith('\n'):
-                try:
-                    selection = int(selection)
-                    real_items[selection-1]
-                    break
-                except ValueError:
-                    print('Invalid input')
-                    selection = ''
-                except IndexError:
-                    print('Invalid input')
-                    selection = ''
-        return real_items[selection-1]
-    
+   
     def set_python2(self):
         print('Current Python2 command: {}'.format(self.dynamic.camera.python2))
         sel = input('Change (yes/no)').lower()
@@ -382,6 +329,7 @@ class TextUI:
             input('press enter to continue')
         else:
             print('No changes!')
+
 
     def loop_trigger(self):
         '''
@@ -506,84 +454,103 @@ class TextUI:
         self.dynamic.finalize()
 
 
-    def run(self):
-        '''
-        Run TUI until user quitting.
-        '''
-        # Check if userdata directory settings exists
-        if not os.path.isdir(PUPILDIR):
-            print('\nFIRST RUN NOTICE\n------------------')
-            print(('Pupil Imsoft needs a location where '
-                'to save user files\n  - list of experimenters\n  - settings'
-                '\n  - created protocol files'))
-            print('This is not the location where imaging data gets saved (no big files)')
-            print('\nCreate {}'.format(PUPILDIR))
+    
+    def _run_firstrun(self):
+        message = (
+                '\nFIRST RUN\n---------'
+                'GonioImsoft needs a location '
+                'to save user files\n  - list of experimenters\n '
+                '- settings'
+                '\n  - created protocol files'
+                'Imaging data will not be saved here (= no big files)'
+                f'\nCreate {USERDATA_DIR}? (recommended)'
+                )
+        if self.libui.bool_select(message):
+            os.makedirs(USERDATA_DIR)
+            print('Success!')
+            time.sleep(2)
+        else:
+            print('Warning! Cannot save any changes')
+            time.sleep(2)
 
-            while True:
-                sel = input ('(yes/no) >> ').lower()
-                if sel == 'yes':
-                    os.makedirs(PUPILDIR)
-                    print('Sucess!')
-                    time.sleep(2)
-                    break
-                elif sel == 'no':
-                    print('Warning! Cannot save any changes')
-                    time.sleep(2)
-                    break
-                else:
-                    print('Whaat? Please try again')
-                    time.sleep(1)
-            
-        
-        self._clearScreen()
-        
-        print(self.menutext)
-        
-        print('Select experimenter\n--------------------')
+
+    def _run_experimenter_select(self):
+
+        if self.experimenter is not None:
+            self.libui.print(f'Current experimenter: {self.experimenter}')
+
+        extra_options = [' (Add new)', ' (Remove old)', ' (Save current list)']
+
+        self.libui.print('Select experimenter\n--------------------')
         while True:
-            extra_options = [' (Add new)', ' (Remove old)', ' (Save current list)']
-            experimenter = self._selectItem(self.experimenters+extra_options).lower()
-            
             # Select operation
-            if experimenter == '(add new)':
-                name = input('Name >>')
+            selection = self.libui.item_select(self.experimenters+extra_options) 
+
+            # add new
+            if selection == extra_options[0]:
+                name = self.libui.input('Name >>')
                 self.experimenters.append(name)
 
-            elif experimenter == '(remove old)':
-                print('Select who to remove (data remains)')
-                name = self._selectItem(self.experimenters+['..back (no deletion)'])
+            # remove old
+            elif selection == extra_options[1]:
+                self.libui.print('Select who to remove (data remains)')
+                
+                to_delete_name = self.libui.item_select(
+                        self.experimenters+['..back (no deletion)'])
 
-                if name in self.experimenters:
-                    self.experimenters.pop(self.experimenters.index(name))
-            elif experimenter == '(save current list)':
-                if os.path.isdir(PUPILDIR):
+                if to_delete_name in self.experimenters:
+                    self.experimenters.pop(self.experimenters.index(to_delete_name))
+
+            # save current
+            elif selection == extra_options[2]:
+                if os.path.isdir(USERDATA_DIR):
                     with open(self.expfn, 'w') as fp: json.dump(self.experimenters, fp)
                     print('Saved!')
                 else:
-                    print('Saving failed (no {})'.format(PUPILDIR))
+                    print(f'Saving failed (no {USERDATA_DIR})')
                 time.sleep(2)
             else:
                 # Got a name
                 break
 
-            self._clearScreen()
+            self.libui.clear_screen()
 
-        self.experimenter = experimenter
-        self._clearScreen()
+        self.experimenter = selection
+ 
+
+    def run(self):
+        '''
+        Run TUI until user quitting.
+        '''
+        
+        self.libui.header = self.menutext
+        self.libui.clear_screen()
+ 
+        # Check if userdata directory settings exists
+        # If not, ask to create it
+        if not os.path.isdir(USERDATA_DIR):
+           self._run_firstrun()
+           self.libui.clear_screen()
+        
+        self._run_experimenter_select()
+        self.libui.clear_screen()
 
         self.quit = False
         while not self.quit:
-            print(self.menutext)
+            self.libui.clear_screen()
             
-            menuitems = [x[0] for x in self.choices]
+            menuitems = [x[0] for x in self.main_menu]
             menuitems[-1] = menuitems[-1].format(self.dynamic.camera.python2)
-
-            selection = self._selectItem(menuitems)
-            self.choices[menuitems.index(selection)][1]()
             
-            time.sleep(1)
+            # Blocking call here
+            selection = self.libui.item_select(menuitems)
+            self.main_menu[menuitems.index(selection)][1]()
 
-            self._clearScreen()
+            # Update status menu and clear screen
+            self.libui.header = self.menutext
+
+            time.sleep(1)
+            
 
         self.dynamic.exit()
         time.sleep(1)
@@ -591,39 +558,51 @@ class TextUI:
 
     def locked_parameters_edit(self):
         
+        selections ['Add locked', 'Remove locked', 'Modify values', '.. back (and save)']
+        
         while True:
-            self._clearScreen()
-            print(self.menutext)
-            print('Here, any of the imaging parameters can be made locked,')
-            print('overriding any presets/values setat imaging time.')
-            
-            print('\nCurrent locked are')
+            self.libui.clear_screen()
+            self.libui.header = self.menutext
+
+            messsage = (
+                    'Here, any of the imaging parameters can be made locked,'
+                    ' overriding any presets/values setat imaging time.'
+                    '\nCurrent locked are'
+                    )
+
+            self.libui.print(message)
+
             if not self.locked_parameters:
-                print('  (NONE)')
+                self.libui.print('  (NONE)')
             for name in self.locked_parameters:
-                print('  {}'.format(name))
-            print()
+                self.libui.print('  {}'.format(name))
+            self.libui.print()
 
-            sel = self._selectItem(['Add locked', 'Remove locked', 'Modify values', '.. back (and save)'])
+            sel = self.libui.item_select(selections)
             
-            if sel == 'Add locked':
-                choices = list(DEFAULT_DYNAMIC_PARAMETERS.keys())
-                sel2 = self._selectItem(choices+[' ..back'])
+            # Add locked
+            if sel == selections[0]:
+                lockable = list(DEFAULT_DYNAMIC_PARAMETERS.keys())
+                to_lock = self.libui.item_select(lockable+[' ..back'])
                 
-                if sel2 in choices:
-                    self.locked_parameters[sel2] = DEFAULT_DYNAMIC_PARAMETERS[sel2]
-            elif sel == 'Remove locked':
-                choices = list(self.locked_parameters.keys())
-                sel2 = self._selectItem(choices+[' ..back'])
+                if to_lock in lockable:
+                    self.locked_parameters[to_lock] = DEFAULT_DYNAMIC_PARAMETERS[sel2]
+            
+            # Remove locked
+            elif sel == selections[1]:
+                locked = list(self.locked_parameters.keys())
+                to_unlock = self.libui_item_select(locked+[' ..back'])
                 
-                if sel2 in choices:
-                    del self.locked_parameters[sel2]
-
-            elif sel == 'Modify values':
+                if to_unlock in locked:
+                    del self.locked_parameters[to_unlock]
+            
+            # Modify locked values
+            elif sel == selections[2]:
                 self.locked_parameters = ParameterEditor(self.locked_parameters).getModified()
 
-            elif sel == '.. back (and save)':
-                if os.path.isdir(PUPILDIR):
+            # Back and save
+            elif sel == selections[3]:
+                if os.path.isdir(USERDATA_DIR):
                     with open(self.glofn, 'w') as fp: json.dump(self.locked_parameters, fp)
                 break
 
@@ -634,8 +613,8 @@ class TextUI:
 
 
 def main():
-    tui = TextUI()
-    tui.run()
+    imsoft = GonioImsoftTUI()
+    imsoft.run()
 
 if __name__ == "__main__":
     main()
