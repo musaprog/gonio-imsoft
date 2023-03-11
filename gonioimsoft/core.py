@@ -1,5 +1,4 @@
-'''
-Pupil Imsoft's core module; Classes for static and dynamic imaging
+'''The PupilImsoft core module for managing devices.
 '''
 
 import os

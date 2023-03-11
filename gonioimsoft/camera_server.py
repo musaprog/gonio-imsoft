@@ -1,10 +1,22 @@
-'''
-Image accusition using Micro-Manager's Python (2) bindings (Camera class)
-and a server program (CameraServer class).
+'''The camera server for using the camera and save images.
 
-On Windows, MM builds come compiled with Python 2 support only, so in this solution
-there is a Python 2 server program that controls the camera and image saving
-and then the client end that can be run with Python 3.
+Functionality
+-------------
+- Image acquisition using Micro-Manager's Python bindings (pymmcore)
+- Live feed using matplotlib
+- File saving using the tifffile module
+
+
+Background
+-----------
+On Windows, MM builds came precompiled with Python 2 support only. The
+camera server/client division here made it possible to run the server
+calling MM using Python 2 (to control the camera and image saving) and
+then the camera client run with Python 3.
+
+It is still usefull; Because it uses (network) sockets, it is trivial
+to use another (or multiple PC) to acqurie images. Or, in future, to
+use another backends than MM.
 '''
 
 import os
@@ -29,8 +41,7 @@ DEFAULT_SAVING_DIRECTORY = "D:\imaging_data"
 
 
 class ImageShower:
-    '''
-    Showing images on the screen on its own window.
+    '''Shows images on the screen in its own window.
 
     In future, may be used to select ROIs as well to allow
     higher frame rate imaging / less data.
@@ -45,7 +56,6 @@ class ImageShower:
     Methods
     -------
     self.loop       Set this as multiprocessing target
-
     '''
     def __init__(self):
         self.fig = plt.figure()
