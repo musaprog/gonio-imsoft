@@ -416,7 +416,7 @@ class Camera:
         with open(fn+'.txt', 'w') as fp:
             fp.write(desc_string)
 
-        print "Wrote file " + fn+'.txt'
+        print("Wrote file " + fn+'.txt')
         
         
         self.description_string = desc_string
@@ -450,8 +450,8 @@ class CameraServer:
             self.cam = Camera()
             self.cam.wait_for_client = self.wait_for_client
         except Exception as e:
-            print e
-            print "Using DUMMY camera instead"
+            print(e)
+            print("Using DUMMY camera instead")
             self.cam = DummyCamera()
         
         self.functions = {'acquireSeries': self.cam.acquire_series,
@@ -464,7 +464,7 @@ class CameraServer:
                           'exit': self.stop}
 
     def ping(self, message):
-        print message
+        print(message)
 
 
 
@@ -479,7 +479,7 @@ class CameraServer:
             if not data: break
             string += data
         conn.close()
-        print "Client ready"
+        print("Client ready")
         
 
 
