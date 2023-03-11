@@ -26,7 +26,7 @@ import socket
 import threading
 import multiprocessing
 
-import MMCorePy
+import pymmcore
 import tifffile
 import numpy as np
 import matplotlib.pyplot as plt
@@ -191,7 +191,7 @@ class Camera:
 
         self.set_saving_directory(saving_directory)
         
-        self.mmc = MMCorePy.CMMCore() 
+        self.mmc = pymmcore.CMMCore() 
         self.mmc.loadDevice('Camera', 'HamamatsuHam', 'HamamatsuHam_DCAM')
         self.mmc.initializeAllDevices()
         self.mmc.setCameraDevice('Camera')
@@ -308,7 +308,7 @@ class Camera:
                 try:
                     image = self.mmc.popNextImage()
                     break
-                except MMCorePy.CMMError:
+                except pymmcore.CMMError:
                     time.sleep(exposure_time)
                 
             images.append(image)
