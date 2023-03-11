@@ -20,13 +20,18 @@ use another backends than MM.
 '''
 
 import os
+import sys
 import time
 import datetime
 import socket
+import argparse
 import threading
 import multiprocessing
 
-import pymmcore
+try:
+    import pymmcore
+except ImportError:
+    print('pymmcore not installed')
 import tifffile
 import numpy as np
 import matplotlib.pyplot as plt
@@ -264,29 +269,29 @@ class Camera:
         N_frames = int(N_frames)
         label = str(label)
 
-        print "Now aquire_series with label " + label
-        print "- IMAGING PARAMETERS -"
-        print " exposure time " + str(exposure_time) + " seconds"
-        print " image interval " + str(image_interval) + " seconds"
-        print " N_frames " + str(N_frames)
-        print "- CAMERA SETTINGS"
+        print("Now aquire_series with label " + label)
+        print("- IMAGING PARAMETERS -")
+        print(" exposure time " + str(exposure_time) + " seconds")
+        print(" image interval " + str(image_interval) + " seconds")
+        print(" N_frames " + str(N_frames))
+        print("- CAMERA SETTINGS")
 
         self.set_binning('2x2')
-        print " Pixel binning 2x2"
+        print(" Pixel binning 2x2")
 
         if trigger_direction == 'send':
-            print " Camera sending a trigger pulse"
+            print(" Camera sending a trigger pulse")
             self.mmc.setProperty('Camera', "OUTPUT TRIGGER KIND[0]","EXPOSURE")
             self.mmc.setProperty('Camera', "OUTPUT TRIGGER POLARITY[0]","NEGATIVE")
         elif trigger_direction== 'receive':
-            print " Camera recieving / waiting for a trigger pulse"
+            print(" Camera recieving / waiting for a trigger pulse")
             self.mmc.setProperty('Camera', "TRIGGER SOURCE","EXTERNAL")
             self.mmc.setProperty('Camera', "TriggerPolarity","POSITIVE")
         else:
             raise ValueError('trigger_direction has to be {} or {}, not {}'.format('receive', 'send', trigger_direction))
 
         
-        print "Circular buffer " + str(self.mmc.getCircularBufferMemoryFootprint()) + " MB"
+        print("Circular buffer " + str(self.mmc.getCircularBufferMemoryFootprint()) + " MB")
 
         self.mmc.setExposure(exposure_time*1000)
 
@@ -435,15 +440,16 @@ class CameraServer:
     Camera server listens incoming connections and
     controls the camera through Camera class
     '''
-    def __init__(self):
-
-        PORT = cac.PORT
+    def __init__(self, port=None):
+        
+        if port is None:
+            port = cac.PORT
         HOST = ''           # This is not cac.SERVER_HOSTNAME, leave empty
 
         self.running = False
 
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.socket.bind((HOST, PORT))
+        self.socket.bind((HOST, port))
         self.socket.listen(1)
 
         try:
@@ -523,13 +529,19 @@ def test_camera():
 
 
 
-def run_server():
-    '''
-    Running the server.
-    '''
-    cam_server = CameraServer()
+def main():
+    
+    parser = argparse.ArgumentParser(
+            prog='GonioImsoft Camera Server',
+            description='Controls a MicroManager camera')
+
+    parser.add_argument('-p', '--port')
+
+    args = parser.parse_args()
+
+    cam_server = CameraServer(args.port)
     cam_server.run()
             
         
 if __name__ == "__main__":
-    run_server()
+    main()
