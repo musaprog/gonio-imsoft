@@ -43,10 +43,12 @@ class Dynamic:
         self.reader = ArduinoReader()
         
         # Initiate camera client/server
-        self.camera = CameraClient()
-        if not self.camera.isServerRunning():
-            print('Camera server not running')
-        #    self.camera.startServer()
+        self.cameras = []
+        #self.cameras.append( CameraClient() )
+        #for camera in self.cameras:
+        #    if not camera.isServerRunning():
+        #        print('Camera server not running')
+        #        #camera.startServer()
         
         # Details about preparation (name, sex, age) are saved in this
         self.preparation = {'name': 'test', 'sex': '', 'age': ''}
@@ -82,7 +84,17 @@ class Dynamic:
         self.triggered_anglepairs = None
 
         self.data_savedir = None
-        
+
+    
+    def add_camera_client(self, host, port):
+        client = CameraClient(host, port)
+        self.cameras.append(client)
+        return client
+
+    def remove_camera_client(self, i_client):
+        client = self.cameras.pop(i_client)
+        return client
+
 
     def analog_output(self, channels, stimuli, fs, wait_trigger, camera=True):
         '''
@@ -128,7 +140,8 @@ class Dynamic:
             task.start()
 
             if camera:
-                self.camera.sendCommand('ready')
+                for camera in self.cameras:
+                    camera.sendCommand('ready')
                 
             task.wait_until_done(timeout=(len(stimuli[0])/fs)*1.5+20)
 
@@ -205,21 +218,22 @@ class Dynamic:
         if save:
             self.set_led(self.dynamic_parameters['ir_channel'], self.dynamic_parameters['ir_imaging'])
             time.sleep(0.3)
-            self.camera.acquireSingle(True, os.path.join(self.preparation['name'], 'snaps'))
+            for camera in self.cameras:
+                camera.acquireSingle(True, os.path.join(self.preparation['name'], 'snaps'))
             self.set_led(self.dynamic_parameters['ir_channel'], self.dynamic_parameters['ir_livefeed'])
             time.sleep(0.2)
 
             print('A snap image taken')
         else:
-            self.camera.acquireSingle(False, '')
+            for camera in self.cameras:
+                camera.acquireSingle(False, '')
             time.sleep(0.1)
 
 
 
     
     def image_trigger_softhard(self):
-        '''
-        For dynamic imaging of pseudopupil movements.
+        '''Software triggering of the cameras.
 
         How this works?
         CameraClient (self.camera) send message to CameraServer to start image acquisition. Starting
@@ -430,7 +444,8 @@ class Dynamic:
             If False, do not attempt to update save folder to the camera server
         '''
         if camera:
-            self.camera.setSavingDirectory(savedir)
+            for camera in self.cameras:
+                camera.setSavingDirectory(savedir)
         self.data_savedir = savedir
 
 
@@ -452,7 +467,8 @@ class Dynamic:
         for name, value in self.dynamic_parameters.items():
             desc_string += '{} {}\n'.format(name, value)
         print(desc_string)
-        self.camera.saveDescription(self.preparation['name'], desc_string)
+        for camera in self.cameras:
+            camera.saveDescription(self.preparation['name'], desc_string)
         
 
     def initialize(self, name, sex, age, camera=False):
@@ -577,7 +593,8 @@ class Dynamic:
 
 
     def exit(self):
-        self.camera.close_server()
+        for camera in self.cameras:
+            camera.close_server()
 
     #
     # CONTROLLING LEDS, MOTORS ETC

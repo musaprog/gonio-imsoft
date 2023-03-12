@@ -160,8 +160,8 @@ class Console:
                 motor.stop()
 
 
-    def set_roi(self, x,y,w,h):
-        self.dynamic.camera.set_roi( (x,y,w,h) )
+    def set_roi(self, x,y,w,h, i_camera=0):
+        self.dynamic.cameras[i_camera].set_roi( (x,y,w,h) )
 
 
     def eternal_repeat(self, isi):
@@ -269,30 +269,75 @@ class GonioImsoftTUI:
             self.locked_parameters = {}
             
    
-        self.main_menu = [['Static imaging', self.loop_static],
-                ['Dynamic imaging', self.loop_dynamic],
-                ['Trigger only (external software for camera)', self.loop_trigger],
+        self.main_menu = [
+                ['Imaging', self.loop_dynamic],
+                ['Step-trigger imaging', self.loop_static],
+                ['Step-trigger only (use external camera software)', self.loop_trigger],
                 ['\n', None],
                 ['Edit locked parameters', self.locked_parameters_edit],
                 ['\n', None],
                 ['Change experimenter', self._run_experimenter_select],
                 ['Quit', self.quit],
                 ['\n', None],
-                ['Start camera server (local)', self.dynamic.camera.startServer],
-                ['Stop camera server', self.dynamic.camera.close_server],
-                ['Set Python2 command (current {})', self.set_python2]]
+                ['Add local camera', self.add_local_camera],
+                ['Add remote camera', self.add_remote_camera]]
+        #['Start camera server (local)', self.dynamic.camera.startServer],
+        #['Stop camera server', self.dynamic.camera.close_server]
 
         self.experimenter = None    # name of the experimenter
         self.quit = False
 
 
+    def _add_camera(self, client):
+        cameras = client.get_cameras()
+        camera = self.libui.item_select(
+                cameras, 'Select a camera')
+        client.set_camera(camera)
+
+
+    def add_local_camera(self):
+        '''Add a camera from a local camera server.
+        '''
+        client = self.dynamic.add_camera_client(None, None)
+        
+        if not client.isServerRunning:
+            client.startServer()
+        
+        self._add_camera(client)
+
+
+    def add_remote_camera(self):
+        host = self.libui.input('IP address or hostname: ')
+        port = self.libui.input('Port (leave blank for default): ')
+        
+        if port == '':
+            port = None
+        else:
+            port = int(port)
+
+        client = self.dynamic.add_camera_client(host, port)
+        
+        if not client.isServerRunning:
+            self.libui.print('Cannot connect to the server')
+        else:
+            self._add_camera(client)
+
+
     @property
     def menutext(self):
+        cam = ''
+
         # Check camera server status
-        if self.dynamic.camera.isServerRunning():
-            cs = 'ON'
-        else:
-            cs = 'OFF'
+        for i_camera, camera in enumerate(self.dynamic.cameras):
+            if camera.isServerRunning():
+                cs = 'ON'
+            else:
+                cs = 'OFF'
+
+            cam += f'Cam{i_camera} {cs}'
+
+        if not self.dynamic.cameras:
+            cam = 'No cameras'
 
         # Check serial (Arduino) status
         ser = self.dynamic.reader.serial
@@ -310,25 +355,12 @@ class GonioImsoftTUI:
         else:
             daq = 'AVAILABLE'
 
-        status = "\n CamServer {} | {} | nidaqmx {}".format(cs, ar, daq)
+        status = "\n {} | {} | nidaqmx {}".format(cam, ar, daq)
         
-        menutext = "Pupil Imsoft - Version {}".format(__version__)
+        menutext = "GonioImsoft - Version {}".format(__version__)
         menutext += "\n" + max(len(menutext), len(status)) * "-"
         menutext += status
         return menutext + "\n"
-
-
-   
-    def set_python2(self):
-        print('Current Python2 command: {}'.format(self.dynamic.camera.python2))
-        sel = input('Change (yes/no)').lower()
-        if sel == 'yes':
-            newp = input('>>')
-            print('Chaning...')
-            self.dynamic.camera.python2 = newp
-            input('press enter to continue')
-        else:
-            print('No changes!')
 
 
     def loop_trigger(self):
@@ -540,7 +572,6 @@ class GonioImsoftTUI:
             self.libui.clear_screen()
             
             menuitems = [x[0] for x in self.main_menu]
-            menuitems[-1] = menuitems[-1].format(self.dynamic.camera.python2)
             
             # Blocking call here
             selection = self.libui.item_select(menuitems)
