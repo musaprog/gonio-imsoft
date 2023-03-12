@@ -42,7 +42,7 @@ import camera_communication as cac
 from camera_communication import SAVING_DRIVE
 
 DEFAULT_SAVING_DIRECTORY = "D:\imaging_data"
-
+DEFAULT_MICROMANAGER_DIR = 'C:/Program Files/Micro-Manager-2.0beta'
 
 
 class ImageShower:
@@ -166,10 +166,10 @@ class ImageShower:
 
 
 class DummyCamera:
+    '''A dummy camera suitable for testing the server/client.
     '''
-    A dummy camera class, used when unable to load the real Camera class
-    due to camera being off or something similar.
-    '''
+    def __init__(self):
+        self.settings = {}
     def acquire_single(self, save, subdir):
         pass
     def acquire_series(self, exposure_time, image_interval, N_frames, label, subdir, trigger_direction):
@@ -179,17 +179,24 @@ class DummyCamera:
     def set_saving_directory(self, saving_directory):
         pass
     def set_binning(self, binning):
-        pass
+        self.settings['binning'] = binning
+    def set_roi(self, x,y,w,h):
+        self.settings['roi'] = [x,y,w,h]
+    def set_save_stack(self, boolean):
+        self.setttings['save-stack'] = boolean
+
     def save_description(self, filename, string):
         pass
     def close(self):
         pass
+    def get_cameras(self):
+        return ['dummy1', 'dummy2']
+    def set_camera(self, name):
+        self.camera = name
 
 
-class Camera:
-    '''
-    Controlling ORCA FLASH 4.0 camera using Micro-Manager's
-    Python (2) bindings.
+class MMCamera:
+    '''Controls any camera using MicroManager and its pymmcore bindings.
     '''
 
     def __init__(self, saving_directory=DEFAULT_SAVING_DIRECTORY):
@@ -213,7 +220,6 @@ class Camera:
         self.description_string = ''
 
         self.save_stack = False
-
 
 
     def acquire_single(self, save, subdir):
@@ -436,11 +442,11 @@ class Camera:
 
 
 class CameraServer:
+    '''Camera server listens incoming connections from the client and
+    controls a camera class.
     '''
-    Camera server listens incoming connections and
-    controls the camera through Camera class
-    '''
-    def __init__(self, port=None):
+
+    def __init__(self, camera, port=None):
         
         if port is None:
             port = cac.PORT
@@ -448,17 +454,15 @@ class CameraServer:
 
         self.running = False
 
+        print(f'Binding a socket (host {HOST}, port {port}))')
+
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.bind((HOST, port))
         self.socket.listen(1)
-
-        try:
-            self.cam = Camera()
-            self.cam.wait_for_client = self.wait_for_client
-        except Exception as e:
-            print(e)
-            print("Using DUMMY camera instead")
-            self.cam = DummyCamera()
+        
+        print(f'Using the camera <{camera.__class__.__name__}>')
+        self.cam = camera
+        self.cam.wait_for_client = self.wait_for_client
         
         self.functions = {'acquireSeries': self.cam.acquire_series,
                           'setSavingDirectory': self.cam.set_saving_directory,
@@ -466,8 +470,21 @@ class CameraServer:
                           'saveDescription': self.cam.save_description,
                           'set_roi': self.cam.set_roi,
                           'set_save_stack': self.cam.set_save_stack,
+                          'get_cameras': self.get_cameras,
+                          'set_cameras': self.set_camera,
                           'ping': self.ping,
                           'exit': self.stop}
+
+        self.responding = set(['get_cameras'])
+
+
+    def get_cameras(self):
+        cameras = sef.cam.get_cameras()
+        return cameras
+
+    def set_camera(self, name):
+        self.cam.set_camera(name)
+
 
     def ping(self, message):
         print(message)
@@ -495,6 +512,9 @@ class CameraServer:
         Each established connection can give one command and then the connection
         is closed.
         '''
+        
+        print('Waiting for clients to connect')
+
         self.running = True
         while self.running:
             conn, addr = self.socket.accept()
@@ -502,15 +522,28 @@ class CameraServer:
             while True:
                 data = conn.recv(1024)
                 if not data: break
-                string += data
+                string += data.decode()
             
-            conn.close()
+            if not string:
+                conn.close()
+                continue
+            
             print('Recieved command "'+string+'" at time '+str(time.time()))
-            if string:
-                func, parameters = string.split(';')
-                parameters = parameters.split(':')
-                target=self.functions[func](*parameters)
-            
+            func, parameters = string.split(';')
+
+            # Can close connection early, no response so let's not delay the client
+            if not func in self.responding:
+                conn.close()
+
+            parameters = parameters.split(':')
+            response = self.functions[func](*parameters)
+
+            # Say back the response and close because still open
+            if func in self.responding:
+                conn.sendall(str(response).encode())
+                conn.close()
+
+
     def stop(self, placeholder):
         '''
         Stop running the camera server.
@@ -536,10 +569,17 @@ def main():
             description='Controls a MicroManager camera')
 
     parser.add_argument('-p', '--port')
-
+    parser.add_argument('-c', '--camera')
     args = parser.parse_args()
 
-    cam_server = CameraServer(args.port)
+    if args.camera == 'mm':
+        camera = MMCamera()
+    elif args.camera == 'dummy':
+        camera = DummyCamera()
+    else:
+        camera = MMCamera()
+
+    cam_server = CameraServer(camera, args.port)
     cam_server.run()
             
         

@@ -1,7 +1,4 @@
-'''
-Camera client software.
-
-Meant to be running using Python 3.
+'''Client code for the camera server/client division.
 '''
 
 import socket
@@ -9,52 +6,51 @@ import time
 import os
 import subprocess
 import platform
+import sys
 
-from gonioimsoft.directories import CODE_ROOTDIR
-import gonioimsoft.camera_communication as cac
+from .directories import CODE_ROOTDIR
+from .camera_communication import SERVER_HOSTNAME, PORT
 
 MAX_RETRIES = 100
 RETRY_INTERVAL = 1
 
-class CameraClient:
-    '''
-    Connecting to the CameraServer and sending imaging commands.
 
-    No data is transmitted over the socket connection, only commands (strings).
-    It's CameraServer's job to store the images.
+class CameraClient:
+    '''Local part of the camera server/client division.
+
+    CameraClient runs on the same PC as GonioImsoft and it connects to
+    a CameraServer instance (over network sockets, so using IP addressess).
+    It works as a middleman.
+    
+    No big data is transmitted over the connection, only commands (strings).
+    It is the CameraServer's job to store the images, and display them on
+    screen (livefeed) if needed.
+    
+    See also camera_server.py for more information.
 
     Attributes
     -----------
-    python2 : string
-        In path command to open Python 2. If empty string, use
-        defaults "C:\Python27\python.exe" (Windows) or "python2" (other)
+    host : string
+        The CameraServer IP address / hostname
+    port : int
+        The CameraServer port number
     '''
-    def __init__(self):
+
+    port_running_index = 0
+
+    def __init__(self, host=None, port=None):
         '''
-        Initialization of the CameraClient 
+        Initialization of the CameraClient
         '''
-        self.host = cac.SERVER_HOSTNAME
-        self.port = cac.PORT
-        
-        self._python2 = ''
+        if host is None:
+            self.host = SERVER_HOSTNAME
+        if port is None:
+            self.port = PORT + self.port_running_index
+            self.port_running_index += 1
+
     
-    @property
-    def python2(self):
-        if self._python2:
-            cmd = self._python2
-        else:
-            if platform.system() == 'Windows':
-                cmd = 'C:\Python27\python.exe'
-            else:
-                cmd = 'python2'
-        return cmd 
 
-    @python2.setter
-    def python2(self, string):
-        self._python2 = string
-
-
-    def sendCommand(self, command_string, retries=MAX_RETRIES):
+    def sendCommand(self, command_string, retries=MAX_RETRIES, listen=False):
         '''
         Send an arbitrary command to the CameraServer.
         All the methods of the Camera class (see camera_server.py) are supported.
@@ -62,6 +58,9 @@ class CameraClient:
         INPUT ARGUMETNS     DESCRIPTION
         command_string      function;parameters,comma,separated
                             For example "acquireSeries;0,01,0,5,'label'"
+        
+        listen : bool
+            If true, expect the server to return a message.
 
         This is where a socket connection to the server is formed. After the command_string
         has been send, the socket terminates.
@@ -83,6 +82,16 @@ class CameraClient:
                     time.sleep(RETRY_INTERVAL)
                 
             s.sendall(command_string.encode())
+
+            # Listen response
+            string = ''
+            if listen:
+                while True:
+                    data = s.recv(1024)
+                    if not data: break
+                    string += data
+            
+
 
 
     def acquireSeries(self, exposure_time, image_interval, N_frames, label, subdir, trigger_direction):
@@ -131,9 +140,24 @@ class CameraClient:
         Start a local camera server instance.
         '''
 
-        subprocess.Popen([self.python2, os.path.join(CODE_ROOTDIR, 'camera_server.py')],
-            stdout=open(os.devnull, 'w'))
+        subprocess.Popen(
+                [
+                    sys.executable,
+                    os.path.join(CODE_ROOTDIR, 'camera_server.py'),
+                    '--port', str(self.port)
+                    ],
+                stdout=open(os.devnull, 'w'))
 
+
+    def get_cameras(self):
+        '''Lists available cameras (their names) on the server.
+        '''
+        self.sendCommand(f'get_cameras', listen=True)
+
+    def set_camera(self, name):
+        '''Sets what camera to use on the server.
+        '''
+        self.sendCommand(f'set_camera;{name}')
 
     def close_server(self):
         '''
@@ -147,10 +171,43 @@ class CameraClient:
         
 
 
-def test():
-    cam = CameraClient()
-    cam.acquireSeries(0.01, 0, 5, 'test')
+def main():
 
+    client = CameraClient()
+
+    print("Welcome to GonioImsoft CameraClient's interactive test program")
+    print('Type in commands and press enter.')
+
+    while True:
+        cmd = input('#').split(' ')
+        
+        if not cmd:
+            continue
+
+        if cmd[0] == 'help':
+            if len(cmd) == 1:
+                help(client)
+            else:
+                method = getattr(client, cmd[1], None)
+                if method is None:
+                    print(f'No such command as "{cmd[1]}"')
+                    continue
+
+                print(method.__doc__)
+
+        else:
+            method = getattr(client, cmd[0], None)
+            
+            if method is None:
+                print(f'No such command as "{cmd[0]}"')
+                continue
+
+            if len(cmd) == 1:
+                message = method()
+            else:
+                message = method(cmd[1:])
+
+            print(message)
 
 if __name__ == "__main__":
-    test()
+    main()
