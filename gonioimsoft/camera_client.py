@@ -82,16 +82,17 @@ class CameraClient:
                     time.sleep(RETRY_INTERVAL)
                 
             s.sendall(command_string.encode())
-
+            
             # Listen response
-            string = ''
             if listen:
+                response = ''
                 while True:
                     data = s.recv(1024)
                     if not data: break
-                    string += data
+                    response += data.decode()
             
-
+                
+                return response
 
 
     def acquireSeries(self, exposure_time, image_interval, N_frames, label, subdir, trigger_direction):
@@ -152,7 +153,7 @@ class CameraClient:
     def get_cameras(self):
         '''Lists available cameras (their names) on the server.
         '''
-        self.sendCommand(f'get_cameras', listen=True)
+        return self.sendCommand(f'get_cameras', listen=True)
 
     def set_camera(self, name):
         '''Sets what camera to use on the server.

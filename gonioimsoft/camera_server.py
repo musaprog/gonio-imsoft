@@ -38,8 +38,8 @@ import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 from matplotlib.widgets import RectangleSelector
 
-import camera_communication as cac
-from camera_communication import SAVING_DRIVE
+import .camera_communication as cac
+from .camera_communication import SAVING_DRIVE
 
 DEFAULT_SAVING_DIRECTORY = "D:\imaging_data"
 DEFAULT_MICROMANAGER_DIR = 'C:/Program Files/Micro-Manager-2.0beta'
@@ -471,7 +471,7 @@ class CameraServer:
                           'set_roi': self.cam.set_roi,
                           'set_save_stack': self.cam.set_save_stack,
                           'get_cameras': self.get_cameras,
-                          'set_cameras': self.set_camera,
+                          'set_camera': self.set_camera,
                           'ping': self.ping,
                           'exit': self.stop}
 
@@ -479,7 +479,7 @@ class CameraServer:
 
 
     def get_cameras(self):
-        cameras = sef.cam.get_cameras()
+        cameras = self.cam.get_cameras()
         return cameras
 
     def set_camera(self, name):
@@ -521,22 +521,30 @@ class CameraServer:
             string = ''
             while True:
                 data = conn.recv(1024)
-                if not data: break
+                #if not data: break
                 string += data.decode()
-            
+                break
+
             if not string:
                 conn.close()
                 continue
             
             print('Recieved command "'+string+'" at time '+str(time.time()))
-            func, parameters = string.split(';')
-
+            if ';' in string:
+                func, parameters = string.split(';')
+                parameters = parameters.split(':')
+            else:
+                func = string
+                parameters = None
+        
             # Can close connection early, no response so let's not delay the client
             if not func in self.responding:
                 conn.close()
-
-            parameters = parameters.split(':')
-            response = self.functions[func](*parameters)
+            
+            if parameters:
+                response = self.functions[func](*parameters)
+            else:
+                response = self.functions[func]()
 
             # Say back the response and close because still open
             if func in self.responding:
