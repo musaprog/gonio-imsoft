@@ -38,7 +38,7 @@ import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 from matplotlib.widgets import RectangleSelector
 
-import .camera_communication as cac
+from .camera_communication import PORT
 from .camera_communication import SAVING_DRIVE
 
 DEFAULT_SAVING_DIRECTORY = "D:\imaging_data"
@@ -449,7 +449,7 @@ class CameraServer:
     def __init__(self, camera, port=None):
         
         if port is None:
-            port = cac.PORT
+            port = PORT
         HOST = ''           # This is not cac.SERVER_HOSTNAME, leave empty
 
         self.running = False
