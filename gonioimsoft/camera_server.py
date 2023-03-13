@@ -212,7 +212,7 @@ class MMCamera:
         #self.mmc.initializeAllDevices()
         #self.mmc.setCameraDevice('Camera')
             
-        self.settings = {}
+        self.settings = {'exposure_time': }
         
         #self.mmc.setCircularBufferMemoryFootprint(4000)
         self.live_queue= False
