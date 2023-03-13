@@ -206,7 +206,7 @@ def main():
             if len(cmd) == 1:
                 message = method()
             else:
-                message = method(cmd[1:])
+                message = method(*cmd[1:])
 
             print(message)
 
