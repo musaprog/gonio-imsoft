@@ -42,7 +42,7 @@ from matplotlib.widgets import RectangleSelector
 from .camera_communication import PORT
 
 DEFAULT_SAVING_DIRECTORY = "imaging_data"
-DEFAULT_MICROMANAGER_DIR = 'C:/Program Files/Micro-Manager-2.0beta'
+DEFAULT_MICROMANAGER_DIR = 'C:/Program Files/Micro-Manager-2.0'
 
 
 class ImageShower:
@@ -204,9 +204,10 @@ class MMCamera:
         self.set_saving_directory(saving_directory)
         
         self.mmc = pymmcore.CMMCore() 
-        self.mmc.loadDevice('Camera', 'HamamatsuHam', 'HamamatsuHam_DCAM')
-        self.mmc.initializeAllDevices()
-        self.mmc.setCameraDevice('Camera')
+        
+        #self.mmc.loadDevice('Camera', 'HamamatsuHam', 'HamamatsuHam_DCAM')
+        #self.mmc.initializeAllDevices()
+        #self.mmc.setCameraDevice('Camera')
             
         self.settings = {'binning': '1x1'}
         
@@ -220,6 +221,26 @@ class MMCamera:
         self.description_string = ''
 
         self.save_stack = False
+
+
+    def get_cameras(self):
+        '''Lists available MicroManager configuration files in .
+        '''
+        return [fn for fn in os.listdir(DEFAULT_MICROMANAGER_DIR) if fn.endswith('.cfg')]
+
+
+    def set_camera(self, name):
+        '''Set the provided configuration file.
+        '''
+        if not os.path.exists(name):
+            name = os.path.join(DEFAULT_MICRONAMAGER_DIR, name)
+            
+            if not os.path.exists(name):
+                print(f'Couldnt open configuration file named: {name}'.)
+                return
+
+        self.mmc.loadSystemConfiguration(name)
+
 
 
     def acquire_single(self, save, subdir):
