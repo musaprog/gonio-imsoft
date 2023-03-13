@@ -236,7 +236,7 @@ class MMCamera:
             name = os.path.join(DEFAULT_MICRONAMAGER_DIR, name)
             
             if not os.path.exists(name):
-                print(f'Couldnt open configuration file named: {name}'.)
+                print(f'Couldnt open configuration file named: {name}')
                 return
 
         self.mmc.loadSystemConfiguration(name)
