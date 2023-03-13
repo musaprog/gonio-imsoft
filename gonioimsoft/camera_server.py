@@ -205,13 +205,14 @@ class MMCamera:
         
         self.mmc = pymmcore.CMMCore() 
         
+        self._device_name = None
+
         #self.mmc.loadDevice('Camera', 'HamamatsuHam', 'HamamatsuHam_DCAM')
         #self.mmc.initializeAllDevices()
         #self.mmc.setCameraDevice('Camera')
             
-        self.settings = {'binning': '1x1'}
+        self.settings = {}
         
-        self.mmc.prepareSequenceAcquisition('Camera')
         #self.mmc.setCircularBufferMemoryFootprint(4000)
         self.live_queue= False
 
@@ -240,7 +241,10 @@ class MMCamera:
                 return
 
         self.mmc.loadSystemConfiguration(name)
-
+        
+        # Rename the current camera to Camera
+        self._device_name = self.mmc.getDeviceName()
+        self.mmc.prepareSequenceAcquisition(self._device_name)
 
 
     def acquire_single(self, save, subdir):
@@ -308,12 +312,12 @@ class MMCamera:
 
         if trigger_direction == 'send':
             print(" Camera sending a trigger pulse")
-            self.mmc.setProperty('Camera', "OUTPUT TRIGGER KIND[0]","EXPOSURE")
-            self.mmc.setProperty('Camera', "OUTPUT TRIGGER POLARITY[0]","NEGATIVE")
+            self.mmc.setProperty(self._device_name, "OUTPUT TRIGGER KIND[0]","EXPOSURE")
+            self.mmc.setProperty(self._device_name, "OUTPUT TRIGGER POLARITY[0]","NEGATIVE")
         elif trigger_direction== 'receive':
             print(" Camera recieving / waiting for a trigger pulse")
-            self.mmc.setProperty('Camera', "TRIGGER SOURCE","EXTERNAL")
-            self.mmc.setProperty('Camera', "TriggerPolarity","POSITIVE")
+            self.mmc.setProperty(self._device_name, "TRIGGER SOURCE","EXTERNAL")
+            self.mmc.setProperty(self._device_name, "TriggerPolarity","POSITIVE")
         else:
             raise ValueError('trigger_direction has to be {} or {}, not {}'.format('receive', 'send', trigger_direction))
 
@@ -353,7 +357,7 @@ class MMCamera:
         save_thread = threading.Thread(target=self.save_images, args=(images,label,metadata,os.path.join(self.saving_directory, subdir)))
         save_thread.start()
         
-        self.mmc.setProperty('Camera', "TRIGGER SOURCE","INTERNAL")
+        self.mmc.setProperty(self._device_name, "TRIGGER SOURCE","INTERNAL")
         print('acquired')
 
     
@@ -404,7 +408,7 @@ class MMCamera:
         Binning '2x2' for example.
         '''
         if not self.settings['binning'] == binning:
-            self.mmc.setProperty('Camera', 'Binning', binning)
+            self.mmc.setProperty(self._device_name, 'Binning', binning)
             self.settings['binning'] =  binning
 
     def set_roi(self, x,y,w,h):
