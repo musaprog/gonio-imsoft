@@ -247,7 +247,7 @@ class MMCamera:
         self.mmc.prepareSequenceAcquisition(self._device_name)
 
 
-    def acquire_single(self, save, subdir):
+    def acquire_single(self, exposure_time, save, subdir):
         '''
         Acquire a single image.
 
@@ -255,11 +255,11 @@ class MMCamera:
         subdir      Subdirectory for saving
         '''
         
-        exposure_time = 0.01
-        binning = '2x2'
-
-        self.set_binning(binning)
+        exposure_time = float(exposure_time)
         self.mmc.setExposure(exposure_time*1000)
+        #binning = '2x2'
+
+        #self.set_binning(binning)
 
         start_time = str(datetime.datetime.now())
  

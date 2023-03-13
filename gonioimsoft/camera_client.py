@@ -112,7 +112,7 @@ class CameraClient:
 
 
     def acquireSingle(self, save, subdir):
-        self.sendCommand('acquireSingle;{}:{}'.format(str(save), subdir))
+        self.sendCommand('acquireSingle;0.1;{}:{}'.format(str(save), subdir))
 
     
     def setSavingDirectory(self, saving_directory):
