@@ -555,7 +555,7 @@ class CameraServer:
         '''
         Stop running the camera server.
         '''
-        self.camera.close()
+        self.cam.close()
         self.running = False
 
 
