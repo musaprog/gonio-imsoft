@@ -204,7 +204,8 @@ class MMCamera:
         self.set_saving_directory(saving_directory)
         
         self.mmc = pymmcore.CMMCore() 
-        
+        self.mmc.setDeviceAdapterSearchPaths([DEFAULT_MICROMANAGER_DIR])
+
         self._device_name = None
 
         #self.mmc.loadDevice('Camera', 'HamamatsuHam', 'HamamatsuHam_DCAM')
