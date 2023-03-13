@@ -243,8 +243,7 @@ class MMCamera:
 
         self.mmc.loadSystemConfiguration(name)
         
-        # Rename the current camera to Camera
-        self._device_name = self.mmc.getDeviceName()
+        self._device_name = self.mmc.getCameraDevice()
         self.mmc.prepareSequenceAcquisition(self._device_name)
 
 
