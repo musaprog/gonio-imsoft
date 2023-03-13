@@ -31,6 +31,7 @@ import multiprocessing
 try:
     import pymmcore
 except ImportError:
+    pymmcore = None
     print('pymmcore not installed')
 import tifffile
 import numpy as np
@@ -39,9 +40,8 @@ from matplotlib.animation import FuncAnimation
 from matplotlib.widgets import RectangleSelector
 
 from .camera_communication import PORT
-from .camera_communication import SAVING_DRIVE
 
-DEFAULT_SAVING_DIRECTORY = "D:\imaging_data"
+DEFAULT_SAVING_DIRECTORY = "imaging_data"
 DEFAULT_MICROMANAGER_DIR = 'C:/Program Files/Micro-Manager-2.0beta'
 
 
@@ -361,7 +361,6 @@ class MMCamera:
         Sets where the specimen folders are saved and if the directory
         does not yet exist, creates it.
         '''
-        saving_directory = os.path.join(SAVING_DRIVE, saving_directory)
         if not os.path.isdir(saving_directory):
             os.makedirs(saving_directory)
             
@@ -578,14 +577,26 @@ def main():
 
     parser.add_argument('-p', '--port')
     parser.add_argument('-c', '--camera')
+    parser.add_argument('-s', '--save-directory')
+
     args = parser.parse_args()
 
+
     if args.camera == 'mm':
-        camera = MMCamera()
+        Camera = MMCamera
     elif args.camera == 'dummy':
-        camera = DummyCamera()
+        Camera = DummyCamera
     else:
-        camera = MMCamera()
+        # Default
+        if pymmcore:
+            Camera = MMCamera
+        else:
+            Camera = DummyCamera
+
+    camera = Camera()
+
+    if args.save_directory:
+        camera.set_saving_directory(args.save_directory)
 
     cam_server = CameraServer(camera, args.port)
     cam_server.run()
