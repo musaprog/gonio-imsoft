@@ -234,7 +234,7 @@ class MMCamera:
         '''Set the provided configuration file.
         '''
         if not os.path.exists(name):
-            name = os.path.join(DEFAULT_MICRONAMAGER_DIR, name)
+            name = os.path.join(DEFAULT_MICROMANAGER_DIR, name)
             
             if not os.path.exists(name):
                 print(f'Couldnt open configuration file named: {name}')
