@@ -461,8 +461,9 @@ class MMCamera:
 
 
     def close(self):
-        self.live_queue.put('close')
-        self.lifep.join()
+        if live_queue:
+            self.live_queue.put('close')
+            self.lifep.join()
 
     def wait_for_client(self):
         pass
