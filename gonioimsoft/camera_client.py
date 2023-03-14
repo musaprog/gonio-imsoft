@@ -153,12 +153,36 @@ class CameraClient:
     def get_cameras(self):
         '''Lists available cameras (their names) on the server.
         '''
-        return self.sendCommand(f'get_cameras', listen=True)
+        return self.sendCommand('get_cameras', listen=True)
 
     def set_camera(self, name):
         '''Sets what camera to use on the server.
         '''
         self.sendCommand(f'set_camera;{name}')
+
+
+    def get_settings(self):
+        '''Retrieves available settings of the camera device.
+        '''
+        return self.sendCommand('get_settings', listen=True)
+    
+    def get_setting_type(self, setting_name):
+        '''Returns the type of the setting.
+        One of the following: "string", "float" or "integer"
+        '''
+        return self.sendCommand(f'get_setting_type;{setting_name}',
+                                listen=True)
+
+    def get_setting(self, setting_name):
+        '''Returns the current value of the setting as a string.
+        '''
+        return self.sendCommand(f'get_setting;{setting_name}',
+                                listen=True)
+    
+    def set_setting(self, setting_name, value):
+        '''Sets the specified setting to the specified value.
+        '''
+        self.sendCommand(f'set_setting;{setting_name}:value')
 
     def close_server(self):
         '''

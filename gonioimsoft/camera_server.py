@@ -246,6 +246,47 @@ class MMCamera:
         self._device_name = self.mmc.getCameraDevice()
         self.mmc.prepareSequenceAcquisition(self._device_name)
 
+    def get_settings(self):
+        '''Returns device property names
+        '''
+        return self.mmc.getDevicePropertyNames(self._device_name)
+
+
+    def get_setting_type(self, setting_name):
+        '''Returns "string", "integer" or "float".
+
+        Returns an empty string if the setting does not exist.
+        '''
+        try:
+            num = self.mmc.getPropertyType(self._device_name, setting_name)
+        except RuntimeError as e:
+            print(f'Error! No setting named: {setting_name}')
+            return ''
+        
+        if num == 1:
+            return 'string'
+        elif num == 2:
+            return 'float'
+        elif num == 3:
+            return 'integer'
+
+
+    def get_setting(self, setting_name):
+        return self.mmc.getProperty(self._device_name, setting_name)
+
+    def set_setting(self, setting_name, value):
+        
+        type_name = self.get_setting_type(setting_name)
+        if type_name == 'float':
+            value = float(value)
+        elif type_name == 'integer':
+            value = int(value)
+        elif type_name == ''
+            print('Error! No setting named: {setting_name}')
+            return
+
+        print(f'Changing {setting_name} to its new value {value}')
+        self.mmc.setProperty(self._device_name, setting_name, value)
 
     def acquire_single(self, exposure_time, save, subdir):
         '''
@@ -500,10 +541,14 @@ class CameraServer:
                           'set_save_stack': self.cam.set_save_stack,
                           'get_cameras': self.get_cameras,
                           'set_camera': self.set_camera,
+                          'get_settings': self.cam.get_settings,
+                          'get_setting_type': self.cam.get_setting_type,
+                          'get_setting': self.cam.get_setting,
+                          'set_setting': self.cam.set_setting,
                           'ping': self.ping,
                           'exit': self.stop}
 
-        self.responding = set(['get_cameras'])
+        self.responding = set(['get_cameras', 'get_settings', 'get_setting_type', 'get_setting'])
 
 
     def get_cameras(self):
