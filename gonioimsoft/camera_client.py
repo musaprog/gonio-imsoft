@@ -8,6 +8,7 @@ import subprocess
 import platform
 import sys
 
+
 from .directories import CODE_ROOTDIR
 from .camera_communication import SERVER_HOSTNAME, PORT
 
@@ -43,11 +44,13 @@ class CameraClient:
         Initialization of the CameraClient
         '''
         if host is None:
-            self.host = SERVER_HOSTNAME
-        if port is None:
-            self.port = PORT + self.port_running_index
-            self.port_running_index += 1
+            host = SERVER_HOSTNAME
+        self.host = host
 
+        if port is None:
+            port = PORT + self.port_running_index
+            self.port_running_index += 1
+        self.port = port
     
 
     def sendCommand(self, command_string, retries=MAX_RETRIES, listen=False):
@@ -196,8 +199,18 @@ class CameraClient:
 
 
 def main():
+    import argparse
 
-    client = CameraClient()
+    parser = argparse.ArgumentParser(
+            prog='GonioImsoft Camera Client',
+            description='Controls the server')
+
+    parser.add_argument('-p', '--port')
+    parser.add_argument('-a', '--address')
+
+    args = parser.parse_args()
+
+    client = CameraClient(args.address, args.port)
 
     print("Welcome to GonioImsoft CameraClient's interactive test program")
     print('Type in commands and press enter.')
