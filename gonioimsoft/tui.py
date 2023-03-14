@@ -387,7 +387,7 @@ class GonioImsoftTUI:
         if label:
             print(label)
         
-        key = self._readKey()
+        key = self.libui.read_key()
 
         if key == '\r':
             # If Enter presed return False, stopping the imaging
@@ -424,7 +424,7 @@ class GonioImsoftTUI:
             
             lines = upper_lines
 
-            key = self._readKey()
+            key = self.libui.read_key()
 
             if static:
                 if trigger and self.dynamic.trigger_rotation:
