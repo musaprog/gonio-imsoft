@@ -149,7 +149,13 @@ class Dynamic:
         '''
         Sending trigger.
         '''
+
         chan = self.dynamic_parameters.get('trigger_out_channel', None)
+        
+        if nidaqmx is None:
+            print(f'    pretending to send trigger on chan {chan}')
+            return None
+
         if chan:
             with nidaqmx.Task() as task:
                 task.ao_channels.add_ao_voltage_chan(chan)
@@ -170,6 +176,10 @@ class Dynamic:
         INPUT ARGUMENTS     DESCRIPTION
         device              A string (single device) or a list of strings (many devices at once)
         '''
+        if nidaqmx is None:
+            print(f'    pretending to set {device} on value {value}')
+            return None
+
         with nidaqmx.Task() as task:
             
             if type(device) == type('string'):
@@ -192,6 +202,10 @@ class Dynamic:
         '''
         Doesn't return until trigger signal is received.
         '''
+        if nidaqmx is None:
+            print(f'    waiting for trigger')
+            return None
+
         with nidaqmx.Task() as task:
             device = nidaqmx.system.device.Device('Dev1')
             
