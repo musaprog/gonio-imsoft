@@ -646,6 +646,10 @@ class CameraServer:
 
             # Say back the response and close because still open
             if func in self.responding:
+                
+                if isinstance(response, list):
+                    response = ':'.join(response)
+
                 conn.sendall(str(response).encode())
                 conn.close()
 
