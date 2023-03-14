@@ -375,19 +375,23 @@ class MMCamera:
 
         #self.set_binning('2x2')
         #print(" Pixel binning 2x2")
+        
+        device_name = self.mmc.getDeviceName(self._device_name)
+        print(f'Device name {device_name}')
 
-        if trigger_direction == 'send':
-            print(" Camera sending a trigger pulse")
-            self.mmc.setProperty(self._device_name, "OUTPUT TRIGGER KIND[0]","EXPOSURE")
-            self.mmc.setProperty(self._device_name, "OUTPUT TRIGGER POLARITY[0]","NEGATIVE")
-        elif trigger_direction== 'receive':
-            print(" Camera recieving / waiting for a trigger pulse")
-            self.mmc.setProperty(self._device_name, "TRIGGER SOURCE","EXTERNAL")
-            self.mmc.setProperty(self._device_name, "TriggerPolarity","POSITIVE")
-        elif trigger_direction == 'none':
-            pass
-        else:
-            raise ValueError('trigger_direction has to be send, receive or none, not {trigger_direction}')
+        if 'hamamatsu' in device_name.lower():
+            if trigger_direction == 'send':
+                print(" Camera sending a trigger pulse")
+                self.mmc.setProperty(self._device_name, "OUTPUT TRIGGER KIND[0]","EXPOSURE")
+                self.mmc.setProperty(self._device_name, "OUTPUT TRIGGER POLARITY[0]","NEGATIVE")
+            elif trigger_direction== 'receive':
+                print(" Camera recieving / waiting for a trigger pulse")
+                self.mmc.setProperty(self._device_name, "TRIGGER SOURCE","EXTERNAL")
+                self.mmc.setProperty(self._device_name, "TriggerPolarity","POSITIVE")
+            elif trigger_direction == 'none':
+                pass
+            else:
+                raise ValueError('trigger_direction has to be send, receive or none, not {trigger_direction}')
 
         
         print("Circular buffer " + str(self.mmc.getCircularBufferMemoryFootprint()) + " MB")
@@ -425,7 +429,7 @@ class MMCamera:
         save_thread = threading.Thread(target=self.save_images, args=(images,label,metadata,os.path.join(self.saving_directory, subdir)))
         save_thread.start()
         
-        if trigger_direction == 'external':
+        if 'hamamatsu' in device_name.lower() and trigger_direction == 'receive':
             self.mmc.setProperty(self._device_name, "TRIGGER SOURCE","INTERNAL")
         print('acquired')
 
