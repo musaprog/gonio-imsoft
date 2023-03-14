@@ -281,7 +281,7 @@ class MMCamera:
             value = float(value)
         elif type_name == 'integer':
             value = int(value)
-        elif type_name == ''
+        elif type_name == '':
             print('Error! No setting named: {setting_name}')
             return
 
