@@ -169,7 +169,8 @@ class DummyCamera:
     '''A dummy camera suitable for testing the server/client.
     '''
     def __init__(self):
-        self.settings = {}
+        self.settings = {'setting1' : 'na', 'setting2': 0.0, 'setting3': 1}
+
     def acquire_single(self, save, subdir):
         pass
     def acquire_series(self, exposure_time, image_interval, N_frames, label, subdir, trigger_direction):
@@ -193,6 +194,26 @@ class DummyCamera:
         return ['dummy1', 'dummy2']
     def set_camera(self, name):
         self.camera = name
+    def get_settings(self):
+        return list(self.settings.keys())
+    def get_setting_type(self, setting_name):
+        if setting_name == 'setting1':
+            return 'string'
+        elif setting_name == 'setting2':
+            return 'float'
+        elif setting_name == 'setting3':
+            return 'integer'
+        else:
+            print('Invalid setting')
+            return ''
+    def get_setting(self, setting_name):
+        value = self.settings.get(setting_name, None)
+        if value is None:
+            return ''
+        return value
+    def set_setting(self, setting_name, value):
+        self.settings[setting_name] = value
+
 
 
 class MMCamera:
