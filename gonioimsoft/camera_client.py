@@ -182,7 +182,7 @@ class CameraClient:
     def set_setting(self, setting_name, value):
         '''Sets the specified setting to the specified value.
         '''
-        self.sendCommand(f'set_setting;{setting_name}:value')
+        self.sendCommand(f'set_setting;{setting_name}:{value}')
 
     def close_server(self):
         '''
