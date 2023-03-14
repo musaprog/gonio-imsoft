@@ -17,7 +17,6 @@ except ModuleNotFoundError:
 from gonioimsoft.anglepairs import saveAnglePairs, loadAnglePairs, toDegrees
 from gonioimsoft.arduino_serial import ArduinoReader
 from gonioimsoft.camera_client import CameraClient
-from gonioimsoft.camera_communication import SAVING_DRIVE
 from gonioimsoft.motors import Motor
 from gonioimsoft.imaging_parameters import (
         DEFAULT_DYNAMIC_PARAMETERS,
@@ -586,7 +585,7 @@ class Dynamic:
             motor.move_to(0)
 
         if self.triggered_anglepairs:
-            fn = os.path.join(SAVING_DRIVE, self.data_savedir, self.preparation['name'], 'anglepairs.txt')
+            fn = os.path.join(self.data_savedir, self.preparation['name'], 'anglepairs.txt')
             os.makedirs(os.path.dirname(fn), exist_ok=True)
 
             print(fn)
