@@ -518,15 +518,15 @@ class CameraServer:
 
 
     def wait_for_client(self):
-        '''
-        Waits until client confirms that it is ready
+        '''Waits until client confirms that it is ready by sending us
+        anything (usually ping).
         '''
         conn, addr = self.socket.accept()
         string = ''
         while True:
             data = conn.recv(1024)
             if not data: break
-            string += data
+            string += data.decode()
         conn.close()
         print("Client ready")
         
