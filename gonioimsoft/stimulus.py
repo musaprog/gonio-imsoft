@@ -4,7 +4,10 @@ import os
 import numpy as np
 import scipy.signal
 
-from biosystfiles import extract as bsextract
+try:
+    from biosystfiles import extract as bsextract
+except ModuleNotFoundError:
+    bsextract = None
 
 class StimulusBuilder:
     '''
@@ -55,6 +58,9 @@ class StimulusBuilder:
 
         Returns the overload stimulus and new fs
         '''
+        if bsextract is None:
+            raise ModuleNotFoundError('Module required\npip install python-biosystfiles')
+
         ffn = os.path.join('biosyst_stimuli', fn)
         self.overload_stimulus, self.fs = bsextract(ffn, channel)
         self.overload_stimulus = self.overload_stimulus.flatten()
