@@ -286,7 +286,11 @@ class MMCamera:
             return
 
         print(f'Changing {setting_name} to its new value {value}')
-        self.mmc.setProperty(self._device_name, setting_name, value)
+        try:
+            self.mmc.setProperty(self._device_name, setting_name, value)
+        except RuntimeError as e:
+            print('Error! The set value likely out of range.')
+            print(e)
 
     def acquire_single(self, exposure_time, save, subdir):
         '''
