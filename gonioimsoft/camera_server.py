@@ -307,8 +307,8 @@ class MMCamera:
         print(" N_frames " + str(N_frames))
         print("- CAMERA SETTINGS")
 
-        self.set_binning('2x2')
-        print(" Pixel binning 2x2")
+        #self.set_binning('2x2')
+        #print(" Pixel binning 2x2")
 
         if trigger_direction == 'send':
             print(" Camera sending a trigger pulse")
@@ -318,8 +318,10 @@ class MMCamera:
             print(" Camera recieving / waiting for a trigger pulse")
             self.mmc.setProperty(self._device_name, "TRIGGER SOURCE","EXTERNAL")
             self.mmc.setProperty(self._device_name, "TriggerPolarity","POSITIVE")
+        elif trigger_direction == 'none':
+            pass
         else:
-            raise ValueError('trigger_direction has to be {} or {}, not {}'.format('receive', 'send', trigger_direction))
+            raise ValueError('trigger_direction has to be send, receive or none, not {trigger_direction}')
 
         
         print("Circular buffer " + str(self.mmc.getCircularBufferMemoryFootprint()) + " MB")
