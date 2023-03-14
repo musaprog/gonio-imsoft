@@ -350,7 +350,8 @@ class Dynamic:
                 dynamic_parameters[param] = [dynamic_parameters[param][0]] * dynamic_parameters['repeats'] 
 
         # Set stack save option
-        self.camera.set_save_stack(dynamic_parameters.get('save_stack', False))
+        for camera in self.cameras:
+            camera.set_save_stack(dynamic_parameters.get('save_stack', False))
         
 
         # Get the current rotation stage angles and use this through the repeating
