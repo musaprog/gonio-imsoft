@@ -429,7 +429,13 @@ class Dynamic:
             irwave[-1] = dynamic_parameters['ir_waiting']
 
 
-        self.camera.acquireSeries(dynamic_parameters['frame_length'], 0, N_frames, label, image_directory, 'send')
+        if len(self.cameras) == 1:
+            self.cameras[0].acquireSeries(dynamic_parameters['frame_length'], 0, N_frames, label, image_directory, 'send')
+        else:
+            # Temporal workaround only
+            self.cameras[0].acquireSeries(dynamic_parameters['frame_length'], 0, N_frames, f'{label}_cam0', image_directory, 'send')
+            for i_camera, camera in enumerate(self.cameras[1:]):
+                camera.acquireSeries(dynamic_parameters['frame_length'], 0, N_frames, f'{label}_cam{i_camera+1}', image_directory, 'none')
 
         self.analog_output([dynamic_parameters['flash_channel'], dynamic_parameters['ir_channel']], [stimulus,irwave], fs, wait_trigger=True)
 
