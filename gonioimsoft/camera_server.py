@@ -184,7 +184,7 @@ class DummyCamera:
     def set_roi(self, x,y,w,h):
         self.settings['roi'] = [x,y,w,h]
     def set_save_stack(self, boolean):
-        self.setttings['save-stack'] = boolean
+        self.settings['save-stack'] = boolean
 
     def save_description(self, filename, string):
         pass
