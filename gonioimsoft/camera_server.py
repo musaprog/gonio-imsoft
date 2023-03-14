@@ -359,7 +359,7 @@ class MMCamera:
         save_thread = threading.Thread(target=self.save_images, args=(images,label,metadata,os.path.join(self.saving_directory, subdir)))
         save_thread.start()
         
-        if trigger_source == 'external':
+        if trigger_direction == 'external':
             self.mmc.setProperty(self._device_name, "TRIGGER SOURCE","INTERNAL")
         print('acquired')
 
