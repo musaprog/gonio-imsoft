@@ -280,7 +280,8 @@ class GonioImsoftTUI:
                 ['Quit', self.quit],
                 ['\n', None],
                 ['Add local camera', self.add_local_camera],
-                ['Add remote camera', self.add_remote_camera]]
+                ['Add remote camera', self.add_remote_camera],
+                ['Edit camera settings', self.camera_settings_edit]]
         #['Start camera server (local)', self.dynamic.camera.startServer],
         #['Stop camera server', self.dynamic.camera.close_server]
 
@@ -637,6 +638,39 @@ class GonioImsoftTUI:
                     with open(self.glofn, 'w') as fp: json.dump(self.locked_parameters, fp)
                 break
 
+    
+    def camera_settings_edit(self):
+        '''View to select a camera and edit it's settings
+        '''
+        
+        while True:
+
+            camera = self.libui.item_select(
+                    self.dynamic.cameras+['..back'],
+                    "Select the camera to edit")
+            
+            if camera == '..back':
+                break
+            
+            while True:
+                setting_name = self.libui.item_select(
+                        camera.get_settings()+['..back'],
+                        "Select the setting to edit")
+
+                if setting_name == '..back':
+                    break
+                
+                value = camera.get_setting(setting_name)
+                value_type = camera.get_setting_type(setting_name)
+
+                self.libui.print(f'{setting_name} ({value_type})')
+                self.libui.print(f'Current value: {value}')
+                new_value = self.libui.input('New value: ')
+
+                camera.set_setting(setting_name, new_value)
+                
+                self.libui.clear_screen()
+                
 
     def quit(self):
         self.quit = True
