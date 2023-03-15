@@ -170,6 +170,7 @@ class DummyCamera:
     '''
     def __init__(self):
         self.settings = {'setting1' : 'na', 'setting2': 0.0, 'setting3': 1}
+        self.camera = None
 
     def acquire_single(self, save, subdir):
         pass
