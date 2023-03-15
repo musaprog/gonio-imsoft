@@ -331,9 +331,13 @@ class GonioImsoftTUI:
         # Check camera server status
         for i_camera, camera in enumerate(self.dynamic.cameras):
             if camera.isServerRunning():
-                cs = 'ON'
+                cam_name = camera.get_camera()
+                if cam_name:
+                    cs = f'{cam_name}\n'
+                else:
+                    cs = 'No camera selected\n'
             else:
-                cs = 'OFF'
+                cs = 'Offline'
 
             cam += f'Cam{i_camera} {cs}'
 
