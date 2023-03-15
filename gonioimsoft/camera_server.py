@@ -278,6 +278,8 @@ class MMCamera:
     def get_settings(self):
         '''Returns device property names
         '''
+        if self._device_name is None:
+            return ''
         return self.mmc.getDevicePropertyNames(self._device_name)
 
 
@@ -651,7 +653,7 @@ class CameraServer:
             # Say back the response and close because still open
             if func in self.responding:
                 
-                if isinstance(response, list):
+                if isinstance(response, (list, tuple)):
                     response = ':'.join(response)
 
                 conn.sendall(str(response).encode())
@@ -705,7 +707,7 @@ def main():
     if args.save_directory:
         camera.set_saving_directory(args.save_directory)
 
-    cam_server = CameraServer(camera, args.port)
+    cam_server = CameraServer(camera, int(args.port))
     cam_server.run()
             
         
