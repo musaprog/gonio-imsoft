@@ -157,6 +157,13 @@ class CameraClient:
         '''
         return self.sendCommand('get_cameras', listen=True)
 
+    
+    def get_camera(self):
+        '''Returns a name describing the current camera device.
+        '''
+        return self.sendCommand('get_camera', listen=True)
+
+
     def set_camera(self, name):
         '''Sets what camera to use on the server.
         '''

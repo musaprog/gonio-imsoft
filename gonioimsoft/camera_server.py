@@ -192,6 +192,8 @@ class DummyCamera:
         pass
     def get_cameras(self):
         return ['dummy1', 'dummy2']
+    def get_camera(self):
+        return self.camera
     def set_camera(self, name):
         self.camera = name
     def get_settings(self):
@@ -251,6 +253,11 @@ class MMCamera:
         '''
         return [fn for fn in os.listdir(DEFAULT_MICROMANAGER_DIR) if fn.endswith('.cfg')]
 
+
+    def get_camera(self):
+        '''Returns the label of the current camera.
+        '''
+        return self._device_name
 
     def set_camera(self, name):
         '''Set the provided configuration file.
@@ -569,6 +576,7 @@ class CameraServer:
                           'set_roi': self.cam.set_roi,
                           'set_save_stack': self.cam.set_save_stack,
                           'get_cameras': self.cam.get_cameras,
+                          'get_camera': self.cam.get_camera,
                           'set_camera': self.cam.set_camera,
                           'get_settings': self.cam.get_settings,
                           'get_setting_type': self.cam.get_setting_type,
@@ -577,7 +585,8 @@ class CameraServer:
                           'ping': self.ping,
                           'exit': self.stop}
 
-        self.responding = set(['get_cameras', 'get_settings', 'get_setting_type', 'get_setting'])
+        self.responding = set([
+            'get_cameras', 'get_camera', 'get_settings', 'get_setting_type', 'get_setting'])
 
 
     def ping(self, message):
