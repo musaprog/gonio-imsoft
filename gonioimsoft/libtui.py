@@ -11,6 +11,7 @@ if OS == 'Windows':
     import msvcrt   # reading pressed keys without blocking
 else:
     import sys
+    import select
 
 
 class SimpleTUI:
@@ -32,10 +33,10 @@ class SimpleTUI:
             if msvcrt.kbhit():
                 key = ord(msvcrt.getwch())
                 return chr(key)
-            return ''
         else:
-            return sys.stdin.read(1)
-
+            if select.select([sys.stdin], [], [], 0.1):
+                return sys.stdin.read(1)
+        return ''
 
     def clear_screen(self):
         '''Empties the screen and prints the header if any.
