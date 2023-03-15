@@ -84,9 +84,14 @@ class Dynamic:
 
         self.data_savedir = None
 
+        self.local_servers_running_index = 0
+
     
     def add_camera_client(self, host, port):
-        client = CameraClient(host, port)
+        client = CameraClient(
+                host, port,
+                running_index=self.local_servers_running_index)
+        self.local_servers_running_index += 1
         self.cameras.append(client)
         return client
 

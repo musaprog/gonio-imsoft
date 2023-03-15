@@ -8,6 +8,7 @@ import subprocess
 import platform
 import sys
 import json
+import atexit
 
 from .directories import CODE_ROOTDIR, USERDATA_DIR
 from .camera_communication import SERVER_HOSTNAME, PORT
@@ -39,9 +40,8 @@ class CameraClient:
         The CameraServer port number
     '''
 
-    port_running_index = 0
 
-    def __init__(self, host=None, port=None):
+    def __init__(self, host=None, port=None, running_index=0):
         '''
         Initialization of the CameraClient
         '''
@@ -50,8 +50,7 @@ class CameraClient:
         self.host = host
 
         if port is None:
-            port = PORT + self.port_running_index
-            self.port_running_index += 1
+            port = int(PORT) + int(running_index)
         self.port = port
     
 
@@ -145,14 +144,21 @@ class CameraClient:
         '''
         Start a local camera server instance.
         '''
+        if self.isServerRunning():
+            print('Server already running, not starting again')
+            return
+
+        print(f'Starting a local server on port {self.port}')
 
         subprocess.Popen(
                 [
                     sys.executable,
-                    os.path.join(CODE_ROOTDIR, 'camera_server.py'),
+                    '-m', 'gonioimsoft.camera_server',
                     '--port', str(self.port)
                     ],
                 stdout=open(os.devnull, 'w'))
+
+        atexit.register(self.close_server)
 
 
     def get_cameras(self):
@@ -206,6 +212,7 @@ class CameraClient:
         except ConnectionRefusedError:
             pass
 
+        atexit.unregister(self.close_server)
 
     def save_state(self, label):
         '''Acquires the current camera state and saves it

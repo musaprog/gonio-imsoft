@@ -301,7 +301,7 @@ class GonioImsoftTUI:
         '''
         client = self.dynamic.add_camera_client(None, None)
         
-        if not client.isServerRunning:
+        if not client.isServerRunning():
             client.startServer()
         
         self._add_camera(client)
