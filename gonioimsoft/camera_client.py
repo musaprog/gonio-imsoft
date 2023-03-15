@@ -52,6 +52,8 @@ class CameraClient:
         if port is None:
             port = int(PORT) + int(running_index)
         self.port = port
+
+        self.modified_settings = set()
     
 
     def sendCommand(self, command_string, retries=MAX_RETRIES, listen=False):
@@ -201,6 +203,8 @@ class CameraClient:
         '''Sets the specified setting to the specified value.
         '''
         self.sendCommand(f'set_setting;{setting_name}:{value}')
+        self.modified_settings.add(setting_name)
+
 
     def close_server(self):
         '''
@@ -214,14 +218,20 @@ class CameraClient:
 
         atexit.unregister(self.close_server)
 
-    def save_state(self, label):
+    def save_state(self, label, modified_only=True):
         '''Acquires the current camera state and saves it
+        
+        modified_only : bool
+            If True, save only those settings that have been edited
+            by the user during this session.
         '''
         state = {}
         state['settings'] = {}
         
         # Save camera device settings
         for setting in self.get_settings():
+            if modified_only and setting not in modified_settings:
+                continue
             state['settings'][setting] = self.get_setting(setting)
 
         savedir = os.path.join(SAVEDIR, self.get_camera())

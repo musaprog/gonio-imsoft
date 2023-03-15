@@ -609,7 +609,7 @@ class Dynamic:
 
         # Save camera states
         for camera in self.cameras:
-            camera.save_state('previous')
+            camera.save_state('previous', modified_only=True)
 
         self.set_led(self.dynamic_parameters['ir_channel'], 0)
         self.set_led(self.dynamic_parameters['flash_channel'], 0)
