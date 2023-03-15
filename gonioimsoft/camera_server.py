@@ -228,6 +228,7 @@ class MMCamera:
         self.mmc.setDeviceAdapterSearchPaths([DEFAULT_MICROMANAGER_DIR])
 
         self._device_name = None
+        self._configuration_name = ''
 
         #self.mmc.loadDevice('Camera', 'HamamatsuHam', 'HamamatsuHam_DCAM')
         #self.mmc.initializeAllDevices()
@@ -255,7 +256,7 @@ class MMCamera:
     def get_camera(self):
         '''Returns the label of the current camera.
         '''
-        return self._device_name
+        return self._configuration_name
 
     def set_camera(self, name):
         '''Set the provided configuration file.
@@ -270,7 +271,9 @@ class MMCamera:
         self.mmc.loadSystemConfiguration(name)
         
         self._device_name = self.mmc.getCameraDevice()
+        self._configuration_name = name
         self.mmc.prepareSequenceAcquisition(self._device_name)
+
 
     def get_settings(self):
         '''Returns device property names
