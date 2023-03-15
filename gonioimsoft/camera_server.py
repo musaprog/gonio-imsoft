@@ -157,12 +157,9 @@ class ImageShower:
         
         image = queue.get()
         self.im = plt.imshow(1000*image/np.max(image), cmap='gray', vmin=0, vmax=1, interpolation='none', aspect='auto')
-        self.ani = FuncAnimation(plt.gcf(), self._updateImage, frames=range(100), interval=5, blit=False)
+        self.ani = FuncAnimation(plt.gcf(), self._updateImage, frames=range(100), interval=50, blit=False)
 
-        plt.show(block=False)
-        
-        while not self.close:
-            plt.pause(1)
+        plt.show(block=True)
 
 
 class DummyCamera:
