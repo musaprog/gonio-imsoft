@@ -93,8 +93,9 @@ class CameraClient:
                     data = s.recv(1024)
                     if not data: break
                     response += data.decode()
-                
-                return response.split(':')
+                if ':' in response:
+                    response = response.split(':')
+                return response
 
 
     def acquireSeries(self, exposure_time, image_interval, N_frames, label, subdir, trigger_direction):
