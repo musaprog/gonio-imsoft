@@ -426,7 +426,8 @@ class MMCamera:
                 try:
                     image = self.mmc.popNextImage()
                     break
-                except pymmcore.CMMError:
+                except (pymmcore.CMMError, IndexError):
+                    # Index error for example when circular buffer is still empty
                     time.sleep(exposure_time)
                 
             images.append(image)
@@ -543,7 +544,6 @@ class MMCamera:
     def close(self):
         if live_queue:
             self.live_queue.put('close')
-            self.lifep.join()
 
     def wait_for_client(self):
         pass
