@@ -2,7 +2,11 @@
 import os
 
 import numpy as np
-import scipy.signal
+
+try:
+    import scipy.signal
+except ModuleNotFoundError:
+    scipy = None
 
 try:
     from biosystfiles import extract as bsextract
