@@ -704,7 +704,10 @@ def main():
     if args.save_directory:
         camera.set_saving_directory(args.save_directory)
 
-    cam_server = CameraServer(camera, int(args.port))
+    if args.port:
+        args.port = int(args.port)
+
+    cam_server = CameraServer(camera, args.port)
     cam_server.run()
             
         
