@@ -568,8 +568,8 @@ class CameraServer:
                           'saveDescription': self.cam.save_description,
                           'set_roi': self.cam.set_roi,
                           'set_save_stack': self.cam.set_save_stack,
-                          'get_cameras': self.get_cameras,
-                          'set_camera': self.set_camera,
+                          'get_cameras': self.cam.get_cameras,
+                          'set_camera': self.cam.set_camera,
                           'get_settings': self.cam.get_settings,
                           'get_setting_type': self.cam.get_setting_type,
                           'get_setting': self.cam.get_setting,
@@ -580,17 +580,8 @@ class CameraServer:
         self.responding = set(['get_cameras', 'get_settings', 'get_setting_type', 'get_setting'])
 
 
-    def get_cameras(self):
-        cameras = self.cam.get_cameras()
-        return cameras
-
-    def set_camera(self, name):
-        self.cam.set_camera(name)
-
-
     def ping(self, message):
         print(message)
-
 
 
     def wait_for_client(self):
@@ -606,7 +597,6 @@ class CameraServer:
         conn.close()
         print("Client ready")
         
-
 
     def run(self):
         '''
