@@ -7,13 +7,15 @@ import os
 import subprocess
 import platform
 import sys
+import json
 
-
-from .directories import CODE_ROOTDIR
+from .directories import CODE_ROOTDIR, USERDATA_DIR
 from .camera_communication import SERVER_HOSTNAME, PORT
 
 MAX_RETRIES = 100
 RETRY_INTERVAL = 1
+
+SAVEDIR = os.path.join(USERDATA_DIR, 'camera_states')
 
 
 class CameraClient:
@@ -203,7 +205,49 @@ class CameraClient:
             self.sendCommand('exit;'+'None', retries=0)
         except ConnectionRefusedError:
             pass
+
+
+    def save_state(self, label):
+        '''Acquires the current camera state and saves it
+        '''
+        state = {}
+        state['settings'] = {}
         
+        # Save camera device settings
+        for setting in self.get_settings():
+            state['settings'][setting] = self.get_setting(setting)
+
+        savedir = os.path.join(SAVEDIR, self.get_camera())
+        os.makedirs(savedir, exist_ok=True)
+
+        with open(os.path.join(savedir, f'{label}.json'), 'w') as fp:
+            json.dump(state, fp)
+
+
+    def load_state(self, label):
+        '''Loads a previously saved camera state.
+        '''
+
+        savedir = os.path.join(SAVEDIR, self.get_camera())
+        fn = os.path.join(savedir, f'{label}.json')
+        
+        if not os.path.exists(fn):
+            raise FileNotFoundError(f'{fn} does not exist')
+
+        with open(fn, 'r') as fp:
+            state = json.load(fp)
+
+        for setting, value in state['settings'].items():
+            self.set_setting(setting, value)
+
+
+    def list_states(self):
+        '''Lists saved states available for the current camera.
+        '''
+        savedir = os.path.join(SAVEDIR, self.get_camera())
+        if not os.path.isdir(savedir):
+            return []
+        return [fn.removesuffix('.json') for fn in os.listdir(savedir) if fn.endswith('.json')]
 
 
 def main():
