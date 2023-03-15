@@ -450,7 +450,7 @@ class Dynamic:
 
         if len(self.cameras) == 1:
             self.cameras[0].acquireSeries(dynamic_parameters['frame_length'], 0, N_frames, label, image_directory, 'send')
-        else:
+        elif len(self.cameras) > 1:
             # Temporal workaround only
             self.cameras[0].acquireSeries(dynamic_parameters['frame_length'], 0, N_frames, f'{label}_cam0', image_directory, 'send')
             for i_camera, camera in enumerate(self.cameras[1:]):
