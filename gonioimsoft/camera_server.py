@@ -456,11 +456,11 @@ class MMCamera:
             # Save separate images
             for i, image in enumerate(images):
                 fn = '{}_{}.tiff'.format(label, i)
-                tifffile.imsave(os.path.join(savedir, fn), image, metadata=metadata)
+                tifffile.write(os.path.join(savedir, fn), image, metadata=metadata)
         else:
             # Save a stack
             fn = '{}_stack.tiff'.format(label)
-            tifffile.imsave(os.path.join(savedir, fn), np.asarray(images), metadata=metadata)
+            tifffile.imwrite(os.path.join(savedir, fn), np.asarray(images), metadata=metadata)
         
         self.save_description(os.path.join(savedir, 'description'), self.description_string, internal=True)
 
