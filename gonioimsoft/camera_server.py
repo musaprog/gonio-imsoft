@@ -542,7 +542,7 @@ class MMCamera:
 
 
     def close(self):
-        if live_queue:
+        if self.live_queue:
             self.live_queue.put('close')
 
     def wait_for_client(self):
