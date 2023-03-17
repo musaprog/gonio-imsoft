@@ -111,7 +111,7 @@ class CameraClient:
         each other (or error raised).
         '''
         function = 'acquireSeries;'
-        parameters = "{}:{}:{}:{}:{}:{}".format(exposure_time, image_interval, N_frames, label, subdir)
+        parameters = "{}:{}:{}:{}:{}".format(exposure_time, image_interval, N_frames, label, subdir)
         message = function+parameters
         
         self.sendCommand(message)
