@@ -354,7 +354,8 @@ class GonioImsoftTUI:
             ar = 'Serial UNAVAIBLE'
         else:
             if ser.is_open:
-                ar = 'Serial OPEN ({} @{} Bd)'.format(ser.port)
+                ar = 'Serial OPEN ({} @{} Bd)'.format(
+                        ser.port, ser.baudrate)
             else:
                 ar = 'Serial CLOSED'
 
