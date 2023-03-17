@@ -262,13 +262,13 @@ class MMCamera:
         '''Set the provided configuration file.
         '''
         if not os.path.exists(name):
-            name = os.path.join(DEFAULT_MICROMANAGER_DIR, name)
+            path = os.path.join(DEFAULT_MICROMANAGER_DIR, name)
             
-            if not os.path.exists(name):
-                print(f'Couldnt open configuration file named: {name}')
+            if not os.path.exists(path):
+                print(f'Couldnt open configuration file named: {path}')
                 return
 
-        self.mmc.loadSystemConfiguration(name)
+        self.mmc.loadSystemConfiguration(path)
         
         self._device_name = self.mmc.getCameraDevice()
         self._configuration_name = name
