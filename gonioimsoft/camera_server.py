@@ -468,7 +468,7 @@ class MMCamera:
             # Save separate images
             for i, image in enumerate(images):
                 fn = '{}_{}.tiff'.format(label, i)
-                tifffile.write(os.path.join(savedir, fn), image, metadata=metadata)
+                tifffile.imwrite(os.path.join(savedir, fn), image, metadata=metadata)
         else:
             # Save a stack
             fn = '{}_stack.tiff'.format(label)
@@ -542,7 +542,7 @@ class MMCamera:
         # Check if the folder exists
         if not os.path.exists(os.path.dirname(fn)):
             #raise OSError('File {} already exsits'.format(fn))
-            os.makedirs(os.path.dirname(fn))
+            os.makedirs(os.path.dirname(fn), exist_ok=True)
         
         with open(fn+'.txt', 'w') as fp:
             fp.write(desc_string)
