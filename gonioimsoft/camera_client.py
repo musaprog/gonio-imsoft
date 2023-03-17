@@ -230,7 +230,7 @@ class CameraClient:
         
         # Save camera device settings
         for setting in self.get_settings():
-            if modified_only and setting not in modified_settings:
+            if modified_only and setting not in self.modified_settings:
                 continue
             state['settings'][setting] = self.get_setting(setting)
 
