@@ -294,7 +294,11 @@ class GonioImsoftTUI:
         camera = self.libui.item_select(
                 cameras, 'Select a camera')
         client.set_camera(camera)
-
+        
+        try:
+            client.load_state('previous')
+        except FileNotFoundError:
+            self.libui.print('Could not find previous settings for this camera')
 
     def add_local_camera(self):
         '''Add a camera from a local camera server.
@@ -675,6 +679,7 @@ class GonioImsoftTUI:
                 
                 self.libui.clear_screen()
                 
+                camera.save_state('previous')
 
     def quit(self):
         self.quit = True

@@ -501,14 +501,6 @@ class Dynamic:
 
         name, sex age       Can be '' (empty string)
         '''
-        # Load previous camera settings
-        if camera:
-            for _camera in self.cameras:
-                try:
-                    _camera.load_state('previous')
-                except FileNotFoundError:
-                    pass
-
         # Preparations, ask droso name
         if name != '':
             self.preparation['name'] = name
@@ -605,11 +597,6 @@ class Dynamic:
         '''
         Finalising the experiments, houskeeping stuff.
         '''
-
-        # Save camera states
-        for camera in self.cameras:
-            camera.save_state('previous', modified_only=True)
-
         self.set_led(self.dynamic_parameters['ir_channel'], 0)
         self.set_led(self.dynamic_parameters['flash_channel'], 0)
 
