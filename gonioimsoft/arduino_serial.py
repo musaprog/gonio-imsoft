@@ -24,18 +24,23 @@ class ArduinoReader:
         
         if serial:
             if port is None:
-                # Selects the first serial device
-                ports = comports()
+                # No port provided, use the first one with text "Arduino" in it
+                ports = [str(p) for p in comports()]
                 print(f'Selecting an Arduino from {ports}')
                 for port in ports:
+                    if not 'arduino' in port.lower():
+                        continue
                     print(f'  Trying {port}')
                     try:
-                        self.serial = serial.Serial(port=port, baudrate=9600, timeout=0.01)
+                        self.serial = serial.Serial(port=port.split(' ')[0], baudrate=9600, timeout=0.01)
                         self.serial.readline()
                         print(f'Accepted port {port}')
                         break
                     except Exception as e:
                         print(e)
+            else:
+                # Use the provided port
+                self.serial = serial.Serial(port=port, baudrate=9600, timeout=0.01)
         else:
             self.serial = None
 
