@@ -171,7 +171,7 @@ class DummyCamera:
 
     def acquire_single(self, save, subdir):
         pass
-    def acquire_series(self, exposure_time, image_interval, N_frames, label, subdir, trigger_direction):
+    def acquire_series(self, exposure_time, image_interval, N_frames, label, subdir):
         pass
     def save_images(images, label, metadata, savedir):
         pass
@@ -359,7 +359,7 @@ class MMCamera:
 
 
 
-    def acquire_series(self, exposure_time, image_interval, N_frames, label, subdir, trigger_direction):
+    def acquire_series(self, exposure_time, image_interval, N_frames, label, subdir):
         '''
         Acquire a series of images
 
@@ -368,7 +368,6 @@ class MMCamera:
         N_frames            How many images to take
         label               Label for saving the images (part of the filename later)
         subdir
-        trigger_direction   "send" (camera sends a trigger pulse when it's ready) or "receive" (camera takes an image for every trigger pulse)
         '''
 
         exposure_time = float(exposure_time)
@@ -389,19 +388,19 @@ class MMCamera:
         device_name = self.mmc.getDeviceName(self._device_name)
         print(f'Device name {device_name}')
 
-        if 'hamamatsu' in device_name.lower():
-            if trigger_direction == 'send':
-                print(" Camera sending a trigger pulse")
-                self.mmc.setProperty(self._device_name, "OUTPUT TRIGGER KIND[0]","EXPOSURE")
-                self.mmc.setProperty(self._device_name, "OUTPUT TRIGGER POLARITY[0]","NEGATIVE")
-            elif trigger_direction== 'receive':
-                print(" Camera recieving / waiting for a trigger pulse")
-                self.mmc.setProperty(self._device_name, "TRIGGER SOURCE","EXTERNAL")
-                self.mmc.setProperty(self._device_name, "TriggerPolarity","POSITIVE")
-            elif trigger_direction == 'none':
-                pass
-            else:
-                raise ValueError('trigger_direction has to be send, receive or none, not {trigger_direction}')
+        #if 'hamamatsu' in device_name.lower():
+        #    if trigger_direction == 'send':
+        #        print(" Camera sending a trigger pulse")
+        #        self.mmc.setProperty(self._device_name, "OUTPUT TRIGGER KIND[0]","EXPOSURE")
+        #        self.mmc.setProperty(self._device_name, "OUTPUT TRIGGER POLARITY[0]","NEGATIVE")
+        #    elif trigger_direction== 'receive':
+        #        print(" Camera recieving / waiting for a trigger pulse")
+        #        self.mmc.setProperty(self._device_name, "TRIGGER SOURCE","EXTERNAL")
+        #        self.mmc.setProperty(self._device_name, "TriggerPolarity","POSITIVE")
+        #    elif trigger_direction == 'none':
+        #        pass
+        #    else:
+        #        raise ValueError('trigger_direction has to be send, receive or none, not {trigger_direction}')
 
         
         print("Circular buffer " + str(self.mmc.getCircularBufferMemoryFootprint()) + " MB")
@@ -440,8 +439,9 @@ class MMCamera:
         save_thread = threading.Thread(target=self.save_images, args=(images,label,metadata,os.path.join(self.saving_directory, subdir)))
         save_thread.start()
         
-        if 'hamamatsu' in device_name.lower() and trigger_direction == 'receive':
-            self.mmc.setProperty(self._device_name, "TRIGGER SOURCE","INTERNAL")
+        #if 'hamamatsu' in device_name.lower() and trigger_direction == 'receive':
+        #    self.mmc.setProperty(self._device_name, "TRIGGER SOURCE","INTERNAL")
+        
         print('acquired')
 
     

@@ -449,12 +449,11 @@ class Dynamic:
 
 
         if len(self.cameras) == 1:
-            self.cameras[0].acquireSeries(dynamic_parameters['frame_length'], 0, N_frames, label, image_directory, 'send')
+            self.cameras[0].acquireSeries(dynamic_parameters['frame_length'], 0, N_frames, label, image_directory)
         elif len(self.cameras) > 1:
-            # Temporal workaround only
-            self.cameras[0].acquireSeries(dynamic_parameters['frame_length'], 0, N_frames, f'{label}_cam0', image_directory, 'send')
-            for i_camera, camera in enumerate(self.cameras[1:]):
-                camera.acquireSeries(dynamic_parameters['frame_length'], 0, N_frames, f'{label}_cam{i_camera+1}', image_directory, 'none')
+            # With many cameras, add camN suffix to the label
+            for i_camera, camera in enumerate(self.cameras):
+                camera.acquireSeries(dynamic_parameters['frame_length'], 0, N_frames, f'{label}_cam{i_camera}', image_directory)
 
         self.analog_output([dynamic_parameters['flash_channel'], dynamic_parameters['ir_channel']], [stimulus,irwave], fs, wait_trigger=True)
 
