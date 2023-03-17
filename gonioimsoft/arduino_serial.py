@@ -5,24 +5,37 @@
 
 try:
     import serial
+    from serial.tools.list_ports import comports
 except ModuleNotFoundError:
     serial = None
 
-DEFAULT_PORT_NAME = 'COM4'
+
 
 class ArduinoReader:
     '''
     Class for reading  angle pairs (states of the rotation encoders) from Arduino.
     '''
 
-    def __init__(self, port=DEFAULT_PORT_NAME):
+    def __init__(self, port=None):
         '''
         port        On Windows, "COM4" or similar. May change if other serial devices
                     are addded or removed?
         '''
         
         if serial:
-            self.serial = serial.Serial(port=port, baudrate=9600, timeout=0.01)
+            if port is None:
+                # Selects the first serial device
+                ports = comports()
+                print(f'Selecting an Arduino from {ports}')
+                for port in ports:
+                    print(f'  Trying {port}')
+                    try:
+                        self.serial = serial.Serial(port=port, baudrate=9600, timeout=0.01)
+                        self.serial.readline()
+                        print(f'Accepted port {port}')
+                        break
+                    except Exception as e:
+                        print(e)
         else:
             self.serial = None
 
