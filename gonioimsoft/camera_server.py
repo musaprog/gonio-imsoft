@@ -234,7 +234,7 @@ class MMCamera:
         #self.mmc.initializeAllDevices()
         #self.mmc.setCameraDevice('Camera')
             
-        self.settings = {}
+        self.settings = {'exposure_time_scaler': 1}
         
         #self.mmc.setCircularBufferMemoryFootprint(4000)
         self.live_queue= False
@@ -280,7 +280,9 @@ class MMCamera:
         '''
         if self._device_name is None:
             return ''
-        return self.mmc.getDevicePropertyNames(self._device_name)
+        properties = self.mmc.getDevicePropertyNames(self._device_name)
+        
+        return list(properties) + list(self.settings.keys())
 
 
     def get_setting_type(self, setting_name):
@@ -288,6 +290,9 @@ class MMCamera:
 
         Returns an empty string if the setting does not exist.
         '''
+        if setting_name in self.settings:
+            return self.settings[setting_name]
+
         try:
             num = self.mmc.getPropertyType(self._device_name, setting_name)
         except RuntimeError as e:
@@ -303,10 +308,18 @@ class MMCamera:
 
 
     def get_setting(self, setting_name):
+        if setting_name in self.settings:
+            return self.settings
         return self.mmc.getProperty(self._device_name, setting_name)
 
     def set_setting(self, setting_name, value):
         
+        # a) Internal setting
+        if setting_name in self.settings:
+            self.settings[setting_name] = value
+            return
+        
+        # b) Camera device setting
         type_name = self.get_setting_type(setting_name)
         if type_name == 'float':
             value = float(value)
@@ -405,15 +418,14 @@ class MMCamera:
         
         print("Circular buffer " + str(self.mmc.getCircularBufferMemoryFootprint()) + " MB")
 
-        self.mmc.setExposure(exposure_time*1000)
+        self.mmc.setExposure(self.settings['exposure_time_scaler']*exposure_time*1000)
 
 
+        self.mmc.prepareSequenceAcquisition(self._device_name)
         self.wait_for_client()
         
-
         start_time = str(datetime.datetime.now())
         self.mmc.startSequenceAcquisition(N_frames, image_interval, False)
-        
         
         while self.mmc.isSequenceRunning():
             time.sleep(exposure_time)
