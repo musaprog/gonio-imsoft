@@ -79,7 +79,7 @@ class Dynamic:
 
         self.trigger_rotation = False
 
-        self.trigger_signal = np.array([5,5,5,0])
+        self.trigger_signal = np.array([3,3,3,0])
         self.triggered_anglepairs = None
 
         self.data_savedir = None
