@@ -418,14 +418,16 @@ class MMCamera:
         
         print("Circular buffer " + str(self.mmc.getCircularBufferMemoryFootprint()) + " MB")
 
-        self.mmc.setExposure(self.settings['exposure_time_scaler']*exposure_time*1000)
+        scaler = float(self.settings['exposure_time_scaler'])
+        exposure = scaler*exposure_time*1000
+        self.mmc.setExposure(exposure)
 
 
         self.mmc.prepareSequenceAcquisition(self._device_name)
         self.wait_for_client()
         
         start_time = str(datetime.datetime.now())
-        self.mmc.startSequenceAcquisition(N_frames, image_interval, False)
+        self.mmc.startSequenceAcquisition(N_frames, image_interval+(1-scaler)*exposure, False)
         
         while self.mmc.isSequenceRunning():
             time.sleep(exposure_time)
