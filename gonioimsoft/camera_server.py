@@ -291,7 +291,7 @@ class MMCamera:
         Returns an empty string if the setting does not exist.
         '''
         if setting_name in self.settings:
-            return self.settings[setting_name]
+            return 'float'
 
         try:
             num = self.mmc.getPropertyType(self._device_name, setting_name)
@@ -309,7 +309,7 @@ class MMCamera:
 
     def get_setting(self, setting_name):
         if setting_name in self.settings:
-            return self.settings
+            return self.settings[setting_name]
         return self.mmc.getProperty(self._device_name, setting_name)
 
     def set_setting(self, setting_name, value):
@@ -365,7 +365,7 @@ class MMCamera:
         self.live_queue.put(image)
 
         if save == 'True':
-            metadata = {'exposure_time_s': exposure_time, 'binning': binning, 'function': 'acquireSingle', 'start_time': start_time}
+            metadata = {'exposure_time_s': exposure_time, 'function': 'acquireSingle', 'start_time': start_time}
 
             save_thread = threading.Thread(target=self.save_images,args=([image],'snap_{}'.format(start_time.replace(':','.').replace(' ','_')), metadata,os.path.join(self.saving_directory, subdir)))
             save_thread.start()
