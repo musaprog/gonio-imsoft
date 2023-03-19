@@ -303,6 +303,10 @@ class GonioImsoftTUI:
             client.load_state('previous')
         except FileNotFoundError:
             self.libui.print('Could not find previous settings for this camera')
+        
+        # Part of the dirty fix
+        client.set_roi((0,0,1024,1024))
+
 
     def add_local_camera(self):
         '''Add a camera from a local camera server.

@@ -397,6 +397,14 @@ class Dynamic:
             
             imaging_function(dynamic_parameters, builder, label, N_frames, image_directory, set_led=bool(dynamic_parameters['isi'][i]))
 
+            # Dirty fix
+            print("Resetting cameras")
+            for i_camera, camera in enumerate(self.cameras):
+                print(f'cam{i_camera}')
+                camera.set_camera(camera.get_camera())
+                camera.load_state('previous')
+                camera.set_roi((0,0,1024,1024))
+
             # Wait the total imaging period; If ISI is short and imaging period is long, we would
             # start the second imaging even before the camera is ready
             # Better would be wait everything clear signal from the camera.
