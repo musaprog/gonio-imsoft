@@ -422,15 +422,17 @@ class MMCamera:
         exposure = scaler*exposure_time*1000
         self.mmc.setExposure(exposure)
 
-
-        self.mmc.prepareSequenceAcquisition(self._device_name)
+        self.mmc.clearCircularBuffer()
+        #self.mmc.prepareSequenceAcquisition(self._device_name)
         self.wait_for_client()
         
         start_time = str(datetime.datetime.now())
         self.mmc.startSequenceAcquisition(N_frames, image_interval+(1-scaler)*exposure, False)
         
         while self.mmc.isSequenceRunning():
-            time.sleep(exposure_time)
+            self.mmc.sleep(1000*exposure_time)
+
+        self.mmc.sleep(1000)
 
         images = []
 
@@ -441,8 +443,8 @@ class MMCamera:
                     break
                 except (pymmcore.CMMError, IndexError):
                     # Index error for example when circular buffer is still empty
-                    time.sleep(exposure_time)
-                
+                    self.mmc.sleep(1000*exposure_time)
+            
             images.append(image)
             
             
