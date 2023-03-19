@@ -160,8 +160,12 @@ class Console:
                 motor.stop()
 
 
-    def set_roi(self, x,y,w,h, i_camera=0):
-        self.dynamic.cameras[i_camera].set_roi( (x,y,w,h) )
+    def set_roi(self, x,y,w,h, i_camera=None):
+        if i_camera is None:
+            for camera in self.dynamic.cameras:
+                camera.set_roi((x,y,w,h))
+        else:
+            self.dynamic.cameras[i_camera].set_roi( (x,y,w,h) )
 
 
     def eternal_repeat(self, isi):
