@@ -180,3 +180,50 @@ class StimulusBuilder:
         camera[-1] = 0
 
         return camera
+
+
+
+def main():
+    '''Saves stimulus as a json.
+    '''
+    from .imaging_parameters import getModifiedParameters
+
+    data = {}
+    for i_stim in range(10):
+
+        dynamic_parameters = getModifiedParameters()
+
+        fs = 10000
+        builder = StimulusBuilder(
+                dynamic_parameters['stim'],
+                dynamic_parameters['pre_stim'],
+                dynamic_parameters['post_stim'],
+                dynamic_parameters['frame_length'],
+                dynamic_parameters['flash_on'],
+                dynamic_parameters['ir_imaging'],
+                fs,
+                stimulus_finalval=dynamic_parameters['flash_off'],
+                illumination_finalval=dynamic_parameters['ir_waiting'],
+                wtype=dynamic_parameters['flash_type'])
+
+        if dynamic_parameters.get('biosyst_stimulus', ''):
+            bsstim, fs = builder.overload_biosyst_stimulus(
+                    dynamic_parameters['biosyst_stimulus'], dynamic_parameters['biosyst_channel'])
+            #N_frames = int(round((len(bsstim)/fs) / dynamic_parameters['frame_length']))
+
+        stimulus = builder.get_stimulus_pulse().tolist()
+
+        data['fs'] = fs
+        data[f'stim_{i_stim}'] = stimulus
+
+        cont = input('Add more (y/n)')
+
+        if cont.lower().startswith('n'):
+            break
+
+    with open('test.json', 'w') as fp:
+        json.dump(data, fp)
+
+
+if __name__ == "__main__":
+    main()
