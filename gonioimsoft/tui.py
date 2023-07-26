@@ -238,9 +238,6 @@ class GonioImsoftTUI:
         If changes to True, quit.
     expfn : string
         Filename of the experiments.json file
-    glofn : string
-        Filename of the locked parameters setting name
-
     '''
     def __init__(self):
         
@@ -262,23 +259,10 @@ class GonioImsoftTUI:
             self.experimenters = ['gonioims']
         
 
-        # Get locked parameters
-        self.glofn = os.path.join(USERDATA_DIR, 'locked_parameters.json')
-        if os.path.exists(self.glofn):
-            try:
-                 with open(self.glofn, 'r') as fp: self.locked_parameters = json.load(fp)
-            except:
-                self.locked_parameters = {}
-        else:
-            self.locked_parameters = {}
-            
-   
         self.main_menu = [
                 ['Imaging', self.loop_dynamic],
                 ['Step-trigger imaging', self.loop_static],
                 ['Step-trigger only (use external camera software)', self.loop_trigger],
-                ['\n', None],
-                ['Edit locked parameters', self.locked_parameters_edit],
                 ['\n', None],
                 ['Change experimenter', self._run_experimenter_select],
                 ['Quit', self.quit],
@@ -427,8 +411,6 @@ class GonioImsoftTUI:
             If False, assume that external program is controlling the camera, and send trigger
         '''
         trigger = False
-        
-        self.core.locked_parameters = self.locked_parameters
         
         self.core.set_savedir(os.path.join('imaging_data_'+self.experimenter), camera=camera)
         name = input('Name ({})>> '.format(self.core.preparation['name']))
@@ -603,57 +585,6 @@ class GonioImsoftTUI:
 
         self.core.exit()
         time.sleep(1)
-
-
-    def locked_parameters_edit(self):
-        
-        selections ['Add locked', 'Remove locked', 'Modify values', '.. back (and save)']
-        
-        while True:
-            self.libui.clear_screen()
-            self.libui.header = self.menutext
-
-            messsage = (
-                    'Here, any of the imaging parameters can be made locked,'
-                    ' overriding any presets/values setat imaging time.'
-                    '\nCurrent locked are'
-                    )
-
-            self.libui.print(message)
-
-            if not self.locked_parameters:
-                self.libui.print('  (NONE)')
-            for name in self.locked_parameters:
-                self.libui.print('  {}'.format(name))
-            self.libui.print()
-
-            sel = self.libui.item_select(selections)
-            
-            # Add locked
-            if sel == selections[0]:
-                lockable = list(DEFAULT_DYNAMIC_PARAMETERS.keys())
-                to_lock = self.libui.item_select(lockable+[' ..back'])
-                
-                if to_lock in lockable:
-                    self.locked_parameters[to_lock] = DEFAULT_DYNAMIC_PARAMETERS[sel2]
-            
-            # Remove locked
-            elif sel == selections[1]:
-                locked = list(self.locked_parameters.keys())
-                to_unlock = self.libui_item_select(locked+[' ..back'])
-                
-                if to_unlock in locked:
-                    del self.locked_parameters[to_unlock]
-            
-            # Modify locked values
-            elif sel == selections[2]:
-                self.locked_parameters = ParameterEditor(self.locked_parameters).getModified()
-
-            # Back and save
-            elif sel == selections[3]:
-                if os.path.isdir(USERDATA_DIR):
-                    with open(self.glofn, 'w') as fp: json.dump(self.locked_parameters, fp)
-                break
 
     
     def camera_settings_edit(self):

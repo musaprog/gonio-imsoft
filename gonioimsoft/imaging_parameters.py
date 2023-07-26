@@ -137,7 +137,7 @@ class ParameterEditor:
     '''
     Dictionary editor on command line with ability to load and save presets.
     '''
-    def __init__(self, dynamic_parameters, locked_parameters={}):
+    def __init__(self, dynamic_parameters):
         '''
         dynamic_parameters      Dictionary of the dynamic imaging parameters.
         '''
@@ -146,8 +146,6 @@ class ParameterEditor:
 
         self.presets_savedir = os.path.join(USERDATA_DIR, 'presets')
         self.presets = self.load_presets(self.presets_savedir)
-
-        self.locked_parameters = locked_parameters
 
     
     def load_presets(self, directory):
@@ -187,11 +185,7 @@ class ParameterEditor:
         
         print('{:<20} {:<40} {}'.format('PARAMETER NAME', 'VALUE', 'DESCRIPTION'))
         for parameter in parameter_names:
-            if parameter in self.locked_parameters:
-                lck = ' (LOCKED to {})'.format(self.locked_parameters[parameter])
-            else:
-                lck = ''
-            print('{:<20} {:<40} {}'.format(parameter, str(preset[parameter])+lck,
+            print('{:<20} {:<40} {}'.format(parameter, str(preset[parameter]),
                 DYNAMIC_PARAMETERS_HELP[parameter]))
         print()
 
@@ -295,7 +289,7 @@ class ParameterEditor:
                 self.dynamic_parameters[parameter] = value
                 break
 
-        return {**self.dynamic_parameters, **self.locked_parameters}
+        return self.dynamic_parameters
 
 
 def getModifiedParameters(**kwargs):

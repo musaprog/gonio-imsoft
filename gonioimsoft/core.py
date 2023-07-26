@@ -54,7 +54,6 @@ class GonioImsoftCore:
         self.preparation = {'name': 'test', 'sex': '', 'age': ''}
 
         self.dynamic_parameters = dynamic_parameters
-        self.locked_parameters = {}
 
         self.previous_angle = None
 
@@ -536,8 +535,7 @@ class GonioImsoftCore:
         if age != '':
             self.preparation['age'] = age
 
-        self.dynamic_parameters = getModifiedParameters(
-                locked_parameters=self.locked_parameters)
+        self.dynamic_parameters = getModifiedParameters()
         print('Preparation name set as {}, sex {}, age {} days.'.format(self.preparation['name'], self.preparation['sex'], self.preparation['age']))
 
         if camera:
@@ -551,7 +549,7 @@ class GonioImsoftCore:
 
     def load_preset(self, preset_name):
         fn = os.path.join('presets', preset_name)
-        self.dynamic_parameters = {**load_parameters(fn), **self.locked_parameters}
+        self.dynamic_parameters = load_parameters(fn)
         self._update_descriptions_file()
 
 
