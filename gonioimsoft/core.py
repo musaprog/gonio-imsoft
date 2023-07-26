@@ -450,7 +450,13 @@ class Dynamic:
         fs = builder.fs
           
         stimulus = builder.get_stimulus_pulse()
-        irwave = dynamic_parameters['ir_imaging'] * np.ones(stimulus.shape)
+        if isinstance(stimulus, list):
+            NN = len(stimulus[0])
+        else:
+            NN = stimulus.shape
+        irwave = dynamic_parameters['ir_imaging'] * np.ones(NN)
+
+        #irwave = dynamic_parameters['ir_imaging'] * np.ones(stimulus.shape)
         if set_led:
             irwave[-1] = dynamic_parameters['ir_waiting']
 
@@ -475,7 +481,7 @@ class Dynamic:
             for i_camera, camera in enumerate(self.cameras):
                 camera.acquireSeries(dynamic_parameters['frame_length'], 0, N_frames, f'{label}_cam{i_camera}', image_directory)
 
-        self.analog_output(stimuli, channels, fs, wait_trigger=True)
+        self.analog_output(channels, stimuli, fs, wait_trigger=True)
 
         
 

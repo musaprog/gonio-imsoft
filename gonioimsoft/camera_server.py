@@ -441,7 +441,7 @@ class MMCamera:
                 try:
                     image = self.mmc.popNextImage()
                     break
-                except (pymmcore.CMMError, IndexError):
+                except:
                     # Index error for example when circular buffer is still empty
                     self.mmc.sleep(1000*exposure_time)
             

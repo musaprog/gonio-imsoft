@@ -14,6 +14,8 @@ try:
 except ModuleNotFoundError:
     bsextract = None
 
+from .directories import CODE_ROOTDIR
+
 class StimulusBuilder:
     '''
     Get various stimulus waveforms
@@ -64,24 +66,25 @@ class StimulusBuilder:
         '''
         
         if fn.endswith('.json'):
-            with open(fn, 'r') as fp:
+            ffn = os.path.join(CODE_ROOTDIR, 'biosyst_stimuli', fn)
+            with open(fnn, 'r') as fp:
                 data = json.load(fp)
 
             self.fs = data['fs']
             self.overload_stimulus = []
 
             for i_stim in range(10):
-                key = f'stim_{i_channel}'
+                key = f'stim_{i_stim}'
                 if key not in data:
                     continue
-                self.overload_stimulus.append(data[key])
+                self.overload_stimulus.append(np.array(data[key]))
 
             return self.overload_stimulus[0], self.fs
 
         if bsextract is None:
             raise ModuleNotFoundError('Module required\npip install python-biosystfiles')
 
-        ffn = os.path.join('biosyst_stimuli', fn)
+        ffn = os.path.join(CODE_ROOTDIR, 'biosyst_stimuli', fn)
         self.overload_stimulus, self.fs = bsextract(ffn, channel)
         self.overload_stimulus = self.overload_stimulus.flatten()
         print(self.overload_stimulus.shape)

@@ -95,7 +95,7 @@ def getRightType(parameter_name, string_value):
 
     if parameter_name in  DYNAMIC_PARAMETERS_TYPES['channel']:
         if type(string_value) == type(''):
-            if string_value.startswith('[') and string_value.endswith([']']):
+            if string_value.startswith('[') and string_value.endswith(']'):
                 return ast.literal_eval(string_value)
             else:
                 return string_value
