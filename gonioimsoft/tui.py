@@ -580,11 +580,7 @@ class GonioImsoftTUI:
             # Update status menu and clear screen
             self.libui.header = self.menutext
 
-            time.sleep(1)
-            
-
         self.core.exit()
-        time.sleep(1)
 
     
     def camera_settings_edit(self):
