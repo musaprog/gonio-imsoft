@@ -1,4 +1,4 @@
-'''The PupilImsoft core module for managing devices.
+'''GonioImsoft main components.
 '''
 
 import os
@@ -27,9 +27,15 @@ import gonioimsoft.macro as macro
 
 
 
-class Dynamic:
-    '''
-    Dynamic imaging procedure.
+class GonioImsoftCore:
+    '''Main interface to control GonioImsoft recordings.
+
+    Attributes
+    ----------
+    reader : obj
+        Reading rotary encoder values from the Arduino Board.
+    cameras : list
+        Lis of camera client objects
     '''
 
 
@@ -43,11 +49,6 @@ class Dynamic:
         
         # Initiate camera client/server
         self.cameras = []
-        #self.cameras.append( CameraClient() )
-        #for camera in self.cameras:
-        #    if not camera.isServerRunning():
-        #        print('Camera server not running')
-        #        #camera.startServer()
         
         # Details about preparation (name, sex, age) are saved in this
         self.preparation = {'name': 'test', 'sex': '', 'age': ''}

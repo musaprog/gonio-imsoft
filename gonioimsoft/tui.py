@@ -1,7 +1,7 @@
 '''Terminal user interface for GonioImsoft.
 
-It uses gonioimsoft.core to to manage the experiments
-and libtui.SimpleTUI to make the user interface. 
+It uses a GonioImsoftCore instance to manage the experiments and
+libtui.SimpleTUI to make the user interface.
 '''
 
 import os
@@ -13,7 +13,7 @@ import inspect      # Inspect docs and source code
 
 from gonioimsoft.version import __version__
 from gonioimsoft.directories import USERDATA_DIR
-import gonioimsoft.core as core
+from gonioimsoft.core import GonioImsoftCore, nidaqmx
 from gonioimsoft.imaging_parameters import (
         DEFAULT_DYNAMIC_PARAMETERS,
         ParameterEditor,
@@ -22,20 +22,18 @@ from .libtui import SimpleTUI
 
 
 class Console:
-    '''Operation console for TUI or other user interfaces.
-
-    Capabilities:
-    - changing imaging parameters
-    - setting save suffix
-    - controlling motors and setting their limits
+    '''A command console for terminal user interface (tui).
     
-    In tui, this console can be opened by pressing ` (the keyboard button next to 1)
+    This console allows inputting commands with arguments within
+    the tui. It is needed when simple keyboard shortcut is not enough.
+
+    Attributes
+    ----------
+    core : obj
+        The GonioImsoftCore instance this console operates on.
     '''
-    def __init__(self, core_dynamic):
-        '''
-        core_dynamic        An instance of core.Dynamic class.
-        '''
-        self.dynamic = core_dynamic
+    def __init__(self, core):
+        self.core = core
 
 
     def enter(self, command):
@@ -103,7 +101,7 @@ class Console:
                 legal_suffix += 'x'
         
         print('Setting suffix {}'.format(legal_suffix))
-        self.dynamic.set_subfolder_suffix(legal_suffix)
+        self.core.set_subfolder_suffix(legal_suffix)
 
 
     def limitset(self, side, i_motor):
@@ -116,16 +114,16 @@ class Console:
         '''
         
         if side == 'upper':
-            self.dynamic.motors[i_motor].set_upper_limit()
+            self.core.motors[i_motor].set_upper_limit()
         elif side == 'lower':
-            self.dynamic.motors[i_motor].set_lower_limit()
+            self.core.motors[i_motor].set_lower_limit()
    
 
     def limitget(self, i_motor):
         '''
         Gets the current limits of a motor
         '''
-        mlim = self.dynamic.motors[i_motor].get_limits()
+        mlim = self.core.motors[i_motor].get_limits()
         print('  Motor {} limited at {} lower and {} upper'.format(i_motor, *mlim))
 
 
@@ -133,14 +131,14 @@ class Console:
         '''Prints the coordinates of the motor i_motor.
         '''
         # Getting motor's position
-        mpos = self.dynamic.motors[motor].get_position()
+        mpos = self.core.motors[motor].get_position()
         print('  Motor {} at {}'.format(motor, mpos))
 
 
     def drive(self, i_motor, position):
         '''Drive i_motor to the given coordinates.
         '''
-        self.dynamic.motors[i_motor].move_to(position)
+        self.core.motors[i_motor].move_to(position)
         
 
     def macro(self, command, macro_name):
@@ -148,24 +146,24 @@ class Console:
         Running and setting macros (automated imaging sequences.)
         '''
         if command == 'run':
-            self.dynamic.run_macro(macro_name)
+            self.core.run_macro(macro_name)
         elif command == 'list':
 
             print('Following macros are available')
-            for line in self.dynamic.list_macros():
+            for line in self.core.list_macros():
                 print(line)
 
         elif command == 'stop':
-            for motor in self.dynamic.motors:
+            for motor in self.core.motors:
                 motor.stop()
 
 
     def set_roi(self, x,y,w,h, i_camera=None):
         if i_camera is None:
-            for camera in self.dynamic.cameras:
+            for camera in self.core.cameras:
                 camera.set_roi((x,y,w,h))
         else:
-            self.dynamic.cameras[i_camera].set_roi( (x,y,w,h) )
+            self.core.cameras[i_camera].set_roi( (x,y,w,h) )
 
 
     def eternal_repeat(self, isi):
@@ -182,7 +180,7 @@ class Console:
 
             start_time = time.time()
             
-            if self.dynamic.image_series(inter_loop_callback=self.image_series_callback) == False:
+            if self.core.image_series(inter_loop_callback=self.image_series_callback) == False:
                 break
             i_repeat += 1
 
@@ -199,38 +197,40 @@ class Console:
         delay       In seconds, how long to wait between presets
         '''
         delay = float(delay)
-        original_parameters = copy.copy(self.dynamic.dynamic_parameters)
+        original_parameters = copy.copy(self.core.dynamic_parameters)
 
         
         print('Repeating presets {}'.format(preset_names))
         for preset_name in preset_names:
             print('Preset {}'.format(preset_name))
             
-            self.dynamic.load_preset(preset_name)
+            self.core.load_preset(preset_name)
             
-            if self.dynamic.image_series(inter_loop_callback=self.image_series_callback) == False:
+            if self.core.image_series(inter_loop_callback=self.image_series_callback) == False:
                 break
 
             time.sleep(delay)
 
         print('Finished repeating presets')
-        self.dynamic.dynamic_parameters = original_parameters
+        self.core.dynamic_parameters = original_parameters
 
             
     def set_rotation(self, horizontal, vertical):
         ho = int(horizontal)
         ve = int(vertical)
-        cho, cve = self.dynamic.reader.latest_angle
+        cho, cve = self.core.reader.latest_angle
         
-        self.dynamic.reader.offset = (cho-ho, cve-ve)
+        self.core.reader.offset = (cho-ho, cve-ve)
 
 
 
 class GonioImsoftTUI:
     '''Terminal user interface for goniometric imaging.
 
-    Attrubutes
+    Attributes
     ----------
+    core : obj
+        The GonioImsoftCore instance
     console : object
     main_menu : list
         Main choices
@@ -245,9 +245,9 @@ class GonioImsoftTUI:
     def __init__(self):
         
         self.libui = SimpleTUI()
-        self.dynamic = core.Dynamic()
+        self.core = GonioImsoftCore()
 
-        self.console = Console(self.dynamic)
+        self.console = Console(self.core)
         self.console.image_series_callback = self.image_series_callback
 
 
@@ -286,8 +286,8 @@ class GonioImsoftTUI:
                 ['Add local camera', self.add_local_camera],
                 ['Add remote camera', self.add_remote_camera],
                 ['Edit camera settings', self.camera_settings_edit]]
-        #['Start camera server (local)', self.dynamic.camera.startServer],
-        #['Stop camera server', self.dynamic.camera.close_server]
+        #['Start camera server (local)', self.core.camera.startServer],
+        #['Stop camera server', self.core.camera.close_server]
 
         self.experimenter = None    # name of the experimenter
         self.quit = False
@@ -311,7 +311,7 @@ class GonioImsoftTUI:
     def add_local_camera(self):
         '''Add a camera from a local camera server.
         '''
-        client = self.dynamic.add_camera_client(None, None)
+        client = self.core.add_camera_client(None, None)
         
         if not client.isServerRunning():
             client.startServer()
@@ -328,7 +328,7 @@ class GonioImsoftTUI:
         else:
             port = int(port)
 
-        client = self.dynamic.add_camera_client(host, port)
+        client = self.core.add_camera_client(host, port)
         
         if not client.isServerRunning:
             self.libui.print('Cannot connect to the server')
@@ -341,7 +341,7 @@ class GonioImsoftTUI:
         cam = ''
 
         # Check camera server status
-        for i_camera, camera in enumerate(self.dynamic.cameras):
+        for i_camera, camera in enumerate(self.core.cameras):
             if camera.isServerRunning():
                 cam_name = camera.get_camera()
                 if cam_name:
@@ -353,11 +353,11 @@ class GonioImsoftTUI:
 
             cam += f'Cam{i_camera} {cs}'
 
-        if not self.dynamic.cameras:
+        if not self.core.cameras:
             cam = 'No cameras'
 
         # Check serial (Arduino) status
-        ser = self.dynamic.reader.serial
+        ser = self.core.reader.serial
         if ser is None:
             ar = 'Serial UNAVAIBLE'
         else:
@@ -368,7 +368,7 @@ class GonioImsoftTUI:
                 ar = 'Serial CLOSED'
 
         # Check DAQ
-        if core.nidaqmx is None:
+        if nidaqmx is None:
             daq = 'UNAVAILABLE'
         else:
             daq = 'AVAILABLE'
@@ -428,13 +428,13 @@ class GonioImsoftTUI:
         '''
         trigger = False
         
-        self.dynamic.locked_parameters = self.locked_parameters
+        self.core.locked_parameters = self.locked_parameters
         
-        self.dynamic.set_savedir(os.path.join('imaging_data_'+self.experimenter), camera=camera)
-        name = input('Name ({})>> '.format(self.dynamic.preparation['name']))
-        sex = input('Sex ({})>> '.format(self.dynamic.preparation['sex']))
-        age = input('Age ({})>> '.format(self.dynamic.preparation['age']))
-        self.dynamic.initialize(name, sex, age, camera=camera)
+        self.core.set_savedir(os.path.join('imaging_data_'+self.experimenter), camera=camera)
+        name = input('Name ({})>> '.format(self.core.preparation['name']))
+        sex = input('Sex ({})>> '.format(self.core.preparation['sex']))
+        age = input('Age ({})>> '.format(self.core.preparation['age']))
+        self.core.initialize(name, sex, age, camera=camera)
 
         upper_lines = ['-','Dynamic imaging', '-', 'Help F1', 'Space ']
 
@@ -445,63 +445,63 @@ class GonioImsoftTUI:
             key = self.libui.read_key()
 
             if static:
-                if trigger and self.dynamic.trigger_rotation:
+                if trigger and self.core.trigger_rotation:
                     if camera:
-                        self.dynamic.image_series(inter_loop_callback=self.image_series_callback)
+                        self.core.image_series(inter_loop_callback=self.image_series_callback)
                     else:
-                        self.dynamic.send_trigger()
+                        self.core.send_trigger()
                 if key == ' ':
                     trigger = not trigger
                     print('Rotation triggering now set to {}'.format(trigger))
             else:
                 if key == ' ':
                     if camera:
-                        self.dynamic.image_series(inter_loop_callback=self.image_series_callback)
+                        self.core.image_series(inter_loop_callback=self.image_series_callback)
                     else:
-                        self.dynamic.send_trigger()
+                        self.core.send_trigger()
             
             if key == 112:
                 lines.append('')
             elif key == '0':
-                self.dynamic.set_zero()
+                self.core.set_zero()
             elif key == 's':
                 if camera:
-                    self.dynamic.take_snap(save=True)
+                    self.core.take_snap(save=True)
             elif key == '\r':
                 # If user hits enter we'll exit
                 break
 
             elif key == '[':
-                self.dynamic.motors[0].move_raw(-1)
+                self.core.motors[0].move_raw(-1)
             elif key == ']':
-                self.dynamic.motors[0].move_raw(1)
+                self.core.motors[0].move_raw(1)
             
             elif key == 'o':
-                self.dynamic.motors[1].move_raw(-1)
+                self.core.motors[1].move_raw(-1)
             elif key == 'p':
-                self.dynamic.motors[1].move_raw(1)
+                self.core.motors[1].move_raw(1)
 
             elif key == 'l':
-                self.dynamic.motors[2].move_raw(-1)
+                self.core.motors[2].move_raw(-1)
             elif key == ';':
-                self.dynamic.motors[2].move_raw(1)
+                self.core.motors[2].move_raw(1)
 
             elif key == '`':
                 user_input = input("Type command >> ")
                 self.console.enter(user_input)
 
-            elif key == '' and not (static and self.dynamic.trigger_rotation):
+            elif key == '' and not (static and self.core.trigger_rotation):
                 if camera:
                     # When there's no input just update the live feed
-                    self.dynamic.take_snap(save=False)
+                    self.core.take_snap(save=False)
             
             
             #self._clearScreen()
             #self._print_lines(lines)
 
-            self.dynamic.tick()
+            self.core.tick()
 
-        self.dynamic.finalize()
+        self.core.finalize()
 
 
     
@@ -601,7 +601,7 @@ class GonioImsoftTUI:
             time.sleep(1)
             
 
-        self.dynamic.exit()
+        self.core.exit()
         time.sleep(1)
 
 
@@ -663,7 +663,7 @@ class GonioImsoftTUI:
         while True:
 
             camera = self.libui.item_select(
-                    self.dynamic.cameras+['..back'],
+                    self.core.cameras+['..back'],
                     "Select the camera to edit")
             
             if camera == '..back':
