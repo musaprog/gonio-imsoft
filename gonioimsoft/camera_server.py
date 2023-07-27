@@ -44,6 +44,8 @@ from .camera_communication import PORT
 DEFAULT_SAVING_DIRECTORY = "imaging_data"
 DEFAULT_MICROMANAGER_DIR = 'C:/Program Files/Micro-Manager-2.0'
 
+# Integer between 1-inf (1 = no downsampling), images for imageshower
+LIVE_DOWNSAMPLE = 2
 
 class ImageShower:
     '''Shows images on the screen in its own window.
@@ -364,12 +366,13 @@ class MMCamera:
         
         if not self.live_queue:
             self.live_queue = multiprocessing.Queue()
-            self.live_queue.put(image)
+            self.live_queue.put(
+                    image[0::LIVE_DOWNSAMPLE, 0::LIVE_DOWNSAMPLE])
             
             self.livep = multiprocessing.Process(target=self.shower.loop, args=(self.live_queue,))
             self.livep.start()
             
-        self.live_queue.put(image)
+        self.live_queue.put(image[0::LIVE_DOWNSAMPLE, 0::LIVE_DOWNSAMPLE])
 
         if save == 'True':
             metadata = {'exposure_time_s': exposure_time, 'function': 'acquireSingle', 'start_time': start_time}
