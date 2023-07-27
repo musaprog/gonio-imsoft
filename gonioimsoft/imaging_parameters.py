@@ -33,27 +33,27 @@ DYNAMIC_PARAMETERS_TYPES = {'seconds': ['isi', 'pre_stim', 'stim', 'post_stim', 
         'boolean': ['save_stack']}
 
 
-DYNAMIC_PARAMETERS_HELP = {'isi': 'Inter stimulus intervali[s]',
-        'repeats': 'How many times the protocol is repeated',
+DYNAMIC_PARAMETERS_HELP = {'isi': 'Inter stimulus interval [s]',
+        'repeats': 'How many times the protocol is repeated [1-inf]',
         'pre_stim': 'How long to image before the pulse [s]',
         'stim': 'Stimulus (step pulse) length [s]',
         'post_stim': 'How long to image after the pulse [s]',
-        'frame_length': 'Exposure time / inter-frame interval',
-        'ir_imaging': 'IR brightness during image acqusition',
-        'ir_waiting': 'IR brightness when waiting ISI',
-        'ir_livefeed': 'IR brightness while updating the live image',
-        'flash_on': 'Flash brightness during stim',
-        'flash_off':' Flash brightness during image acqustition',
-        'ir_channel': 'NI channel for IR',
+        'frame_length': 'Exposure time / inter-frame interval [s]',
+        'ir_imaging': 'IR brightness during image acqusition [0-10]',
+        'ir_waiting': 'IR brightness when waiting ISI [0-10]',
+        'ir_livefeed': 'IR brightness while updating the live image[0-10]',
+        'flash_on': 'Flash brightness during stim [0-10]',
+        'flash_off': 'Flash brightness during pre- and post-stim [0-10]',
+        'ir_channel': 'NI channel for IR [0-10]',
         'flash_channel': 'NI channel for Flash',
-        'trigger_channel': 'Trigger recieve/in channel',
-        'trigger_out_channel': 'Trigger send/out channel',
+        'trigger_channel': 'Trigger recieve/in channel for NI',
+        'trigger_out_channel': 'Trigger send/out channel from NI',
         'suffix': 'Tag added to the saved folders',
-        'biosyst_stimulus': 'Override the square pulse by a biosyst stimulus',
-        'biosyst_channel': 'Channel of the biosyst simulus',
+        'biosyst_stimulus': 'Override the square pulse by a biosyst stimulus [filename]',
+        'biosyst_channel': 'The channel read from the biosyst simulus file if set',
         'avgint_adaptation': 'Time to show stimulus mean value before imaging [s]',
-        'flash_type': '"square" or sinelogsweep',
-        'save_stack': 'If true, save stack instead separate images'}
+        'flash_type': 'square, sinelogsweep, squarelogsweep or 3steplogsweep. "{sweep},f0,f1" for Hz',
+        'save_stack': 'If true, save a stack instead separate images'}
 
 
 def getRightType(parameter_name, string_value):
