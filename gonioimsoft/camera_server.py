@@ -374,7 +374,9 @@ class MMCamera:
             self.live_queue.put(
                     image[0::LIVE_DOWNSAMPLE, 0::LIVE_DOWNSAMPLE])
             
-            self.livep = multiprocessing.Process(target=self.shower.loop, args=(self.live_queue,))
+            self.livep = multiprocessing.Process(
+                    target=self.shower.loop,
+                    args=(self.live_queue,self.title))
             self.livep.start()
             
         self.live_queue.put(image[0::LIVE_DOWNSAMPLE, 0::LIVE_DOWNSAMPLE])
