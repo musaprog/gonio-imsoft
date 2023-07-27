@@ -560,13 +560,17 @@ class GonioImsoftTUI:
     
     def _run_firstrun(self):
         message = (
-                '\nFIRST RUN\n---------'
+                '\nHello and welcome! This is your first run.\n'
+                '\n'
                 'GonioImsoft needs a location '
-                'to save user files\n  - list of savefolders\n '
-                '- settings'
-                '\n  - created protocol files'
-                'Imaging data will not be saved here (= no big files)'
-                f'\nCreate {USERDATA_DIR}? (recommended)'
+                'to save user files\n- list of savefolders\n'
+                '- camera states\n'
+                '- macros\n'
+                '- presets\n'
+                '\n'
+                f'The location is {os.path.abspath(USERDATA_DIR)}\n'
+                'No imaging data or big files will be saved here.\n'
+                f'\nCreate {USERDATA_DIR}? (yes recommended)\n'
                 )
         if self.libui.bool_select(message):
             initialize_userdata()
