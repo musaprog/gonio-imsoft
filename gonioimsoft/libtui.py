@@ -178,14 +178,32 @@ class SimpleTUI:
             time.sleep(1)
 
 
-    def input(self, message=None):
+
+    def input(self, message=None, cancels=None):
         '''Ask the user for text input.
 
         A blocking call.
+        
+        Arguments
+        ---------
+        message : string
+            The on-line message shown to the user.
+        cancels: string
+            If user inputs this string then returns None
+
+        Returns
+        -------
+        user_input : string or None if cancels
         '''
         if message is not None:
-            self.print(message)
-        return input('>> ')
+            uinput = input(f'{message} >> ')
+        else:
+            uinput = input('>> ')
+        
+        if isinstance(cancels, str) and uinput == cancels:
+            return None
+
+        return uinput
 
 
 

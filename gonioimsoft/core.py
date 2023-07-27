@@ -543,8 +543,10 @@ class GonioImsoftCore:
         
 
     def initialize(self, name, sex, age, camera=False):
-        '''
-        Call this to initialize the experiments.
+        '''Call this to initialize the experiments.
+
+        Returns True if worked or None if user cancelled.
+
 
         name, sex age       Can be '' (empty string)
         '''
@@ -556,7 +558,12 @@ class GonioImsoftCore:
         if age != '':
             self.preparation['age'] = age
 
-        self.dynamic_parameters = getModifiedParameters()
+        params = getModifiedParameters()
+        if params is None:
+            return None 
+
+        self.dynamic_parameters = params
+
         print('Preparation name set as {}, sex {}, age {} days.'.format(self.preparation['name'], self.preparation['sex'], self.preparation['age']))
 
         if camera:
@@ -566,7 +573,8 @@ class GonioImsoftCore:
         
         self.set_led(self.dynamic_parameters['ir_channel'], self.dynamic_parameters['ir_livefeed'])
         self.set_led(self.dynamic_parameters['flash_channel'], self.dynamic_parameters['flash_off'])
-
+        
+        return True
 
     def load_preset(self, preset_name):
         fn = os.path.join('presets', preset_name)

@@ -210,7 +210,7 @@ class ParameterEditor:
         while True:
             print('MODIFYING IMAGING PARAMETERS')
             self.print_preset(self.dynamic_parameters)
-            parameter = input('Parameter name or (list/save/load) (Enter to continue) >> ')
+            parameter = input('Parameter name or (list/save/load/back) (Enter to continue) >> ')
             
             # If breaking free
             if parameter == '':
@@ -263,6 +263,9 @@ class ParameterEditor:
                         print('Invalid preset.')
 
                 parameter = to_load
+
+            if parameter == 'back':
+                return None
 
             if parameter in self.presets.keys():
                 self.print_preset(self.presets[parameter])

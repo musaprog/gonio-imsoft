@@ -304,9 +304,16 @@ class GonioImsoftTUI:
 
 
     def add_remote_camera(self):
-        host = self.libui.input('IP address or hostname: ')
-        port = self.libui.input('Port (leave blank for default): ')
-        
+        cancels = 'back'
+        self.libui.input(f'# Type in {cancels} to cancel')
+
+        host = self.libui.input('IP address or hostname', cancels)
+        if host is None:
+            return
+        port = self.libui.input('Port (leave blank for default): ', cancels)
+        if port is None:
+            return
+
         if port == '':
             port = None
         else:
@@ -421,14 +428,24 @@ class GonioImsoftTUI:
         trigger = False
         
         self.core.set_savedir(os.path.join('imaging_data_'+self.experimenter), camera=camera)
-        self.libui.print('# Enter specimen metadata\n')
+
+        cancels = 'back'
+        self.libui.print(f'# Enter specimen metadata (enter {cancels} to cancel)\n')
+
         name = self.libui.input(
-                'Name ({})>> '.format(self.core.preparation['name']))
+                'Name ({})>> '.format(self.core.preparation['name']), cancels)
+        if name is None: return
+
         sex = self.libui.input(
-                'Sex ({})>> '.format(self.core.preparation['sex']))
+                'Sex ({})>> '.format(self.core.preparation['sex']), cancels)
+        if sex is None: return
+
         age = self.libui.input(
-                'Age ({})>> '.format(self.core.preparation['age']))
-        self.core.initialize(name, sex, age, camera=camera)
+                'Age ({})>> '.format(self.core.preparation['age']), cancels)
+        if age is None: return
+
+        if self.core.initialize(name, sex, age, camera=camera) is None:
+            return
 
         upper_lines = ['-','Dynamic imaging', '-', 'Help F1', 'Space ']
 
@@ -480,7 +497,9 @@ class GonioImsoftTUI:
                 elif key == ';':
                     self.core.motors[2].move_raw(1)
             elif key == '`':
-                user_input = input("Type command >> ")
+                user_input = self.libui.input("Type command >> ", '')
+                if user_input is None:
+                    continue
                 self.console.enter(user_input)
 
             elif key == '' and not (static and self.core.trigger_rotation):
@@ -529,9 +548,15 @@ class GonioImsoftTUI:
             # Select operation
             selection = self.libui.item_select(self.experimenters+extra_options) 
 
+            self.libui.clear_screen()
+            
             # add new
             if selection == extra_options[0]:
-                name = self.libui.input('Name >>')
+                cancels = 'back'
+                self.libui.print(f'# Adding new user (enter {cancels} to cancel)')
+                name = self.libui.input('Name >>', cancels)
+                if name is None:
+                    continue
                 self.experimenters.append(name)
 
             # remove old
@@ -586,6 +611,8 @@ class GonioImsoftTUI:
             
             # Blocking call here
             selection = self.libui.item_select(menuitems)
+
+            self.libui.clear_screen()
             self.main_menu[menuitems.index(selection)][1]()
 
             # Update status menu and clear screen
