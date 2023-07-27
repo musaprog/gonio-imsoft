@@ -60,7 +60,21 @@ class SimpleTUI:
         print(value)
 
 
-    def item_select(self, items, message=None):
+    def _convert_selection(self, selection):
+        '''
+        selection : string
+            Raw string typed by the user.
+        '''
+        selection = selection.strip('\r\n')
+        selection = selection.split(',')
+
+        # Raises ValueError if fails
+        selection = [int(string) for string in selection]
+        
+        return selection
+
+
+    def item_select(self, items, message=None, multiselect=False):
         '''Makes the user to select an item
 
         Arguments
@@ -69,11 +83,16 @@ class SimpleTUI:
             An iterable (eg. list) that returns printable items.
             If the item is newline, then prints a space and this
             space cannot be selected.
+        message : string
+            Printed before the selection table as an instruction
+        multiselect : bool
+            If True, 
 
         Returns
         -------
-        item : any
-            The selected item
+        item : ?
+            The selected item. If multiselect is True, returns a
+            list of selected items
 
         Empty string items are converted to a space
         '''
@@ -85,13 +104,20 @@ class SimpleTUI:
         i = 0
         for item in items:
             if item != '\n':
-                print('{}) {}'.format(i+1, item))
+                self.print('{}) {}'.format(i+1, item))
                 real_items.append(item)
                 i += 1
             else:
-                print()
+                self.print()
 
-        print()
+        self.print()
+        
+        if multiselect:
+            self.print('# Multiple selections possible, separate by commas (,)')
+        else:
+            self.print('# Select by number and hit enter')
+
+        self.print()
 
         selection = ''
         while True:
@@ -100,18 +126,32 @@ class SimpleTUI:
                 selection += new_char
                 self.print(selection)
             if selection.endswith('\r') or selection.endswith('\n'):
+                
                 try:
-                    selection = int(selection)
-                    real_items[selection-1]
-                    break
+                    selection = self._convert_selection(selection)
                 except ValueError:
-                    self.print('Invalid input')
+                    self.print('Invalid input (non-numbers inputted)')
                     selection = ''
+                    continue
+                
+                try:
+                    # Test that we can get the item; -1 comes from
+                    # the difference between Python first index (0)
+                    # and this selection program first index (1) 
+                    [real_items[number-1] for number in selection]
                 except IndexError:
-                    self.print('Invalid input')
+                    self.print('Invalid input (index out of range)')
                     selection = ''
-        return real_items[selection-1]
-    
+                    continue
+
+                break
+
+
+        to_return = [real_items[int(number)-1] for number in selection]
+        if not multiselect:
+            to_return = to_return[0]
+
+        return to_return
 
     def bool_select(self, message=None, true='yes', false='no'):
         '''Ask the user yes/no.
