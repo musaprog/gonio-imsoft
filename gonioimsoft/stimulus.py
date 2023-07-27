@@ -14,7 +14,7 @@ try:
 except ModuleNotFoundError:
     bsextract = None
 
-from .directories import CODE_ROOTDIR
+from .directories import USERDATA_DIR
 
 class StimulusBuilder:
     '''
@@ -66,7 +66,7 @@ class StimulusBuilder:
         '''
         
         if fn.endswith('.json'):
-            ffn = os.path.join(CODE_ROOTDIR, 'biosyst_stimuli', fn)
+            ffn = os.path.join(USERDATA_DIR, 'biosyst_stimuli', fn)
             with open(fnn, 'r') as fp:
                 data = json.load(fp)
 
@@ -84,7 +84,7 @@ class StimulusBuilder:
         if bsextract is None:
             raise ModuleNotFoundError('Module required\npip install python-biosystfiles')
 
-        ffn = os.path.join(CODE_ROOTDIR, 'biosyst_stimuli', fn)
+        ffn = os.path.join(USERDATA_DIR, 'biosyst_stimuli', fn)
         self.overload_stimulus, self.fs = bsextract(ffn, channel)
         self.overload_stimulus = self.overload_stimulus.flatten()
         print(self.overload_stimulus.shape)

@@ -12,7 +12,11 @@ import json
 import inspect      # Inspect docs and source code
 
 from gonioimsoft.version import __version__
-from gonioimsoft.directories import USERDATA_DIR
+from gonioimsoft.directories import (
+        USERDATA_DIR,
+        IS_USERDATA_INITIALIZED,
+        initialize_userdata,
+        )
 from gonioimsoft.core import GonioImsoftCore, nidaqmx
 from gonioimsoft.imaging_parameters import (
         DEFAULT_DYNAMIC_PARAMETERS,
@@ -565,7 +569,7 @@ class GonioImsoftTUI:
                 f'\nCreate {USERDATA_DIR}? (recommended)'
                 )
         if self.libui.bool_select(message):
-            os.makedirs(USERDATA_DIR)
+            initialize_userdata()
             print('Success!')
             time.sleep(2)
         else:
@@ -633,9 +637,13 @@ class GonioImsoftTUI:
  
         # Check if userdata directory settings exists
         # If not, ask to create it
-        if not os.path.isdir(USERDATA_DIR):
-           self._run_firstrun()
-           self.libui.clear_screen()
+        if not IS_USERDATA_INITIALIZED:
+            self._run_firstrun()
+            self.libui.clear_screen()
+        else:
+            # Already initialized, just check all subfolders present
+            # in newer versions are also there
+            initialize_userdata()
         
         self._run_experimenter_select()
         self.libui.clear_screen()

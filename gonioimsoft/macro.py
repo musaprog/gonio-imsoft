@@ -2,6 +2,8 @@
 import os
 import ast
 
+from .directories import USERDATA_DIR
+
 def list_macros():
     '''
     Lists all available macros by names that can be
@@ -23,7 +25,8 @@ def load(macro_name):
 
     macro = []
 
-    with open(os.path.join('macros', macro_name+'.txt'), 'r') as fp:
+    with open(os.path.join(
+        USERDATA_DIR, 'macros', macro_name+'.txt'), 'r') as fp:
         for line in fp:
             if line:
                 macro.append(ast.literal_eval(line))
