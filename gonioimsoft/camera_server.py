@@ -466,7 +466,12 @@ class MMCamera:
         Save given images as grayscale tiff images.
         '''
         if not os.path.isdir(savedir):
-            os.makedirs(savedir)
+            try:
+                os.makedirs(savedir)
+            except:
+                # May fail if many local servers creating
+                # the folders simultaneously
+                pass
 
         if self.save_stack == False:
             # Save separate images
@@ -545,14 +550,20 @@ class MMCamera:
         
         # Check if the folder exists
         if not os.path.exists(os.path.dirname(fn)):
-            #raise OSError('File {} already exsits'.format(fn))
-            os.makedirs(os.path.dirname(fn), exist_ok=True)
+            try:
+                os.makedirs(os.path.dirname(fn), exist_ok=True)
+            except:
+                # My fail if many local servers. Let's not
+                # care about it, another server has made it
+                pass
         
-        with open(fn+'.txt', 'w') as fp:
-            fp.write(desc_string)
+        try:
+            with open(fn+'.txt', 'w') as fp:
+                fp.write(desc_string)
 
-        print("Wrote file " + fn+'.txt')
-        
+            print("Wrote file " + fn+'.txt') 
+        except:
+            pass
         
         self.description_string = desc_string
 
