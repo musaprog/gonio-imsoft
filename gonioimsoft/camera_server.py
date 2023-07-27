@@ -146,7 +146,7 @@ class ImageShower:
         return self.im, text
            
          
-    def loop(self, queue):
+    def loop(self, queue, title):
         '''
         Runs the ImageShower by reading images from the given queue.
         Set this as a multiprocessing target.
@@ -159,6 +159,8 @@ class ImageShower:
         image = queue.get()
         self.im = plt.imshow(1000*image/np.max(image), cmap='gray', vmin=0, vmax=1, interpolation='none', aspect='auto')
         self.ani = FuncAnimation(plt.gcf(), self._updateImage, frames=range(100), interval=50, blit=False)
+
+        self.fig.canvas.toolbar.winfo_toplevel().title(title)
 
         # Remove the toolbar; Gives more space when having many cameras
         self.fig.canvas.toolbar.pack_forget()
@@ -254,6 +256,9 @@ class MMCamera:
 
         self.save_stack = False
 
+        self.title = 'Camera not set'
+        self.servertitle = ''
+
 
     def get_cameras(self):
         '''Lists available MicroManager configuration files in .
@@ -282,6 +287,7 @@ class MMCamera:
         self._configuration_name = name
         self.mmc.prepareSequenceAcquisition(self._device_name)
 
+        self.title = f'{name} ({self._device_name}) | {self.servertitle}'
 
     def get_settings(self):
         '''Returns device property names
@@ -606,6 +612,7 @@ class CameraServer:
         
         print(f'Using the camera <{camera.__class__.__name__}>')
         self.cam = camera
+        self.cam.servertitle = f'Server on port {port}'
         self.cam.wait_for_client = self.wait_for_client
         
         self.functions = {'acquireSeries': self.cam.acquire_series,
