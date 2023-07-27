@@ -320,11 +320,12 @@ class GonioImsoftTUI:
             self._add_camera(client)
 
     def remove_camera(self):
+        names = [cam.get_camera() for cam in self.core.cameras]
         selection = self.libui.item_select(
-                self.core.cameras+['..back'], 'Select camera to remove')
+                names+['..back'], 'Select camera to remove')
 
         if selection != '..back':
-            index = self.core.cameras.index(selection)
+            index = names.index(selection)
             self.core.remove_camera_client(index)
 
     @property
