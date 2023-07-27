@@ -159,6 +159,13 @@ class ImageShower:
         self.im = plt.imshow(1000*image/np.max(image), cmap='gray', vmin=0, vmax=1, interpolation='none', aspect='auto')
         self.ani = FuncAnimation(plt.gcf(), self._updateImage, frames=range(100), interval=50, blit=False)
 
+        # Remove the toolbar; Gives more space when having many cameras
+        self.fig.canvas.toolbar.pack_forget()
+        
+        # Take away all white space
+        plt.subplots_adjust(top=1, bottom=0, right=1,left=0,
+                            hspace=0, wspace=0)
+        
         plt.show(block=True)
 
 
