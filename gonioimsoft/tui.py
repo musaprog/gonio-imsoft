@@ -470,12 +470,11 @@ class GonioImsoftTUI:
                 "#   ` (tilde)  Open command console (type in help for help)\n"
                 "# \n"
                 "# Rotation stage changes will be printed here.\n"
-                "# Separate windows for the added cameras should open\n"
                 )
-        if self.core.cameras:
+        if not self.core.cameras:
             help_string += (
-                    '# You have not added any cameras. Space only triggers.\n'
-                    '# Return to the main menu to add local cameras.\n'
+                    '# You have not added any cameras. Space now triggers only.\n'
+                    '# Return to the main menu to add cameras.\n'
                     )
         else:
             help_string += (
