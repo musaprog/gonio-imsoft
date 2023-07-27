@@ -433,15 +433,15 @@ class GonioImsoftTUI:
         self.libui.print(f'# Enter specimen metadata (enter {cancels} to cancel)\n')
 
         name = self.libui.input(
-                'Name ({})>> '.format(self.core.preparation['name']), cancels)
+                'Name ({})'.format(self.core.preparation['name']), cancels)
         if name is None: return
 
         sex = self.libui.input(
-                'Sex ({})>> '.format(self.core.preparation['sex']), cancels)
+                'Sex ({})'.format(self.core.preparation['sex']), cancels)
         if sex is None: return
 
         age = self.libui.input(
-                'Age ({})>> '.format(self.core.preparation['age']), cancels)
+                'Age ({})'.format(self.core.preparation['age']), cancels)
         if age is None: return
 
         if self.core.initialize(name, sex, age, camera=camera) is None:
