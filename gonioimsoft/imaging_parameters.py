@@ -15,7 +15,7 @@ from gonioimsoft.directories import USERDATA_DIR
 DEFAULT_DYNAMIC_PARAMETERS = {'isi': 10.0, 'repeats': 1, 'pre_stim': 0.000,
         'stim': 0.200, 'post_stim': 0.00, 'frame_length' : 0.010,
         'ir_imaging': 5, 'ir_waiting': 0, 'ir_livefeed': 1,
-        'flash_on': 8, 'flash_off': 0,
+        'flash_on': 5, 'flash_off': 0,
         'ir_channel': "Dev1/ao1", 'flash_channel': "Dev1/ao0",
         'suffix': '', 'trigger_channel': "/Dev1/PFI0",
         'trigger_out_channel': "Dev2/ao0",
