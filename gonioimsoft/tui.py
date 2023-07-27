@@ -497,7 +497,7 @@ class GonioImsoftTUI:
         message = (
                 '\nFIRST RUN\n---------'
                 'GonioImsoft needs a location '
-                'to save user files\n  - list of experimenters\n '
+                'to save user files\n  - list of savefolders\n '
                 '- settings'
                 '\n  - created protocol files'
                 'Imaging data will not be saved here (= no big files)'
@@ -515,11 +515,11 @@ class GonioImsoftTUI:
     def _run_experimenter_select(self):
 
         if self.experimenter is not None:
-            self.libui.print(f'Current experimenter: {self.experimenter}')
+            self.libui.print(f'Current savefolder: {self.experimenter}')
 
         extra_options = [' (Add new)', ' (Remove old)', ' (Save current list)']
 
-        self.libui.print('Select experimenter\n--------------------')
+        self.libui.print('Select savefolder\n--------------------')
         while True:
             # Select operation
             selection = self.libui.item_select(self.experimenters+extra_options) 
