@@ -537,7 +537,6 @@ class GonioImsoftCore:
         desc_string += "\n\n#DYNAMIC PROTOCOL PARAMETERS\n"
         for name, value in self.dynamic_parameters.items():
             desc_string += '{} {}\n'.format(name, value)
-        print(desc_string)
         for camera in self.cameras:
             camera.saveDescription(self.preparation['name'], desc_string)
         
@@ -563,8 +562,6 @@ class GonioImsoftCore:
             return None 
 
         self.dynamic_parameters = params
-
-        print('Preparation name set as {}, sex {}, age {} days.'.format(self.preparation['name'], self.preparation['sex'], self.preparation['age']))
 
         if camera:
             self._update_descriptions_file()
