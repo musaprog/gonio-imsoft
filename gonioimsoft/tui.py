@@ -449,6 +449,38 @@ class GonioImsoftTUI:
 
         upper_lines = ['-','Dynamic imaging', '-', 'Help F1', 'Space ']
 
+        self.libui.clear_screen()
+
+
+        help_string = "# This part of the program works by keyboard shortcuts\n"
+        if static:
+            help_string += '#   space      Toggle trigger-by-rotation on/off\n'
+        else:
+            help_string += "#   space      Run imaging\n"
+        help_string += (
+                '#   enter      Return back to the main menu\n'
+                "#   0          Set current rotation as (0,0)\n"
+                "#   s          Take a snap image\n"
+                '#   e          Edit imaging parameters again\n'
+                '#   h          Print this help again\n'
+                "#   ` (tilde)  Open command console (type in help for help)\n"
+                "# \n"
+                "# Rotation stage changes will be printed here.\n"
+                "# Separate windows for the added cameras should open\n"
+                )
+        if self.core.cameras:
+            help_string += (
+                    '# You have not added any cameras. Space only triggers.\n'
+                    '# Return to the main menu to add local cameras.\n'
+                    )
+        else:
+            help_string += (
+                    '# Separate windows for the added cameras should open\n'
+                    )
+
+
+        self.libui.print(help_string)
+
         while True:
             
             lines = upper_lines
@@ -481,6 +513,11 @@ class GonioImsoftTUI:
             elif key == '\r':
                 # If user hits enter we'll exit
                 break
+            elif key == 'e':
+                if self.core.initialize(name, sex, age, camera=camera) is None:
+                    continue
+            elif key == 'h':
+                self.libui.print(help_string)
             elif self.core.motors:
                 if key == '[':
                     self.core.motors[0].move_raw(-1)
