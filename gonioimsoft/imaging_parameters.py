@@ -185,8 +185,19 @@ class ParameterEditor:
         
         print('{:<20} {:<40} {}'.format('PARAMETER NAME', 'VALUE', 'DESCRIPTION'))
         for parameter in parameter_names:
-            print('{:<20} {:<40} {}'.format(parameter, str(preset[parameter]),
-                DYNAMIC_PARAMETERS_HELP[parameter]))
+
+            value = str(preset[parameter])
+
+            # Special addition for frame_length parameter; Show Hz so that
+            # it is harder to do mistakes
+            if parameter == 'frame_length':
+                hz = str(round(1/float(value)))
+                if hz == 1:
+                    hz = str(1/float(value))
+                value += ' ({} Hz)'.format(hz)
+
+            print('{:<20} {:<40} {}'.format(
+                parameter, value, DYNAMIC_PARAMETERS_HELP[parameter]))
         print()
 
 
