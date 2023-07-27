@@ -23,7 +23,7 @@ DEFAULT_DYNAMIC_PARAMETERS = {'isi': 10.0, 'repeats': 1, 'pre_stim': 0.000,
         'biosyst_channel': 2,
         'avgint_adaptation': 0,
         'flash_type': 'square',
-        'save_stack': False}
+        'save_stack': True}
 
 DYNAMIC_PARAMETERS_TYPES = {'seconds': ['isi', 'pre_stim', 'stim', 'post_stim', 'frame_length', 'avgint_adaptation'],
         'voltage': ['ir_imaging', 'ir_waiting', 'ir_livefeed', 'flash_on', 'flash_off'],
