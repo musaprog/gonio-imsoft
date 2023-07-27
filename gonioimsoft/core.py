@@ -576,10 +576,9 @@ class GonioImsoftCore:
 
 
     def tick(self, horizontal_trigger=True, vertical_trigger=False):
-        '''
-        Updates the current angle. In the future may do other houskeeping functions also.
+        '''Updates the current angle and performs all "houskeeping" duties also.
         
-        Call this once while in a loop that the angles have to be updated.
+        Meant to be called repeatedly inside the UI loop.
         '''
 
         change = False

@@ -420,9 +420,13 @@ class GonioImsoftTUI:
         trigger = False
         
         self.core.set_savedir(os.path.join('imaging_data_'+self.experimenter), camera=camera)
-        name = input('Name ({})>> '.format(self.core.preparation['name']))
-        sex = input('Sex ({})>> '.format(self.core.preparation['sex']))
-        age = input('Age ({})>> '.format(self.core.preparation['age']))
+        self.libui.print('# Enter specimen metadata\n')
+        name = self.libui.input(
+                'Name ({})>> '.format(self.core.preparation['name']))
+        sex = self.libui.input(
+                'Sex ({})>> '.format(self.core.preparation['sex']))
+        age = self.libui.input(
+                'Age ({})>> '.format(self.core.preparation['age']))
         self.core.initialize(name, sex, age, camera=camera)
 
         upper_lines = ['-','Dynamic imaging', '-', 'Help F1', 'Space ']

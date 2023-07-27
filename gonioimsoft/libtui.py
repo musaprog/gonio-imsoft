@@ -56,7 +56,7 @@ class SimpleTUI:
             print(text)
         
     @staticmethod
-    def print(value):
+    def print(value=''):
         print(value)
 
 
@@ -176,6 +176,8 @@ class SimpleTUI:
 
     def input(self, message=None):
         '''Ask the user for text input.
+
+        A blocking call.
         '''
         if message is not None:
             self.print(message)
