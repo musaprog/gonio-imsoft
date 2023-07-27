@@ -38,6 +38,9 @@ class CameraClient:
         The CameraServer IP address / hostname
     port : int
         The CameraServer port number
+    local_server : Popen obj or None
+        If local server is started by the server, this attribute
+        holds the Popen object.
     '''
 
 
@@ -54,6 +57,8 @@ class CameraClient:
         self.port = port
 
         self.modified_settings = set()
+
+        self.local_server = None
     
 
     def sendCommand(self, command_string, retries=MAX_RETRIES, listen=False):
@@ -134,7 +139,7 @@ class CameraClient:
     def set_save_stack(self, boolean):
         self.sendCommand('set_save_stack;{}'.format(boolean))
 
-    def isServerRunning(self):
+    def is_server_running(self):
         try:
             self.sendCommand('ping;Client wants to know if server is running', retries=0)
         except ConnectionRefusedError:
@@ -142,23 +147,22 @@ class CameraClient:
         return True
 
 
-    def startServer(self):
+    def start_server(self):
+        '''Start a local camera server using Popen.
         '''
-        Start a local camera server instance.
-        '''
-        if self.isServerRunning():
+        if self.is_server_running():
             print('Server already running, not starting again')
             return
 
         print(f'Starting a local server on port {self.port}')
 
-        subprocess.Popen(
+        self.local_server = subprocess.Popen(
                 [
                     sys.executable,
                     '-m', 'gonioimsoft.camera_server',
                     '--port', str(self.port)
                     ],
-                stdout=open(os.devnull, 'w'))
+                stdout=subprocess.DEVNULL)
 
         atexit.register(self.close_server)
 
@@ -207,9 +211,7 @@ class CameraClient:
 
 
     def close_server(self):
-        '''
-        Sends an exit message to the server, to which the server should respond
-        by closing itself down.
+        '''Sends an exit message to the server, and waits if local.
         '''
         try:
             self.sendCommand('exit;'+'None', retries=0)
@@ -217,6 +219,15 @@ class CameraClient:
             pass
 
         atexit.unregister(self.close_server)
+        
+        # If local waits that the subprocess terminates for 10 seconds
+        # and if not in this time then send terminate and continue
+        if self.local_server is not None:
+            try:
+                self.local_server.wait(10)
+            except subprocess.TimeoutExpired:
+                self.local_server.terminate()
+            self.local_server = None
 
     def save_state(self, label, modified_only=True):
         '''Acquires the current camera state and saves it

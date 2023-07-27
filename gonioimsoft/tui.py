@@ -296,10 +296,6 @@ class GonioImsoftTUI:
         '''Add a camera from a local camera server.
         '''
         client = self.core.add_camera_client(None, None)
-        
-        if not client.isServerRunning():
-            client.startServer()
-        
         self._add_camera(client)
 
 
@@ -314,11 +310,18 @@ class GonioImsoftTUI:
 
         client = self.core.add_camera_client(host, port)
         
-        if not client.isServerRunning:
+        if not client.is_server_running:
             self.libui.print('Cannot connect to the server')
         else:
             self._add_camera(client)
 
+    def remove_camera(self):
+        selection = self.libui.item_select(
+                self.core.cameras+['..back'], 'Select camera to remove')
+
+        if selection != '..back':
+            index = self.core.cameras.index(selection)
+            self.core.remove_camera_client(index)
 
     @property
     def menutext(self):
@@ -326,7 +329,7 @@ class GonioImsoftTUI:
 
         # Check camera server status
         for i_camera, camera in enumerate(self.core.cameras):
-            if camera.isServerRunning():
+            if camera.is_server_running():
                 cam_name = camera.get_camera()
                 if cam_name:
                     cs = f'{cam_name}\n'

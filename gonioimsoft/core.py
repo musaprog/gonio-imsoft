@@ -88,15 +88,35 @@ class GonioImsoftCore:
 
     
     def add_camera_client(self, host, port):
+        '''Adds a camera client to the given host and port.
+
+        If host is None uses the localhost and starts a local
+        server if no local server running at that port
+        '''
         client = CameraClient(
                 host, port,
                 running_index=self.local_servers_running_index)
         self.local_servers_running_index += 1
+
+        if host is None and not client.is_server_running():
+            client.start_server()
+
         self.cameras.append(client)
+
         return client
 
     def remove_camera_client(self, i_client):
+        '''Removes the camera client and closes its server if local server
+        '''
+        # Popping is enough and the client should be garbage collected
+        # by Python (the sockets are not kept alive so nothing is
+        # left open etc. by the client)
         client = self.cameras.pop(i_client)
+        
+        # If the client started a local server, close the server
+        if client.local_server is not None:
+            client.close_server()
+
         return client
 
 
