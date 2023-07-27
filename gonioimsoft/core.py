@@ -25,7 +25,7 @@ from gonioimsoft.imaging_parameters import (
 from gonioimsoft.stimulus import StimulusBuilder
 import gonioimsoft.macro as macro
 
-
+ENABLE_MOTORS = False
 
 class GonioImsoftCore:
     '''Main interface to control GonioImsoft recordings.
@@ -65,8 +65,9 @@ class GonioImsoftCore:
         # 1)    Vertical + sensor
         # 2)    Microscope focus (no sensor)
         self.motors = []
-        for i_motor, i_sensor in zip([0,1,2],[0,1,None]):
-            self.motors.append(Motor(self.reader, i_motor, i_sensor))
+        if ENABLE_MOTORS:
+            for i_motor, i_sensor in zip([0,1,2],[0,1,None]):
+                self.motors.append(Motor(self.reader, i_motor, i_sensor))
         
 
         # Macro imaging: Automatically move motors and take images
@@ -615,7 +616,7 @@ class GonioImsoftCore:
             
             if type(action) == type((0,0)):
                 # Move motors only if they have reached their positions
-                if all([self.motors[i].reached_target() for i in [0,1]]):
+                if self.motors and all([self.motors[i].reached_target() for i in [0,1]]):
                     self.motors[0].move_to(action[0])
                     self.motors[1].move_to(action[1])
                     next_macro_step = True
@@ -644,7 +645,7 @@ class GonioImsoftCore:
         '''
         self.set_led(self.dynamic_parameters['ir_channel'], 0)
         self.set_led(self.dynamic_parameters['flash_channel'], 0)
-
+        
         for motor in self.motors:
             motor.move_to(0)
 

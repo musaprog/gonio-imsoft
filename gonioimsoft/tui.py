@@ -455,22 +455,21 @@ class GonioImsoftTUI:
             elif key == '\r':
                 # If user hits enter we'll exit
                 break
+            elif self.core.motors:
+                if key == '[':
+                    self.core.motors[0].move_raw(-1)
+                elif key == ']':
+                    self.core.motors[0].move_raw(1)
+                
+                elif key == 'o':
+                    self.core.motors[1].move_raw(-1)
+                elif key == 'p':
+                    self.core.motors[1].move_raw(1)
 
-            elif key == '[':
-                self.core.motors[0].move_raw(-1)
-            elif key == ']':
-                self.core.motors[0].move_raw(1)
-            
-            elif key == 'o':
-                self.core.motors[1].move_raw(-1)
-            elif key == 'p':
-                self.core.motors[1].move_raw(1)
-
-            elif key == 'l':
-                self.core.motors[2].move_raw(-1)
-            elif key == ';':
-                self.core.motors[2].move_raw(1)
-
+                elif key == 'l':
+                    self.core.motors[2].move_raw(-1)
+                elif key == ';':
+                    self.core.motors[2].move_raw(1)
             elif key == '`':
                 user_input = input("Type command >> ")
                 self.console.enter(user_input)
