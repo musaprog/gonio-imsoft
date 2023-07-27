@@ -33,7 +33,8 @@ def initialize_userdata():
             USERDATA_DIR,
             os.path.join(USERDATA_DIR, 'macros'),
             os.path.join(USERDATA_DIR, 'biosyst_stimuli'),
-            os.path.join(USERDATA_DIR, 'presets')
+            os.path.join(USERDATA_DIR, 'presets'),
+            os.path.join(USERDATA_DIR, 'camera_states'),
             ]
     for adir in dirs:
         os.makedirs(adir, exist_ok=True)
