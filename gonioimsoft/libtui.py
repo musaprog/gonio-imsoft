@@ -123,7 +123,11 @@ class SimpleTUI:
         while True:
             new_char = self.read_key()
             if new_char:
-                selection += new_char
+                if new_char == '\b':
+                    # Backspace
+                    selection = selection[:-1]
+                elif new_char in "0123456789\n\r":
+                    selection += new_char
                 self.print(selection)
             if selection.endswith('\r') or selection.endswith('\n'):
                 
