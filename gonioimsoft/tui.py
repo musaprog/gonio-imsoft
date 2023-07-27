@@ -259,22 +259,26 @@ class GonioImsoftTUI:
             self.experimenters = ['gonioims']
         
 
-        self.main_menu = [
-                ['Imaging', self.loop_dynamic],
-                ['Step-trigger imaging', self.loop_static],
-                ['Step-trigger only (use external camera software)', self.loop_trigger],
-                ['\n', None],
-                ['Change experimenter', self._run_experimenter_select],
-                ['Quit', self.quit],
-                ['\n', None],
-                ['Add local camera', self.add_local_camera],
-                ['Add remote camera', self.add_remote_camera],
-                ['Edit camera settings', self.camera_settings_edit]]
-        #['Start camera server (local)', self.core.camera.startServer],
-        #['Stop camera server', self.core.camera.close_server]
 
         self.experimenter = None    # name of the experimenter
         self.quit = False
+
+
+    @property
+    def main_menu(self):
+        menu = [
+                ['Normal imaging', self.loop_dynamic],
+                ['Step-trigger imaging (takes an image on each goniometer step)', self.loop_static],
+                ['Step-trigger (triggers only; use external camera software)', self.loop_trigger],
+                ['\n', None],
+                [f'Change savefolder (current: {self.experimenter})', self._run_experimenter_select],
+                ['Quit', self.quit],
+                ['\n', None],
+                ['Add a local camera', self.add_local_camera],
+                ['Add a remote camera', self.add_remote_camera],
+                ['Edit camera settings', self.camera_settings_edit],
+                ['Remove camera', self.remove_camera]]
+        return menu
 
 
     def _add_camera(self, client):
