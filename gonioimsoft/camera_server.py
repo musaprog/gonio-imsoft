@@ -110,7 +110,7 @@ class ImageShower:
             data = self.queue.get(True, timeout=0.01)
         if data is None:
             return self.im, ''
-        elif data == 'close':
+        elif isinstance(data, str) and data == 'close':
             self.close = True
             return self.im, ''
 
