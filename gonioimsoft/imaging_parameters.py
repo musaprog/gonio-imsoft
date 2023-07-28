@@ -12,7 +12,8 @@ import json
 from gonioimsoft.directories import USERDATA_DIR
 
 
-DEFAULT_DYNAMIC_PARAMETERS = {'isi': 10.0, 'repeats': 1, 'pre_stim': 0.000,
+DEFAULT_DYNAMIC_PARAMETERS = {
+        'isi': 10.0, 'repeats': 1, 'pre_stim': 0.000,
         'stim': 0.200, 'post_stim': 0.00, 'frame_length' : 0.010,
         'ir_imaging': 5, 'ir_waiting': 0, 'ir_livefeed': 1,
         'flash_on': 5, 'flash_off': 0,
@@ -23,17 +24,21 @@ DEFAULT_DYNAMIC_PARAMETERS = {'isi': 10.0, 'repeats': 1, 'pre_stim': 0.000,
         'biosyst_channel': 2,
         'avgint_adaptation': 0,
         'flash_type': 'square',
-        'save_stack': True}
+        'save_stack': True,
+        'reboot_cameras': False,
+        }
 
-DYNAMIC_PARAMETERS_TYPES = {'seconds': ['isi', 'pre_stim', 'stim', 'post_stim', 'frame_length', 'avgint_adaptation'],
+DYNAMIC_PARAMETERS_TYPES = {
+        'seconds': ['isi', 'pre_stim', 'stim', 'post_stim', 'frame_length', 'avgint_adaptation'],
         'voltage': ['ir_imaging', 'ir_waiting', 'ir_livefeed', 'flash_on', 'flash_off'],
         'channel': ['ir_channel', 'flash_channel', 'trigger_channel', 'trigger_out_channel'],
         'integer': ['repeats', 'biosyst_channel'],
         'string': ['suffix', 'biosyst_stimulus', 'flash_type'],
-        'boolean': ['save_stack']}
+        'boolean': ['save_stack', 'reboot_cameras']}
 
 
-DYNAMIC_PARAMETERS_HELP = {'isi': 'Inter stimulus interval [s]',
+DYNAMIC_PARAMETERS_HELP = {
+        'isi': 'Inter stimulus interval [s]',
         'repeats': 'How many times the protocol is repeated [1-inf]',
         'pre_stim': 'How long to image before the pulse [s]',
         'stim': 'Stimulus (step pulse) length [s]',
@@ -53,7 +58,8 @@ DYNAMIC_PARAMETERS_HELP = {'isi': 'Inter stimulus interval [s]',
         'biosyst_channel': 'The channel read from the biosyst simulus file if set',
         'avgint_adaptation': 'Time to show stimulus mean value before imaging [s]',
         'flash_type': 'square, sinelogsweep, squarelogsweep or 3steplogsweep. "{sweep},f0,f1" for Hz',
-        'save_stack': 'If true, save a stack instead separate images'}
+        'save_stack': 'If true, save a stack instead separate images'
+        'reboot_cameras': 'If true, reboots cameras after each run (dirtyfix)'}
 
 
 def getRightType(parameter_name, string_value):

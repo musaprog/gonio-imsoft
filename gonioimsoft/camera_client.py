@@ -60,6 +60,8 @@ class CameraClient:
 
         self.local_server = None
     
+        self._roi = None
+
 
     def sendCommand(self, command_string, retries=MAX_RETRIES, listen=False):
         '''
@@ -134,6 +136,7 @@ class CameraClient:
         self.sendCommand('saveDescription;'+filename+':'+string)
 
     def set_roi(self, roi):
+        self._roi = roi
         self.sendCommand('set_roi;{}:{}:{}:{}'.format(*roi))
 
     def set_save_stack(self, boolean):
@@ -276,6 +279,18 @@ class CameraClient:
         if not os.path.isdir(savedir):
             return []
         return [fn.removesuffix('.json') for fn in os.listdir(savedir) if fn.endswith('.json')]
+
+
+    def reboot(self):
+        '''Performs a "reboot" for the camera and restores settings.
+
+        Can be used as a "dirty fix" when the first image acqusition
+        works fine but the subsequent ones crash for unkown reasons.
+        '''
+        self.set_camera(self.get_camera())
+        self.load_state('previous')
+        if self._roi:
+            self.set_roi(self._roi)
 
 
 def main():
