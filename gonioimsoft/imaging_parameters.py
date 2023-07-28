@@ -26,6 +26,7 @@ DEFAULT_DYNAMIC_PARAMETERS = {
         'flash_type': 'square',
         'save_stack': True,
         'reboot_cameras': False,
+        'ROI': None,
         }
 
 DYNAMIC_PARAMETERS_TYPES = {
@@ -34,7 +35,8 @@ DYNAMIC_PARAMETERS_TYPES = {
         'channel': ['ir_channel', 'flash_channel', 'trigger_channel', 'trigger_out_channel'],
         'integer': ['repeats', 'biosyst_channel'],
         'string': ['suffix', 'biosyst_stimulus', 'flash_type'],
-        'boolean': ['save_stack', 'reboot_cameras']}
+        'boolean': ['save_stack', 'reboot_cameras'],
+        'roibox': ['ROI']}
 
 
 DYNAMIC_PARAMETERS_HELP = {
@@ -58,8 +60,10 @@ DYNAMIC_PARAMETERS_HELP = {
         'biosyst_channel': 'The channel read from the biosyst simulus file if set',
         'avgint_adaptation': 'Time to show stimulus mean value before imaging [s]',
         'flash_type': 'square, sinelogsweep, squarelogsweep or 3steplogsweep. "{sweep},f0,f1" for Hz',
-        'save_stack': 'If true, save a stack instead separate images'
-        'reboot_cameras': 'If true, reboots cameras after each run (dirtyfix)'}
+        'save_stack': 'If true, save a stack instead separate images',
+        'reboot_cameras': 'If true, reboots cameras after each run (dirtyfix)',
+        'ROI': 'If set, crops the sensor area (allows higher fps). x,y,w,h',
+        }
 
 
 def getRightType(parameter_name, string_value):
@@ -116,6 +120,14 @@ def getRightType(parameter_name, string_value):
             return False
         else:
             raise ValueError('Boolean falue has to be either "True" or "False"')
+
+
+    if parameter_name in DYNAMIC_PARAMETERS_TYPES['roibox']:
+        try:
+            x,y,w,h = [int(num) for num in string_value.split(',')]
+            return (x,y,w,h)
+        except:
+            return None
 
     raise NotImplementedError('Add {} correctly to DYNAMIC_PARAMETER_TYPES in dynamic_parameters.py')
 

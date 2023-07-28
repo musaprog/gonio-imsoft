@@ -569,7 +569,12 @@ class GonioImsoftCore:
         
         self.set_led(self.dynamic_parameters['ir_channel'], self.dynamic_parameters['ir_livefeed'])
         self.set_led(self.dynamic_parameters['flash_channel'], self.dynamic_parameters['flash_off'])
-        
+       
+        roi = self.dynamic_parameters['ROI']
+        if roi is not None:
+            for camera in self.cameras:
+                camera.set_roi(roi)
+
         return True
 
     def load_preset(self, preset_name):
