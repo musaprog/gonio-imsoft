@@ -87,6 +87,8 @@ class GonioImsoftCore:
 
         self.local_servers_running_index = 0
 
+        self.pause_livefeed = False
+
     
     def add_camera_client(self, host, port):
         '''Adds a camera client to the given host and port.
@@ -264,6 +266,9 @@ class GonioImsoftCore:
 
             print('A snap image taken')
         else:
+            if self.pause_livefeed:
+                return
+
             for camera in self.cameras:
                 camera.acquireSingle(False, '')
             time.sleep(0.1)

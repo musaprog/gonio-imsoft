@@ -227,6 +227,15 @@ class Console:
         self.core.reader.offset = (cho-ho, cve-ve)
 
 
+    def live(self):
+        '''Toggles the cameras' livefeed (running/paused).
+        '''
+        if self.core.pause_livefeed == True:
+            self.core.pause_livefeed = False
+        else:
+            self.core.pause_livefeed = True
+
+
 
 class GonioImsoftTUI:
     '''Terminal user interface for goniometric imaging.
