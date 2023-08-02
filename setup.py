@@ -10,6 +10,7 @@ install_requires = [
         'numpy',
         'matplotlib',
         'tifffile',
+        'pymmcore',
         'nidaqmx',
         'pyserial',
         'python-biosystfiles',
@@ -19,7 +20,7 @@ setuptools.setup(
     name="gonio-imsoft",
     version=__version__,
     author="Joni Kemppainen",
-    author_email="jjtkemppainen1@sheffield.ac.uk",
+    author_email="joni.kemppainen@windowslive.com",
     description="Goniometric imaging software",
     long_description=long_description,
     long_description_content_type="text/markdown",
@@ -33,5 +34,5 @@ setuptools.setup(
         'Intended Audience :: Science/Research',
         "Environment :: Console",
     ],
-    python_requires='>=3.0',
+    python_requires='>=3.6',
 )

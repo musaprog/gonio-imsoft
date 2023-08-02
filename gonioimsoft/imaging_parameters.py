@@ -1,19 +1,22 @@
-'''
-Default dynamic parameters and ParameterEditor for letting the user
+'''Settting and getting imaging parameters.
+
+Default imaging parameters, and ParameterEditor for letting the user
 modify them in the program.
 '''
+
 import os
 import time
 import ast
 import json
 
-from gonioimsoft.directories import PUPILDIR
+from gonioimsoft.directories import USERDATA_DIR
 
 
-DEFAULT_DYNAMIC_PARAMETERS = {'isi': 10.0, 'repeats': 1, 'pre_stim': 0.000,
+DEFAULT_DYNAMIC_PARAMETERS = {
+        'isi': 10.0, 'repeats': 1, 'pre_stim': 0.000,
         'stim': 0.200, 'post_stim': 0.00, 'frame_length' : 0.010,
         'ir_imaging': 5, 'ir_waiting': 0, 'ir_livefeed': 1,
-        'flash_on': 8, 'flash_off': 0,
+        'flash_on': 5, 'flash_off': 0,
         'ir_channel': "Dev1/ao1", 'flash_channel': "Dev1/ao0",
         'suffix': '', 'trigger_channel': "/Dev1/PFI0",
         'trigger_out_channel': "Dev2/ao0",
@@ -21,37 +24,46 @@ DEFAULT_DYNAMIC_PARAMETERS = {'isi': 10.0, 'repeats': 1, 'pre_stim': 0.000,
         'biosyst_channel': 2,
         'avgint_adaptation': 0,
         'flash_type': 'square',
-        'save_stack': False}
+        'save_stack': True,
+        'reboot_cameras': False,
+        'ROI': None,
+        }
 
-DYNAMIC_PARAMETERS_TYPES = {'seconds': ['isi', 'pre_stim', 'stim', 'post_stim', 'frame_length', 'avgint_adaptation'],
+DYNAMIC_PARAMETERS_TYPES = {
+        'seconds': ['isi', 'pre_stim', 'stim', 'post_stim', 'frame_length', 'avgint_adaptation'],
         'voltage': ['ir_imaging', 'ir_waiting', 'ir_livefeed', 'flash_on', 'flash_off'],
         'channel': ['ir_channel', 'flash_channel', 'trigger_channel', 'trigger_out_channel'],
         'integer': ['repeats', 'biosyst_channel'],
         'string': ['suffix', 'biosyst_stimulus', 'flash_type'],
-        'boolean': ['save_stack']}
+        'boolean': ['save_stack', 'reboot_cameras'],
+        'roibox': ['ROI']}
 
 
-DYNAMIC_PARAMETERS_HELP = {'isi': 'Inter stimulus intervali[s]',
-        'repeats': 'How many times the protocol is repeated',
+DYNAMIC_PARAMETERS_HELP = {
+        'isi': 'Inter stimulus interval [s]',
+        'repeats': 'How many times the protocol is repeated [1-inf]',
         'pre_stim': 'How long to image before the pulse [s]',
         'stim': 'Stimulus (step pulse) length [s]',
         'post_stim': 'How long to image after the pulse [s]',
-        'frame_length': 'Exposure time / inter-frame interval',
-        'ir_imaging': 'IR brightness during image acqusition',
-        'ir_waiting': 'IR brightness when waiting ISI',
-        'ir_livefeed': 'IR brightness while updating the live image',
-        'flash_on': 'Flash brightness during stim',
-        'flash_off':' Flash brightness during image acqustition',
-        'ir_channel': 'NI channel for IR',
+        'frame_length': 'Exposure time / inter-frame interval [s]',
+        'ir_imaging': 'IR brightness during image acqusition [0-10]',
+        'ir_waiting': 'IR brightness when waiting ISI [0-10]',
+        'ir_livefeed': 'IR brightness while updating the live image[0-10]',
+        'flash_on': 'Flash brightness during stim [0-10]',
+        'flash_off': 'Flash brightness during pre- and post-stim [0-10]',
+        'ir_channel': 'NI channel for IR [0-10]',
         'flash_channel': 'NI channel for Flash',
-        'trigger_channel': 'Trigger recieve/in channel',
-        'trigger_out_channel': 'Trigger send/out channel',
+        'trigger_channel': 'Trigger recieve/in channel for NI',
+        'trigger_out_channel': 'Trigger send/out channel from NI',
         'suffix': 'Tag added to the saved folders',
-        'biosyst_stimulus': 'Override the square pulse by a biosyst stimulus',
-        'biosyst_channel': 'Channel of the biosyst simulus',
+        'biosyst_stimulus': 'Override the square pulse by a biosyst stimulus [filename]',
+        'biosyst_channel': 'The channel read from the biosyst simulus file if set',
         'avgint_adaptation': 'Time to show stimulus mean value before imaging [s]',
-        'flash_type': '"square" or sinelogsweep',
-        'save_stack': 'If true, save stack instead separate images'}
+        'flash_type': 'square, sinelogsweep, squarelogsweep or 3steplogsweep. "{sweep},f0,f1" for Hz',
+        'save_stack': 'If true, save a stack instead separate images',
+        'reboot_cameras': 'If true, reboots cameras after each run (dirtyfix)',
+        'ROI': 'If set, crops the sensor area (allows higher fps). x,y,w,h',
+        }
 
 
 def getRightType(parameter_name, string_value):
@@ -93,7 +105,7 @@ def getRightType(parameter_name, string_value):
 
     if parameter_name in  DYNAMIC_PARAMETERS_TYPES['channel']:
         if type(string_value) == type(''):
-            if string_value.startswith('[') and string_value.endswith([']']):
+            if string_value.startswith('[') and string_value.endswith(']'):
                 return ast.literal_eval(string_value)
             else:
                 return string_value
@@ -108,6 +120,14 @@ def getRightType(parameter_name, string_value):
             return False
         else:
             raise ValueError('Boolean falue has to be either "True" or "False"')
+
+
+    if parameter_name in DYNAMIC_PARAMETERS_TYPES['roibox']:
+        try:
+            x,y,w,h = [int(num) for num in string_value.split(',')]
+            return (x,y,w,h)
+        except:
+            return None
 
     raise NotImplementedError('Add {} correctly to DYNAMIC_PARAMETER_TYPES in dynamic_parameters.py')
 
@@ -135,17 +155,15 @@ class ParameterEditor:
     '''
     Dictionary editor on command line with ability to load and save presets.
     '''
-    def __init__(self, dynamic_parameters, locked_parameters={}):
+    def __init__(self, dynamic_parameters):
         '''
         dynamic_parameters      Dictionary of the dynamic imaging parameters.
         '''
         self.dynamic_parameters = dynamic_parameters
         self.parameter_names = sorted(self.dynamic_parameters.keys())
 
-        self.presets_savedir = os.path.join(PUPILDIR, 'presets')
+        self.presets_savedir = os.path.join(USERDATA_DIR, 'presets')
         self.presets = self.load_presets(self.presets_savedir)
-
-        self.locked_parameters = locked_parameters
 
     
     def load_presets(self, directory):
@@ -185,12 +203,19 @@ class ParameterEditor:
         
         print('{:<20} {:<40} {}'.format('PARAMETER NAME', 'VALUE', 'DESCRIPTION'))
         for parameter in parameter_names:
-            if parameter in self.locked_parameters:
-                lck = ' (LOCKED to {})'.format(self.locked_parameters[parameter])
-            else:
-                lck = ''
-            print('{:<20} {:<40} {}'.format(parameter, str(preset[parameter])+lck,
-                DYNAMIC_PARAMETERS_HELP[parameter]))
+
+            value = str(preset[parameter])
+
+            # Special addition for frame_length parameter; Show Hz so that
+            # it is harder to do mistakes
+            if parameter == 'frame_length':
+                hz = str(round(1/float(value)))
+                if hz == 1:
+                    hz = str(1/float(value))
+                value += ' ({} Hz)'.format(hz)
+
+            print('{:<20} {:<40} {}'.format(
+                parameter, value, DYNAMIC_PARAMETERS_HELP[parameter]))
         print()
 
 
@@ -203,7 +228,7 @@ class ParameterEditor:
         while True:
             print('MODIFYING IMAGING PARAMETERS')
             self.print_preset(self.dynamic_parameters)
-            parameter = input('Parameter name or (list/save/load) (Enter to continue) >> ')
+            parameter = input('Parameter name or (list/save/load/back) (Enter to continue) >> ')
             
             # If breaking free
             if parameter == '':
@@ -219,11 +244,11 @@ class ParameterEditor:
                 if name == '' and self.dynamic_parameters['suffix'] != '':
                     name = self.dynamic_parameters['suffix']
                 
-                if os.path.isdir(PUPILDIR):
+                if os.path.isdir(USERDATA_DIR):
                     os.makedirs(self.presets_savedir, exist_ok=True)
                     save_parameters(os.path.join(self.presets_savedir, name), self.dynamic_parameters)
                 else:
-                    print('Saving the preset failed, {} does not exist'.format(PUPILDIR))
+                    print('Saving the preset failed, {} does not exist'.format(USERDATA_DIR))
 
                 continue        
 
@@ -256,6 +281,9 @@ class ParameterEditor:
                         print('Invalid preset.')
 
                 parameter = to_load
+
+            if parameter == 'back':
+                return None
 
             if parameter in self.presets.keys():
                 self.print_preset(self.presets[parameter])
@@ -293,7 +321,7 @@ class ParameterEditor:
                 self.dynamic_parameters[parameter] = value
                 break
 
-        return {**self.dynamic_parameters, **self.locked_parameters}
+        return self.dynamic_parameters
 
 
 def getModifiedParameters(**kwargs):

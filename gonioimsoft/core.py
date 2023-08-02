@@ -1,5 +1,4 @@
-'''
-Pupil Imsoft's core module; Classes for static and dynamic imaging
+'''GonioImsoft main components.
 '''
 
 import os
@@ -18,7 +17,6 @@ except ModuleNotFoundError:
 from gonioimsoft.anglepairs import saveAnglePairs, loadAnglePairs, toDegrees
 from gonioimsoft.arduino_serial import ArduinoReader
 from gonioimsoft.camera_client import CameraClient
-from gonioimsoft.camera_communication import SAVING_DRIVE
 from gonioimsoft.motors import Motor
 from gonioimsoft.imaging_parameters import (
         DEFAULT_DYNAMIC_PARAMETERS,
@@ -27,11 +25,17 @@ from gonioimsoft.imaging_parameters import (
 from gonioimsoft.stimulus import StimulusBuilder
 import gonioimsoft.macro as macro
 
+ENABLE_MOTORS = False
 
+class GonioImsoftCore:
+    '''Main interface to control GonioImsoft recordings.
 
-class Dynamic:
-    '''
-    Dynamic imaging procedure.
+    Attributes
+    ----------
+    reader : obj
+        Reading rotary encoder values from the Arduino Board.
+    cameras : list
+        Lis of camera client objects
     '''
 
 
@@ -44,16 +48,12 @@ class Dynamic:
         self.reader = ArduinoReader()
         
         # Initiate camera client/server
-        self.camera = CameraClient()
-        if not self.camera.isServerRunning():
-            print('Camera server not running')
-        #    self.camera.startServer()
+        self.cameras = []
         
         # Details about preparation (name, sex, age) are saved in this
         self.preparation = {'name': 'test', 'sex': '', 'age': ''}
 
         self.dynamic_parameters = dynamic_parameters
-        self.locked_parameters = {}
 
         self.previous_angle = None
 
@@ -65,8 +65,9 @@ class Dynamic:
         # 1)    Vertical + sensor
         # 2)    Microscope focus (no sensor)
         self.motors = []
-        for i_motor, i_sensor in zip([0,1,2],[0,1,None]):
-            self.motors.append(Motor(self.reader, i_motor, i_sensor))
+        if ENABLE_MOTORS:
+            for i_motor, i_sensor in zip([0,1,2],[0,1,None]):
+                self.motors.append(Motor(self.reader, i_motor, i_sensor))
         
 
         # Macro imaging: Automatically move motors and take images
@@ -79,11 +80,46 @@ class Dynamic:
 
         self.trigger_rotation = False
 
-        self.trigger_signal = np.array([5,5,5,0])
+        self.trigger_signal = np.array([3,3,3,0])
         self.triggered_anglepairs = None
 
         self.data_savedir = None
+
+        self.local_servers_running_index = 0
+
+    
+    def add_camera_client(self, host, port):
+        '''Adds a camera client to the given host and port.
+
+        If host is None uses the localhost and starts a local
+        server if no local server running at that port
+        '''
+        client = CameraClient(
+                host, port,
+                running_index=self.local_servers_running_index)
+        self.local_servers_running_index += 1
+
+        if host is None and not client.is_server_running():
+            client.start_server()
+
+        self.cameras.append(client)
+
+        return client
+
+    def remove_camera_client(self, i_client):
+        '''Removes the camera client and closes its server if local server
+        '''
+        # Popping is enough and the client should be garbage collected
+        # by Python (the sockets are not kept alive so nothing is
+        # left open etc. by the client)
+        client = self.cameras.pop(i_client)
         
+        # If the client started a local server, close the server
+        if client.local_server is not None:
+            client.close_server()
+
+        return client
+
 
     def analog_output(self, channels, stimuli, fs, wait_trigger, camera=True):
         '''
@@ -129,7 +165,8 @@ class Dynamic:
             task.start()
 
             if camera:
-                self.camera.sendCommand('ready')
+                for camera in self.cameras:
+                    camera.sendCommand('ready')
                 
             task.wait_until_done(timeout=(len(stimuli[0])/fs)*1.5+20)
 
@@ -138,7 +175,13 @@ class Dynamic:
         '''
         Sending trigger.
         '''
+
         chan = self.dynamic_parameters.get('trigger_out_channel', None)
+        
+        if nidaqmx is None:
+            print(f'    pretending to send trigger on chan {chan}')
+            return None
+
         if chan:
             with nidaqmx.Task() as task:
                 task.ao_channels.add_ao_voltage_chan(chan)
@@ -159,6 +202,10 @@ class Dynamic:
         INPUT ARGUMENTS     DESCRIPTION
         device              A string (single device) or a list of strings (many devices at once)
         '''
+        if nidaqmx is None:
+            print(f'    pretending to set {device} on value {value}')
+            return None
+
         with nidaqmx.Task() as task:
             
             if type(device) == type('string'):
@@ -181,6 +228,10 @@ class Dynamic:
         '''
         Doesn't return until trigger signal is received.
         '''
+        if nidaqmx is None:
+            print(f'    waiting for trigger')
+            return None
+
         with nidaqmx.Task() as task:
             device = nidaqmx.system.device.Device('Dev1')
             
@@ -206,21 +257,22 @@ class Dynamic:
         if save:
             self.set_led(self.dynamic_parameters['ir_channel'], self.dynamic_parameters['ir_imaging'])
             time.sleep(0.3)
-            self.camera.acquireSingle(True, os.path.join(self.preparation['name'], 'snaps'))
+            for camera in self.cameras:
+                camera.acquireSingle(True, os.path.join(self.preparation['name'], 'snaps'))
             self.set_led(self.dynamic_parameters['ir_channel'], self.dynamic_parameters['ir_livefeed'])
             time.sleep(0.2)
 
             print('A snap image taken')
         else:
-            self.camera.acquireSingle(False, '')
+            for camera in self.cameras:
+                camera.acquireSingle(False, '')
             time.sleep(0.1)
 
 
 
     
     def image_trigger_softhard(self):
-        '''
-        For dynamic imaging of pseudopupil movements.
+        '''Software triggering of the cameras.
 
         How this works?
         CameraClient (self.camera) send message to CameraServer to start image acquisition. Starting
@@ -324,7 +376,8 @@ class Dynamic:
                 dynamic_parameters[param] = [dynamic_parameters[param][0]] * dynamic_parameters['repeats'] 
 
         # Set stack save option
-        self.camera.set_save_stack(dynamic_parameters.get('save_stack', False))
+        for camera in self.cameras:
+            camera.set_save_stack(dynamic_parameters.get('save_stack', False))
         
 
         # Get the current rotation stage angles and use this through the repeating
@@ -364,6 +417,13 @@ class Dynamic:
                 time.sleep(dynamic_parameters['avgint_adaptation'])
             
             imaging_function(dynamic_parameters, builder, label, N_frames, image_directory, set_led=bool(dynamic_parameters['isi'][i]))
+
+            # Dirtyfix
+            if dynamic_parameters['reboot_cameras']:
+                print("Rebooting cameras")
+                for i_camera, camera in enumerate(self.cameras):
+                    print(f'  cam_{i_camera}...')
+                    camera.reboot()
 
             # Wait the total imaging period; If ISI is short and imaging period is long, we would
             # start the second imaging even before the camera is ready
@@ -410,15 +470,38 @@ class Dynamic:
         fs = builder.fs
           
         stimulus = builder.get_stimulus_pulse()
+        if isinstance(stimulus, list):
+            NN = len(stimulus[0])
+        else:
+            NN = stimulus.shape
+        irwave = dynamic_parameters['ir_imaging'] * np.ones(NN)
 
-        irwave = dynamic_parameters['ir_imaging'] * np.ones(stimulus.shape)
+        #irwave = dynamic_parameters['ir_imaging'] * np.ones(stimulus.shape)
         if set_led:
             irwave[-1] = dynamic_parameters['ir_waiting']
 
+        stimuli = []
+        channels = []
 
-        self.camera.acquireSeries(dynamic_parameters['frame_length'], 0, N_frames, label, image_directory, 'send')
+        if isinstance(stimulus, list):
+            # Many stimulus channels
+            print('Many stimulus channels')
+            stimuli = [*stimulus, irwave]
+            channels = [*dynamic_parameters['flash_channel'], dynamic_parameters['ir_channel']]
+        else:
+            # One stimulus channel
+            stimuli = [stimulus, irwave]
+            channels = [dynamic_parameters['flash_channel'], dynamic_parameters['ir_channel']]
 
-        self.analog_output([dynamic_parameters['flash_channel'], dynamic_parameters['ir_channel']], [stimulus,irwave], fs, wait_trigger=True)
+
+        if len(self.cameras) == 1:
+            self.cameras[0].acquireSeries(dynamic_parameters['frame_length'], 0, N_frames, label, image_directory)
+        elif len(self.cameras) > 1:
+            # With many cameras, add camN suffix to the label
+            for i_camera, camera in enumerate(self.cameras):
+                camera.acquireSeries(dynamic_parameters['frame_length'], 0, N_frames, f'{label}_cam{i_camera}', image_directory)
+
+        self.analog_output(channels, stimuli, fs, wait_trigger=True)
 
         
 
@@ -431,7 +514,8 @@ class Dynamic:
             If False, do not attempt to update save folder to the camera server
         '''
         if camera:
-            self.camera.setSavingDirectory(savedir)
+            for camera in self.cameras:
+                camera.setSavingDirectory(savedir)
         self.data_savedir = savedir
 
 
@@ -452,13 +536,15 @@ class Dynamic:
         desc_string += "\n\n#DYNAMIC PROTOCOL PARAMETERS\n"
         for name, value in self.dynamic_parameters.items():
             desc_string += '{} {}\n'.format(name, value)
-        print(desc_string)
-        self.camera.saveDescription(self.preparation['name'], desc_string)
+        for camera in self.cameras:
+            camera.saveDescription(self.preparation['name'], desc_string)
         
 
     def initialize(self, name, sex, age, camera=False):
-        '''
-        Call this to initialize the experiments.
+        '''Call this to initialize the experiments.
+
+        Returns True if worked or None if user cancelled.
+
 
         name, sex age       Can be '' (empty string)
         '''
@@ -470,9 +556,11 @@ class Dynamic:
         if age != '':
             self.preparation['age'] = age
 
-        self.dynamic_parameters = getModifiedParameters(
-                locked_parameters=self.locked_parameters)
-        print('Preparation name set as {}, sex {}, age {} days.'.format(self.preparation['name'], self.preparation['sex'], self.preparation['age']))
+        params = getModifiedParameters()
+        if params is None:
+            return None 
+
+        self.dynamic_parameters = params
 
         if camera:
             self._update_descriptions_file()
@@ -481,20 +569,25 @@ class Dynamic:
         
         self.set_led(self.dynamic_parameters['ir_channel'], self.dynamic_parameters['ir_livefeed'])
         self.set_led(self.dynamic_parameters['flash_channel'], self.dynamic_parameters['flash_off'])
+       
+        roi = self.dynamic_parameters['ROI']
+        if roi is not None:
+            for camera in self.cameras:
+                camera.set_roi(roi)
 
+        return True
 
     def load_preset(self, preset_name):
         fn = os.path.join('presets', preset_name)
-        self.dynamic_parameters = {**load_parameters(fn), **self.locked_parameters}
+        self.dynamic_parameters = load_parameters(fn)
         self._update_descriptions_file()
 
 
 
     def tick(self, horizontal_trigger=True, vertical_trigger=False):
-        '''
-        Updates the current angle. In the future may do other houskeeping functions also.
+        '''Updates the current angle and performs all "houskeeping" duties also.
         
-        Call this once while in a loop that the angles have to be updated.
+        Meant to be called repeatedly inside the UI loop.
         '''
 
         change = False
@@ -531,7 +624,7 @@ class Dynamic:
             
             if type(action) == type((0,0)):
                 # Move motors only if they have reached their positions
-                if all([self.motors[i].reached_target() for i in [0,1]]):
+                if self.motors and all([self.motors[i].reached_target() for i in [0,1]]):
                     self.motors[0].move_to(action[0])
                     self.motors[1].move_to(action[1])
                     next_macro_step = True
@@ -560,12 +653,12 @@ class Dynamic:
         '''
         self.set_led(self.dynamic_parameters['ir_channel'], 0)
         self.set_led(self.dynamic_parameters['flash_channel'], 0)
-
+        
         for motor in self.motors:
             motor.move_to(0)
 
         if self.triggered_anglepairs:
-            fn = os.path.join(SAVING_DRIVE, self.data_savedir, self.preparation['name'], 'anglepairs.txt')
+            fn = os.path.join(self.data_savedir, self.preparation['name'], 'anglepairs.txt')
             os.makedirs(os.path.dirname(fn), exist_ok=True)
 
             print(fn)
@@ -578,7 +671,8 @@ class Dynamic:
 
 
     def exit(self):
-        self.camera.close_server()
+        for camera in self.cameras:
+            camera.close_server()
 
     #
     # CONTROLLING LEDS, MOTORS ETC

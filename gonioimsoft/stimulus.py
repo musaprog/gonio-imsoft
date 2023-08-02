@@ -2,9 +2,19 @@
 import os
 
 import numpy as np
-import scipy.signal
+import json
 
-from biosystfiles import extract as bsextract
+try:
+    import scipy.signal
+except ModuleNotFoundError:
+    scipy = None
+
+try:
+    from biosystfiles import extract as bsextract
+except ModuleNotFoundError:
+    bsextract = None
+
+from .directories import USERDATA_DIR
 
 class StimulusBuilder:
     '''
@@ -47,7 +57,6 @@ class StimulusBuilder:
             self.overload_stimulus = None
             
 
-
     def overload_biosyst_stimulus(self, fn, channel=0):
         '''
         Loads a Biosyst stimulus that gets returned then at
@@ -55,7 +64,27 @@ class StimulusBuilder:
 
         Returns the overload stimulus and new fs
         '''
-        ffn = os.path.join('biosyst_stimuli', fn)
+        
+        if fn.endswith('.json'):
+            ffn = os.path.join(USERDATA_DIR, 'biosyst_stimuli', fn)
+            with open(fnn, 'r') as fp:
+                data = json.load(fp)
+
+            self.fs = data['fs']
+            self.overload_stimulus = []
+
+            for i_stim in range(10):
+                key = f'stim_{i_stim}'
+                if key not in data:
+                    continue
+                self.overload_stimulus.append(np.array(data[key]))
+
+            return self.overload_stimulus[0], self.fs
+
+        if bsextract is None:
+            raise ModuleNotFoundError('Module required\npip install python-biosystfiles')
+
+        ffn = os.path.join(USERDATA_DIR, 'biosyst_stimuli', fn)
         self.overload_stimulus, self.fs = bsextract(ffn, channel)
         self.overload_stimulus = self.overload_stimulus.flatten()
         print(self.overload_stimulus.shape)
@@ -154,3 +183,50 @@ class StimulusBuilder:
         camera[-1] = 0
 
         return camera
+
+
+
+def main():
+    '''Saves stimulus as a json.
+    '''
+    from .imaging_parameters import getModifiedParameters
+
+    data = {}
+    for i_stim in range(10):
+
+        dynamic_parameters = getModifiedParameters()
+
+        fs = 10000
+        builder = StimulusBuilder(
+                dynamic_parameters['stim'],
+                dynamic_parameters['pre_stim'],
+                dynamic_parameters['post_stim'],
+                dynamic_parameters['frame_length'],
+                dynamic_parameters['flash_on'],
+                dynamic_parameters['ir_imaging'],
+                fs,
+                stimulus_finalval=dynamic_parameters['flash_off'],
+                illumination_finalval=dynamic_parameters['ir_waiting'],
+                wtype=dynamic_parameters['flash_type'])
+
+        if dynamic_parameters.get('biosyst_stimulus', ''):
+            bsstim, fs = builder.overload_biosyst_stimulus(
+                    dynamic_parameters['biosyst_stimulus'], dynamic_parameters['biosyst_channel'])
+            #N_frames = int(round((len(bsstim)/fs) / dynamic_parameters['frame_length']))
+
+        stimulus = builder.get_stimulus_pulse().tolist()
+
+        data['fs'] = fs
+        data[f'stim_{i_stim}'] = stimulus
+
+        cont = input('Add more (y/n)')
+
+        if cont.lower().startswith('n'):
+            break
+
+    with open('test.json', 'w') as fp:
+        json.dump(data, fp)
+
+
+if __name__ == "__main__":
+    main()
