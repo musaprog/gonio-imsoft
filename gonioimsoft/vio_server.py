@@ -15,12 +15,13 @@ class DummyBoard:
 
     For documentation, see the NIBoard class.
     '''
-    def analog_input(self, device, channels, duration, fs):
+    def analog_input(self, duration, wait_trigger=False):
         print('DummyBoard.analog_input(...)')
-        print(f'dvs={device} | chs={channels} | dur={duration} | fs={fs}')
+        print(f'dur={duration} | wait_trigger={wait_trigger}')
 
-
-
+    def set_settings(self, device, channels, fs):
+        print('DummyBoard.set_settings(...)')
+        print(f'dvs={device} | chs={channels} | fs={fs}')
 
 class NIBoard:
     def __init__(self):
@@ -29,7 +30,7 @@ class NIBoard:
         self.fs = 1000
     
 
-    def set_settings(self, device, channels, fs);
+    def set_settings(self, device, channels, fs):
         '''
 
         Arguments
@@ -96,7 +97,7 @@ class VIOServer(ServerBase):
         super().__init__('', port, device)
         
         self.functions['analog_input'] = self.device.analog_input
-        self.functions['set_settings'] = self.device.set_setttings
+        self.functions['set_settings'] = self.device.set_settings
 
 
 

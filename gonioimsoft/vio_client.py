@@ -28,7 +28,9 @@ class VIOClient(ClientBase):
         self.send_command(
                 f'set_settings;{device}:{channels}:{fs}')
         
-        
+    
+    def start_server(self):
+        super().start_server('vio')
        
 
 def main():

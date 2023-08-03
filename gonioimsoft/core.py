@@ -112,14 +112,16 @@ class GonioImsoftCore:
             Client = CameraClient
             register = self.cameras
             self.local_camera_servers_running_index += 1
+            index = self.local_camera_servers_running_index
         elif name == 'vio':
             Client = VIOClient
             register = self.vios
             self.local_vio_servers_running_index += 1
+            index = self.local_vio_servers_running_index
+        else:
+            raise ValueError
 
-        client = Client(
-                host, port,
-                running_index=self.local_servers_running_index-1)
+        client = Client(host, port, running_index=index-1)
 
         if host is None and not client.is_server_running():
             client.start_server()

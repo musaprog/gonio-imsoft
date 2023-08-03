@@ -173,6 +173,9 @@ class CameraClient(ClientBase):
         return [fn.removesuffix('.json') for fn in os.listdir(savedir) if fn.endswith('.json')]
 
 
+    def start_server(self):
+        super().start_server('camera')
+
     def reboot(self):
         '''Performs a "reboot" for the camera and restores settings.
 

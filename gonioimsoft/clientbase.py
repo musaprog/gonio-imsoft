@@ -75,15 +75,15 @@ class ClientBase:
                         raise ConnectionRefusedError(
                                 f'Cannot connect to {host}:{port}')
 
-                        print('Server connection unavailable, retrying...')
-                        time.sleep(retry_interval)
+                    print('Server connection unavailable, retrying...')
+                    time.sleep(retry_interval)
 
             soc.sendall(command.encode())
             
             if listen:
                 response = []
                 while True:
-                    data = soc.secv(1024)
+                    data = soc.recv(1024)
                     if not data: break
                     response.append(data.decode())
                 response = ''.join(response)
