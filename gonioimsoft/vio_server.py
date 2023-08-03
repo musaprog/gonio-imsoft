@@ -24,37 +24,56 @@ class DummyBoard:
 
 class NIBoard:
     def __init__(self):
-        pass
-
+        
+        self.channels = None
+        self.fs = 1000
     
-    def analog_input(self, device, channels, duration, fs):
-        '''Records voltage input and saves it.
 
+    def set_settings(self, device, channels, fs);
+        '''
+
+        Arguments
+        ---------
         dev : string
             The NI board name (usually "Dev1" or "Dev2").
         channels : string
             Channels names to record, separated by commas.
-        duration : int or float
-            In seconds, the recording's length.
         fs : float or int
             The used sampling frequency in Hz (samples/second).
         '''
-        channels = channels.split(',')
+        self.device = device
+        self.channels = channels.split(',')
+        self.fs = float(fs)
+        
+   
+    def analog_input(self, duration, wait_trigger=False):
+        '''Records voltage input and saves it.
+
+           
+        duration : int or float
+            In seconds, the recording's length.
+
+        '''
         duration = float(duration)
-        fs = float(fs)
-
-        N_channels = len(channels)
-        N_samples = duration * fs
-
         timeout = duration + 10
+
+        N_channels = len(self.channels)
+        N_samples = duration * self.fs
+        
+
+        if str(wait_trigger).lower() == 'true':
+            wait_trigger = True
+        else:
+            wait_trigger = False
+
 
         with nidaqmx.Task() as task:
             
-            for channel in channels:
-                task.ai_channels.add_ai_voltage_chan(channel)
+            for channel in self.channels:
+                task.ai_channels.add_ai_voltage_chan(f'{device}/{channel}')
 
             task.timing.cfg_samp_clk_timing(
-                    fs, samps_per_chan=N_samples)
+                    self.fs, samps_per_chan=N_samples)
 
             if wait_trigger:
                 taks.triggers.start_trigger.cfg_dig_edge_start_trig(
@@ -70,16 +89,14 @@ class VIOServer(ServerBase):
     '''Analog voltage input/output board server.
     '''
 
-    def __init__(self, board, port=None):
+    def __init__(self, device, port=None):
 
         if port is None:
             port = VIO_PORT
-        super().__init__('', port)
+        super().__init__('', port, device)
         
-        self.board = board
-
-        self.functions['analog_input'] = self.board.analog_input
-
+        self.functions['analog_input'] = self.device.analog_input
+        self.functions['set_settings'] = self.device.set_setttings
 
 
 

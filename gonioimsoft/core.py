@@ -17,6 +17,7 @@ except ModuleNotFoundError:
 from gonioimsoft.anglepairs import saveAnglePairs, loadAnglePairs, toDegrees
 from gonioimsoft.arduino_serial import ArduinoReader
 from gonioimsoft.camera_client import CameraClient
+from gonioimsoft.vio_client import VIOClient
 from gonioimsoft.motors import Motor
 from gonioimsoft.imaging_parameters import (
         DEFAULT_DYNAMIC_PARAMETERS,
@@ -35,7 +36,12 @@ class GonioImsoftCore:
     reader : obj
         Reading rotary encoder values from the Arduino Board.
     cameras : list
-        Lis of camera client objects
+        Camera client objects that each talk to a specific server
+        over IPv4 sockets. The server's can be local (on the same
+        machine) or remote.
+    vios : list
+        Analog voltage input/ouput clients. Similar to the cameras,
+        they talk to a vio server.
     '''
 
 
@@ -47,8 +53,8 @@ class GonioImsoftCore:
         # Angle pairs reader (rotary encoder values)
         self.reader = ArduinoReader()
         
-        # Initiate camera client/server
         self.cameras = []
+        self.vios = []
         
         # Details about preparation (name, sex, age) are saved in this
         self.preparation = {'name': 'test', 'sex': '', 'age': ''}
@@ -85,32 +91,55 @@ class GonioImsoftCore:
 
         self.data_savedir = None
 
-        self.local_servers_running_index = 0
+        self.local_camera_servers_running_index = 0
+        self.local_vio_servers_running_index = 0
 
         self.pause_livefeed = False
 
     
-    def add_camera_client(self, host, port):
+    def _add_client(self, name, host, port):
         '''Adds a camera client to the given host and port.
 
         If host is None uses the localhost and starts a local
         server if no local server running at that port
+
+        Arguments
+        ---------
+        name : string
+            The name of the client. "camera" or "vio"
         '''
-        client = CameraClient(
+        if name == 'camera':
+            Client = CameraClient
+            register = self.cameras
+            self.local_camera_servers_running_index += 1
+        elif name == 'vio':
+            Client = VIOClient
+            register = self.vios
+            self.local_vio_servers_running_index += 1
+
+        client = Client(
                 host, port,
-                running_index=self.local_servers_running_index)
-        self.local_servers_running_index += 1
+                running_index=self.local_servers_running_index-1)
 
         if host is None and not client.is_server_running():
             client.start_server()
-
-        self.cameras.append(client)
-
+        register.append(client)
+        
         return client
 
-    def remove_camera_client(self, i_client):
-        '''Removes the camera client and closes its server if local server
-        '''
+
+    def add_camera_client(self, host, port):
+        return self._add_client('camera', host, port)
+        
+    def add_vio_client(self, host, port):
+        return self._add_client('vio', host, port)
+
+
+    def _remove_client(self, name, i_client):
+        if name == 'camera':
+            register = self.cameras
+        elif name == 'vio':
+            reigster = self.vios
         # Popping is enough and the client should be garbage collected
         # by Python (the sockets are not kept alive so nothing is
         # left open etc. by the client)
@@ -121,6 +150,18 @@ class GonioImsoftCore:
             client.close_server()
 
         return client
+
+    def remove_camera_client(self, i_client):
+        '''Removes the camera client and closes its server if local
+        '''
+        return self._remove_client('camera', i_client)
+   
+
+    def remove_vio_client(self, i_client):
+        '''Removes the vio client and closes its server if local
+        '''
+        return self._remove_client('vio', i_client)
+
 
 
     def analog_output(self, channels, stimuli, fs, wait_trigger, camera=True):
@@ -497,6 +538,12 @@ class GonioImsoftCore:
             # One stimulus channel
             stimuli = [stimulus, irwave]
             channels = [dynamic_parameters['flash_channel'], dynamic_parameters['ir_channel']]
+        
+
+        # Arm analog input recording if any vio clients
+        for vio in self.vios:
+            duration = N_frames * dynamic_parameters['frame_length']
+            vio.analog_input(duration, wait_trigger=True)
 
 
         if len(self.cameras) == 1:
@@ -505,7 +552,7 @@ class GonioImsoftCore:
             # With many cameras, add camN suffix to the label
             for i_camera, camera in enumerate(self.cameras):
                 camera.acquireSeries(dynamic_parameters['frame_length'], 0, N_frames, f'{label}_cam{i_camera}', image_directory)
-
+        
         self.analog_output(channels, stimuli, fs, wait_trigger=True)
 
         
@@ -519,8 +566,8 @@ class GonioImsoftCore:
             If False, do not attempt to update save folder to the camera server
         '''
         if camera:
-            for camera in self.cameras:
-                camera.set_save_directory(savedir)
+            for device in self.cameras+self.vios:
+                device.set_save_directory(savedir)
         self.data_savedir = savedir
 
 

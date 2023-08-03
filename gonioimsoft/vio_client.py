@@ -15,12 +15,21 @@ class VIOClient(ClientBase):
         super().__init__(host, port)
 
 
-    def analog_input(self, device, channels, duration, fs):
+    def analog_input(self, duration, wait_trigger=False):
         '''Makes the server to record analog signal and save it.
         '''
         self.send_command(
-                f'analog_input;{device}:{channels}:{duration}:{fs}')
+                f'analog_input;{duration}:{wait_trigger}')
 
+    
+    def set_settings(self, device, channels, fs):
+        '''Configures the setttings in use.
+        '''
+        self.send_command(
+                f'set_settings;{device}:{channels}:{fs}')
+        
+        
+       
 
 def main():
     run_client(VIOClient)
