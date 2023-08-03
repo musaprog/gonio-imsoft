@@ -102,6 +102,11 @@ class ClientBase:
             return False
         return True
 
+    def set_save_directory(self, directory):
+        '''For any data saving that the server can do, set the directory.
+        '''
+        self.send_command(f'set_save_directory;{directory}')
+
     def start_server(self, name):
         '''Starts a local server if it is not running.
 

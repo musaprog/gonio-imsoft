@@ -70,9 +70,6 @@ class CameraClient(ClientBase):
     def acquireSingle(self, save, subdir):
         self.send_command('acquireSingle;0.1:{}:{}'.format(str(save), subdir))
     
-    def setSavingDirectory(self, saving_directory):
-        self.send_command('setSavingDirectory;'+saving_directory)
-
     def saveDescription(self, filename, string):
         self.send_command('saveDescription;'+filename+':'+string)
 

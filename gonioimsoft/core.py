@@ -520,7 +520,7 @@ class GonioImsoftCore:
         '''
         if camera:
             for camera in self.cameras:
-                camera.setSavingDirectory(savedir)
+                camera.set_save_directory(savedir)
         self.data_savedir = savedir
 
 

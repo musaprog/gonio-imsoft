@@ -41,7 +41,6 @@ from matplotlib.widgets import RectangleSelector
 from .common import CAMERA_PORT
 from .serverbase import ServerBase
 
-DEFAULT_SAVING_DIRECTORY = "imaging_data"
 DEFAULT_MICROMANAGER_DIR = 'C:/Program Files/Micro-Manager-2.0'
 
 # Integer between 1-inf (1 = no downsampling), images for imageshower
@@ -185,8 +184,6 @@ class DummyCamera:
         pass
     def save_images(images, label, metadata, savedir):
         pass
-    def set_saving_directory(self, saving_directory):
-        pass
     def set_binning(self, binning):
         self.settings['binning'] = binning
     def set_roi(self, x,y,w,h):
@@ -230,10 +227,8 @@ class MMCamera:
     '''Controls any camera using MicroManager and its pymmcore bindings.
     '''
 
-    def __init__(self, saving_directory=DEFAULT_SAVING_DIRECTORY):
+    def __init__(self):
 
-        self.set_saving_directory(saving_directory)
-        
         self.mmc = pymmcore.CMMCore() 
         self.mmc.setDeviceAdapterSearchPaths([DEFAULT_MICROMANAGER_DIR])
 
@@ -255,6 +250,7 @@ class MMCamera:
         self.description_string = ''
 
         self.save_stack = False
+        self.save_directory = None
 
         self.title = 'Camera not set'
         self.servertitle = ''
@@ -384,7 +380,7 @@ class MMCamera:
         if save == 'True':
             metadata = {'exposure_time_s': exposure_time, 'function': 'acquireSingle', 'start_time': start_time}
 
-            save_thread = threading.Thread(target=self.save_images,args=([image],'snap_{}'.format(start_time.replace(':','.').replace(' ','_')), metadata,os.path.join(self.saving_directory, subdir)))
+            save_thread = threading.Thread(target=self.save_images,args=([image],'snap_{}'.format(start_time.replace(':','.').replace(' ','_')), metadata,os.path.join(self.save_directory, subdir)))
             save_thread.start()
 
 
@@ -469,7 +465,7 @@ class MMCamera:
                     'N_frames': N_frames, 'label': label, 'function': 'acquireSeries', 'start_time': start_time}
         metadata.update(self.settings)
 
-        save_thread = threading.Thread(target=self.save_images, args=(images,label,metadata,os.path.join(self.saving_directory, subdir)))
+        save_thread = threading.Thread(target=self.save_images, args=(images,label,metadata,os.path.join(self.save_directory, subdir)))
         save_thread.start()
         
         #if 'hamamatsu' in device_name.lower() and trigger_direction == 'receive':
@@ -501,17 +497,6 @@ class MMCamera:
             tifffile.imwrite(os.path.join(savedir, fn), np.asarray(images), metadata=metadata)
         
         self.save_description(os.path.join(savedir, 'description'), self.description_string, internal=True)
-
-
-    def set_saving_directory(self, saving_directory):
-        '''
-        Sets where the specimen folders are saved and if the directory
-        does not yet exist, creates it.
-        '''
-        if not os.path.isdir(saving_directory):
-            os.makedirs(saving_directory)
-            
-        self.saving_directory = saving_directory
 
 
     def set_save_stack(self, boolean):
@@ -563,7 +548,7 @@ class MMCamera:
         if internal:
             fn = specimen_name
         else:
-            fn = os.path.join(self.saving_directory, specimen_name, specimen_name)
+            fn = os.path.join(self.save_directory, specimen_name, specimen_name)
         
         # Check if the folder exists
         if not os.path.exists(os.path.dirname(fn)):
@@ -603,16 +588,15 @@ class CameraServer(ServerBase):
         if port is None:
             port = CAMERA_PORT
         
-        super().__init__('', port)
+        super().__init__('', port, camera)
         
         
         print(f'Using the camera <{camera.__class__.__name__}>')
-        self.cam = camera
+        self.cam = self.device
         self.cam.servertitle = f'Server on port {port}'
         self.cam.wait_for_client = self.wait_for_client
         
         added_functions = {'acquireSeries': self.cam.acquire_series,
-                          'setSavingDirectory': self.cam.set_saving_directory,
                           'acquireSingle': self.cam.acquire_single,
                           'saveDescription': self.cam.save_description,
                           'set_roi': self.cam.set_roi,
@@ -672,7 +656,7 @@ def main():
     camera = Camera()
 
     if args.save_directory:
-        camera.set_saving_directory(args.save_directory)
+        self.set_save_directory(args.save_directory)
 
     if args.port:
         args.port = int(args.port)

@@ -3,6 +3,9 @@
 
 import socket
 import time
+import os
+
+DEFAULT_SAVE_DIRECTORY = 'gonioimsoft_data'
 
 
 class ServerBase:
@@ -12,6 +15,8 @@ class ServerBase:
     ----------
     socket : obj
         The socket object.
+    device : obj or None
+        
     functions : dict
         Keys command names and values callables.
     responders : list
@@ -19,22 +24,29 @@ class ServerBase:
         send a return value to the client.
     '''
     
-    def __init__(self, host, port):
+    def __init__(self, host, port, device):
         
         print(f'Binding a socket (host {host}, port {port}')
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.bind(('', port))
         self.socket.listen(1)
+        
+        if getattr(device, 'save_directory', None):
+            device.save_directory = DEFAULT_SAVE_DIRECTORY
+        self.device = device
 
+        
         self.functions = {
                 'ping': self.ping,
                 'pong': self.pong,
                 'exit': self.exit,
+                'set_save_directory': self.set_save_directory,
                 }
 
         self.responders = ['pong']
 
         self.run_exit = False
+
 
 
     def ping(self, message):
@@ -47,6 +59,19 @@ class ServerBase:
         '''Sends the client's message back to the server with a greeting.
         '''
         return f'General Kenobi! (response to {message})'
+    
+    def set_save_directory(self, directory):
+        '''Sets the location for the data saving
+        '''
+        if not os.path.isdir(directory):
+            abspath = os.path.abspath(directory)
+            print(f'Creating directory {abspath} for saving data')
+            os.makedirs(directory)
+        else:
+            print(f'Setting directory {abspath} for saving data')
+        
+        if self.device is not None:
+            self.device.save_directory = directory
 
 
     def wait_for_client(self):
