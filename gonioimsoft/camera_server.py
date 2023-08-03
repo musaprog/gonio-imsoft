@@ -23,7 +23,6 @@ import os
 import sys
 import time
 import datetime
-import socket
 import argparse
 import threading
 import multiprocessing
@@ -39,7 +38,8 @@ import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 from matplotlib.widgets import RectangleSelector
 
-from .camera_communication import PORT
+from .common import CAMERA_PORT
+from .serverbase import ServerBase
 
 DEFAULT_SAVING_DIRECTORY = "imaging_data"
 DEFAULT_MICROMANAGER_DIR = 'C:/Program Files/Micro-Manager-2.0'
@@ -593,7 +593,7 @@ class MMCamera:
         pass
 
 
-class CameraServer:
+class CameraServer(ServerBase):
     '''Camera server listens incoming connections from the client and
     controls a camera class.
     '''
@@ -601,23 +601,17 @@ class CameraServer:
     def __init__(self, camera, port=None):
         
         if port is None:
-            port = PORT
-        HOST = ''           # This is not cac.SERVER_HOSTNAME, leave empty
-
-        self.running = False
-
-        print(f'Binding a socket (host {HOST}, port {port}))')
-
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.socket.bind((HOST, port))
-        self.socket.listen(1)
+            port = CAMERA_PORT
+        
+        super().__init__('', port)
+        
         
         print(f'Using the camera <{camera.__class__.__name__}>')
         self.cam = camera
         self.cam.servertitle = f'Server on port {port}'
         self.cam.wait_for_client = self.wait_for_client
         
-        self.functions = {'acquireSeries': self.cam.acquire_series,
+        added_functions = {'acquireSeries': self.cam.acquire_series,
                           'setSavingDirectory': self.cam.set_saving_directory,
                           'acquireSingle': self.cam.acquire_single,
                           'saveDescription': self.cam.save_description,
@@ -630,88 +624,16 @@ class CameraServer:
                           'get_setting_type': self.cam.get_setting_type,
                           'get_setting': self.cam.get_setting,
                           'set_setting': self.cam.set_setting,
-                          'ping': self.ping,
-                          'exit': self.stop}
+                          }
 
-        self.responding = set([
-            'get_cameras', 'get_camera', 'get_settings', 'get_setting_type', 'get_setting'])
+        self.functions = {**self.functions, **added_functions}
 
+        self.responders.extend(
+                ['get_cameras', 'get_camera', 'get_settings',
+                 'get_setting_type', 'get_setting']
+                )
 
-    def ping(self, message):
-        print(message)
-
-
-    def wait_for_client(self):
-        '''Waits until client confirms that it is ready by sending us
-        anything (usually ping).
-        '''
-        conn, addr = self.socket.accept()
-        string = ''
-        while True:
-            data = conn.recv(1024)
-            if not data: break
-            string += data.decode()
-        conn.close()
-        print("Client ready")
         
-
-    def run(self):
-        '''
-        Loop waiting for incoming connections.
-        Each established connection can give one command and then the connection
-        is closed.
-        '''
-        
-        print('Waiting for clients to connect')
-
-        self.running = True
-        while self.running:
-            conn, addr = self.socket.accept()
-            string = ''
-            while True:
-                data = conn.recv(1024)
-                #if not data: break
-                string += data.decode()
-                break
-
-            if not string:
-                conn.close()
-                continue
-            
-            print('Recieved command "'+string+'" at time '+str(time.time()))
-            if ';' in string:
-                func, parameters = string.split(';')
-                parameters = parameters.split(':')
-            else:
-                func = string
-                parameters = None
-        
-            # Can close connection early, no response so let's not delay the client
-            if not func in self.responding:
-                conn.close()
-            
-            if parameters:
-                response = self.functions[func](*parameters)
-            else:
-                response = self.functions[func]()
-
-            # Say back the response and close because still open
-            if func in self.responding:
-                
-                if isinstance(response, (list, tuple)):
-                    response = ':'.join(response)
-
-                conn.sendall(str(response).encode())
-                conn.close()
-
-
-    def stop(self, placeholder):
-        '''
-        Stop running the camera server.
-        '''
-        self.cam.close()
-        self.running = False
-
 
 def test_camera():
     cam = Camera()
