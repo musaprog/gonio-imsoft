@@ -244,7 +244,7 @@ class GonioImsoftCore:
         self.triggered_anglepairs.append(self.reader.get_latest())
 
 
-    def set_led(self, device, value, wait_trigger=False):
+    def set_led(self, device, value, wait_trigger=False, exclude=None):
         '''
         Set an output channel to a specific voltage value.
 
@@ -255,6 +255,9 @@ class GonioImsoftCore:
             print(f'    pretending to set {device} on value {value}')
             return None
 
+
+        excluded = 0
+
         with nidaqmx.Task() as task:
             
             if type(device) == type('string'):
@@ -263,8 +266,11 @@ class GonioImsoftCore:
             else:
                 # If device is actually a list of devices
                 for dev in device:
+                    if exclude and dev in exclude:
+                        excluded += 1
+                        continue
                     task.ao_channels.add_ao_voltage_chan(dev)
-                value = [value for i in range(len(device))]
+                value = [value for i in range(len(device)-excluded)]
             
             if wait_trigger:
                 task.timing.cfg_samp_clk_timing(10000)
@@ -316,9 +322,13 @@ class GonioImsoftCore:
             if self.pause_livefeed:
                 return
 
+
+                
             for camera in self.cameras:
                 camera.acquireSingle(False, '')
             time.sleep(0.1)
+
+
 
 
 
