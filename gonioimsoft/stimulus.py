@@ -67,7 +67,7 @@ class StimulusBuilder:
         
         if fn.endswith('.json'):
             ffn = os.path.join(USERDATA_DIR, 'biosyst_stimuli', fn)
-            with open(fnn, 'r') as fp:
+            with open(ffn, 'r') as fp:
                 data = json.load(fp)
 
             self.fs = data['fs']
@@ -175,7 +175,7 @@ class StimulusBuilder:
         Returns 1D np.array.
         '''
         
-        samples_per_frame = int(frame_length * fs /2)
+        samples_per_frame = int(self.frame_length * self.fs /2)
         
         camera = np.concatenate( ( np.ones((samples_per_frame, self.N_frames)), np.zeros((samples_per_frame, self.N_frames)) ) ).T.flatten()
         camera = 5*camera
