@@ -252,6 +252,8 @@ class MMCamera:
         self.save_stack = False
         self.save_directory = None
 
+        self._startdir = os.getcwd()
+
         self.title = 'Camera not set'
         self.servertitle = ''
 
@@ -478,6 +480,7 @@ class MMCamera:
         '''
         Save given images as grayscale tiff images.
         '''
+        savedir = os.path.join(self._startdir, savedir)
         if not os.path.isdir(savedir):
             try:
                 os.makedirs(savedir)
