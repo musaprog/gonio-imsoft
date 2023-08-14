@@ -95,6 +95,10 @@ class GonioImsoftCore:
         self.local_vio_servers_running_index = 0
 
         self.pause_livefeed = False
+        self.vio_livefeed = False
+        self.vio_livefeed_dur = 0.1
+
+        self._last_vio = time.time()
 
     
     def _add_client(self, name, host, port):
@@ -180,12 +184,12 @@ class GonioImsoftCore:
             print('    pretending analog_output on channels {}'.format(channels))
             return None
 
+
         with nidaqmx.Task() as task:
             for i_channel, channel in enumerate(channels):
                 if type(channel) == type('string'):
                     task.ao_channels.add_ao_voltage_chan(channel)
                 else:
-                    
                     for subchan in channel:
                         task.ao_channels.add_ao_voltage_chan(subchan)
                         stimuli.insert(i_channel, stimuli[i_channel])
@@ -540,12 +544,15 @@ class GonioImsoftCore:
             # One stimulus channel
             stimuli = [stimulus, irwave]
             channels = [dynamic_parameters['flash_channel'], dynamic_parameters['ir_channel']]
-        
+
+
 
         # Arm analog input recording if any vio clients
-        for vio in self.vios:
+        for i_vio, vio in enumerate(self.vios):
+            vio.set_save_directory(os.path.join(self.data_savedir, image_directory))
             duration = N_frames * dynamic_parameters['frame_length']
-            vio.analog_input(duration, wait_trigger=True)
+            vio_label = f'vi{i_vio}{label[2:]}'
+            vio.analog_input(duration, save=vio_label, wait_trigger=True)
 
 
         if len(self.cameras) == 1:
@@ -645,6 +652,12 @@ class GonioImsoftCore:
         '''
 
         change = False
+
+        if self.vio_livefeed:
+            if time.time()-self._last_vio > max(self.vio_livefeed_dur+0.1, 0.1):
+                for vio in self.vios:
+                    vio.analog_input(self.vio_livefeed_dur)
+                self._last_vio = time.time()
         
         while True:
             
