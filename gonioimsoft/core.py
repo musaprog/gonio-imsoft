@@ -477,10 +477,13 @@ class GonioImsoftCore:
                 N_frames = int(round((len(bsstim)/fs) / dynamic_parameters['frame_length']))
 
             if i==0 and dynamic_parameters['avgint_adaptation']:
-                self.set_led(dynamic_parameters['flash_channel'], np.mean(builder.get_stimulus_pulse()))
+                self.set_led(dynamic_parameters['flash_channel'], np.mean(builder.get_stimulus_pulse()), exclude='Dev1/ao4')
                 time.sleep(dynamic_parameters['avgint_adaptation'])
             
             imaging_function(dynamic_parameters, builder, label, N_frames, image_directory, set_led=bool(dynamic_parameters['isi'][i]))
+
+            if i==0 and dynamic_parameters['avgint_adaptation']:
+                self.set_led(dynamic_parameters['flash_channel'], np.mean(builder.get_stimulus_pulse()), exclude='Dev1/ao4')
 
             # Dirtyfix
             if dynamic_parameters['reboot_cameras']:
