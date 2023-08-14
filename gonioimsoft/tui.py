@@ -355,7 +355,12 @@ class GonioImsoftTUI:
                 ['Add a local camera', self.add_local_camera],
                 ['Add a remote camera', self.add_remote_camera],
                 ['Edit camera settings', self.camera_settings_edit],
-                ['Remove camera', self.remove_camera]]
+                ['Remove camera', self.remove_camera],
+                ['\n', None],
+                ['Add a local vio', self.add_local_vio],
+                ['Add a remote vio', self.add_remote_vio],
+                ['Remove vio', self.add_remote_vio],
+                ]
         return menu
 
 
@@ -369,7 +374,15 @@ class GonioImsoftTUI:
             client.load_state('previous')
         except FileNotFoundError:
             self.libui.print('Could not find previous settings for this camera')
-        
+    
+    def _add_vio(self, client):
+        cancels = 'back'
+
+        device = self.libui.input('Device', cancels)
+        channels = self.libui.input('Channels (comma separated)', cancels)
+        fs = self.libui.input('Sampling frequency (Hz)', cancels)
+
+        client.set_settings(device, channels, fs)
 
     def add_local_camera(self):
         '''Add a camera from a local camera server.
@@ -378,9 +391,23 @@ class GonioImsoftTUI:
         self._add_camera(client)
 
 
-    def add_remote_camera(self):
+    def add_local_vio(self):
+        '''Start a local vio server and a client.
+        '''
+        client = self.core.add_vio_client(None, None)
+        self._add_vio(client)
+
+
+    def _add_remote_client(self, name):
+        if name == 'camera':
+            addfunc = self.core.add_camera_client
+        elif name == 'vio':
+            addfunc = self.core.add_vio_client
+        else:
+            raise ValueError
+
         cancels = 'back'
-        self.libui.input(f'# Type in {cancels} to cancel')
+        self.libui.print(f'# Type in {cancels} to cancel')
 
         host = self.libui.input('IP address or hostname', cancels)
         if host is None:
@@ -394,12 +421,28 @@ class GonioImsoftTUI:
         else:
             port = int(port)
 
-        client = self.core.add_camera_client(host, port)
+        client = addfunc(host, port)
         
-        if not client.is_server_running:
+        while not client.is_server_running():
+            print('Waiting the server to come up...')
+            time.sleep(1)
+
+        if not client.is_server_running():
             self.libui.print('Cannot connect to the server')
         else:
-            self._add_camera(client)
+            if name == 'camera':
+                self._add_camera(client)
+            else:
+                self._add_vio(client)
+
+    
+    def add_remote_camera(self):
+        self._add_remote_client('camera')
+    
+    def add_remote_vio(self):
+        self._add_remote_client('vio')
+
+
 
     def remove_camera(self):
         names = [cam.get_camera() for cam in self.core.cameras]
@@ -409,6 +452,17 @@ class GonioImsoftTUI:
         if selection != '..back':
             index = names.index(selection)
             self.core.remove_camera_client(index)
+
+    def remove_vio(self):
+        names = [f'vio_{i}' for i, vio in enumerate(self.core.vios)]
+        selection = self.libui.item_select(
+                names+['..back'], 'Select camera to remove')
+
+        if selection != '..back':
+            index = names.index(selection)
+            self.core.remove_vio_client(index)
+
+   
 
     @property
     def menutext(self):
