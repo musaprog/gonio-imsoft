@@ -62,8 +62,9 @@ class DummyBoard:
 
 class NIBoard:
     def __init__(self):
-        
-        self.channels = None
+
+        self.device = 'Dev2'
+        self.channels = ['ai0']
         self.fs = 1000
 
         self.live_queue = None
@@ -104,7 +105,7 @@ class NIBoard:
         timeout = duration + 10
 
         N_channels = len(self.channels)
-        N_samples = duration * self.fs
+        N_samples = int(duration * self.fs)
         
 
         if str(wait_trigger).lower() == 'true':
@@ -116,18 +117,19 @@ class NIBoard:
         with nidaqmx.Task() as task:
             
             for channel in self.channels:
-                task.ai_channels.add_ai_voltage_chan(f'{device}/{channel}')
+                task.ai_channels.add_ai_voltage_chan(f'{self.device}/{channel}')
 
             task.timing.cfg_samp_clk_timing(
                     self.fs, samps_per_chan=N_samples)
-
+            task.ai_conv_rate = self.fs
             if wait_trigger:
-                taks.triggers.start_trigger.cfg_dig_edge_start_trig(
-                        f'/{device}/PFI0')
+                task.triggers.start_trigger.cfg_dig_edge_start_trig(
+                        f'/{self.device}/PFI0')
 
             task.start()
 
-            task.read(timeout=timeout)
+            data = task.read(
+                timeout=timeout, number_of_samples_per_channel=N_samples)
 
 
         if save is not None:
