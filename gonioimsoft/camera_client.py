@@ -11,7 +11,8 @@ import json
 import atexit
 
 from .directories import CODE_ROOTDIR, USERDATA_DIR
-from .camera_communication import SERVER_HOSTNAME, PORT
+from .common import SERVER_HOSTNAME, CAMERA_PORT
+from .clientbase import ClientBase, run_client
 
 MAX_RETRIES = 100
 RETRY_INTERVAL = 1
@@ -19,7 +20,7 @@ RETRY_INTERVAL = 1
 SAVEDIR = os.path.join(USERDATA_DIR, 'camera_states')
 
 
-class CameraClient:
+class CameraClient(ClientBase):
     '''Local part of the camera server/client division.
 
     CameraClient runs on the same PC as GonioImsoft and it connects to
@@ -30,82 +31,24 @@ class CameraClient:
     It is the CameraServer's job to store the images, and display them on
     screen (livefeed) if needed.
     
-    See also camera_server.py for more information.
+    See also clientbase.py and camera_server.py for more information.
 
     Attributes
-    -----------
-    host : string
-        The CameraServer IP address / hostname
-    port : int
-        The CameraServer port number
-    local_server : Popen obj or None
-        If local server is started by the server, this attribute
-        holds the Popen object.
+    ----------
+    modified_settings : set
     '''
 
 
     def __init__(self, host=None, port=None, running_index=0):
-        '''
-        Initialization of the CameraClient
-        '''
+        
         if host is None:
             host = SERVER_HOSTNAME
-        self.host = host
-
         if port is None:
-            port = int(PORT) + int(running_index)
-        self.port = port
+            port = int(CAMERA_PORT) + int(running_index)
+        super().__init__(host, port)
 
         self.modified_settings = set()
-
-        self.local_server = None
-    
         self._roi = None
-
-
-    def sendCommand(self, command_string, retries=MAX_RETRIES, listen=False):
-        '''
-        Send an arbitrary command to the CameraServer.
-        All the methods of the Camera class (see camera_server.py) are supported.
-
-        INPUT ARGUMETNS     DESCRIPTION
-        command_string      function;parameters,comma,separated
-                            For example "acquireSeries;0,01,0,5,'label'"
-        
-        listen : bool
-            If true, expect the server to return a message.
-
-        This is where a socket connection to the server is formed. After the command_string
-        has been send, the socket terminates.
-        '''
-
-        tries = 0
-        
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            
-            while True:
-                try:
-                    s.connect((self.host, self.port))
-                    break
-                except ConnectionRefusedError:
-                    tries += 1
-                    if tries > retries:
-                        raise ConnectionRefusedError('Cannot connect to the camera server')
-                    print('Camera server connection refused, retrying...')
-                    time.sleep(RETRY_INTERVAL)
-                
-            s.sendall(command_string.encode())
-            
-            # Listen response
-            if listen:
-                response = ''
-                while True:
-                    data = s.recv(1024)
-                    if not data: break
-                    response += data.decode()
-                if ':' in response:
-                    response = response.split(':')
-                return response
 
 
     def acquireSeries(self, exposure_time, image_interval, N_frames, label, subdir):
@@ -121,116 +64,65 @@ class CameraClient:
         parameters = "{}:{}:{}:{}:{}".format(exposure_time, image_interval, N_frames, label, subdir)
         message = function+parameters
         
-        self.sendCommand(message)
+        self.send_command(message)
 
 
     def acquireSingle(self, save, subdir):
-        self.sendCommand('acquireSingle;0.1:{}:{}'.format(str(save), subdir))
-
+        self.send_command('acquireSingle;0.1:{}:{}'.format(str(save), subdir))
     
-    def setSavingDirectory(self, saving_directory):
-        self.sendCommand('setSavingDirectory;'+saving_directory)
-
-
     def saveDescription(self, filename, string):
-        self.sendCommand('saveDescription;'+filename+':'+string)
+        self.send_command('saveDescription;'+filename+':'+string)
 
     def set_roi(self, roi):
         self._roi = roi
-        self.sendCommand('set_roi;{}:{}:{}:{}'.format(*roi))
+        self.send_command('set_roi;{}:{}:{}:{}'.format(*roi))
 
     def set_save_stack(self, boolean):
-        self.sendCommand('set_save_stack;{}'.format(boolean))
-
-    def is_server_running(self):
-        try:
-            self.sendCommand('ping;Client wants to know if server is running', retries=0)
-        except ConnectionRefusedError:
-            return False
-        return True
-
-
-    def start_server(self):
-        '''Start a local camera server using Popen.
-        '''
-        if self.is_server_running():
-            print('Server already running, not starting again')
-            return
-
-        print(f'Starting a local server on port {self.port}')
-
-        self.local_server = subprocess.Popen(
-                [
-                    sys.executable,
-                    '-m', 'gonioimsoft.camera_server',
-                    '--port', str(self.port)
-                    ],
-                stdout=subprocess.DEVNULL)
-
-        atexit.register(self.close_server)
+        self.send_command('set_save_stack;{}'.format(boolean))
 
 
     def get_cameras(self):
         '''Lists available cameras (their names) on the server.
         '''
-        return self.sendCommand('get_cameras', listen=True)
+        return self.send_command('get_cameras', listen=True)
 
     
     def get_camera(self):
         '''Returns a name describing the current camera device.
         '''
-        return self.sendCommand('get_camera', listen=True)
+        return self.send_command('get_camera', listen=True)
 
 
     def set_camera(self, name):
         '''Sets what camera to use on the server.
         '''
-        self.sendCommand(f'set_camera;{name}')
+        self.send_command(f'set_camera;{name}')
 
 
     def get_settings(self):
         '''Retrieves available settings of the camera device.
         '''
-        return self.sendCommand('get_settings', listen=True)
+        return self.send_command('get_settings', listen=True)
     
     def get_setting_type(self, setting_name):
         '''Returns the type of the setting.
         One of the following: "string", "float" or "integer"
         '''
-        return self.sendCommand(f'get_setting_type;{setting_name}',
+        return self.send_command(f'get_setting_type;{setting_name}',
                                 listen=True)
 
     def get_setting(self, setting_name):
         '''Returns the current value of the setting as a string.
         '''
-        return self.sendCommand(f'get_setting;{setting_name}',
+        return self.send_command(f'get_setting;{setting_name}',
                                 listen=True)
     
     def set_setting(self, setting_name, value):
         '''Sets the specified setting to the specified value.
         '''
-        self.sendCommand(f'set_setting;{setting_name}:{value}')
+        self.send_command(f'set_setting;{setting_name}:{value}')
         self.modified_settings.add(setting_name)
 
-
-    def close_server(self):
-        '''Sends an exit message to the server, and waits if local.
-        '''
-        try:
-            self.sendCommand('exit;'+'None', retries=0)
-        except ConnectionRefusedError:
-            pass
-
-        atexit.unregister(self.close_server)
-        
-        # If local waits that the subprocess terminates for 10 seconds
-        # and if not in this time then send terminate and continue
-        if self.local_server is not None:
-            try:
-                self.local_server.wait(10)
-            except subprocess.TimeoutExpired:
-                self.local_server.terminate()
-            self.local_server = None
 
     def save_state(self, label, modified_only=True):
         '''Acquires the current camera state and saves it
@@ -281,6 +173,9 @@ class CameraClient:
         return [fn.removesuffix('.json') for fn in os.listdir(savedir) if fn.endswith('.json')]
 
 
+    def start_server(self):
+        super().start_server('camera')
+
     def reboot(self):
         '''Performs a "reboot" for the camera and restores settings.
 
@@ -294,52 +189,7 @@ class CameraClient:
 
 
 def main():
-    import argparse
-
-    parser = argparse.ArgumentParser(
-            prog='GonioImsoft Camera Client',
-            description='Controls the server')
-
-    parser.add_argument('-p', '--port')
-    parser.add_argument('-a', '--address')
-
-    args = parser.parse_args()
-
-    client = CameraClient(args.address, args.port)
-
-    print("Welcome to GonioImsoft CameraClient's interactive test program")
-    print('Type in commands and press enter.')
-
-    while True:
-        cmd = input('#').split(' ')
-        
-        if not cmd:
-            continue
-
-        if cmd[0] == 'help':
-            if len(cmd) == 1:
-                help(client)
-            else:
-                method = getattr(client, cmd[1], None)
-                if method is None:
-                    print(f'No such command as "{cmd[1]}"')
-                    continue
-
-                print(method.__doc__)
-
-        else:
-            method = getattr(client, cmd[0], None)
-            
-            if method is None:
-                print(f'No such command as "{cmd[0]}"')
-                continue
-
-            if len(cmd) == 1:
-                message = method()
-            else:
-                message = method(*cmd[1:])
-
-            print(message)
+    run_client(CameraClient)
 
 if __name__ == "__main__":
     main()

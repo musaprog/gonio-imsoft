@@ -19,7 +19,7 @@ DEFAULT_DYNAMIC_PARAMETERS = {
         'flash_on': 5, 'flash_off': 0,
         'ir_channel': "Dev1/ao1", 'flash_channel': "Dev1/ao0",
         'suffix': '', 'trigger_channel': "/Dev1/PFI0",
-        'trigger_out_channel': "Dev2/ao0",
+        'trigger_out_channel': "Dev1/ao7",
         'biosyst_stimulus': '',
         'biosyst_channel': 2,
         'avgint_adaptation': 0,

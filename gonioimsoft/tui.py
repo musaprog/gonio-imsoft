@@ -26,26 +26,25 @@ from .libtui import SimpleTUI
 
 
 class Console:
-    '''A command console for terminal user interface (tui).
+    '''A command console for the terminal user interface.
     
-    This console allows inputting commands with arguments within
-    the tui. It is needed when simple keyboard shortcut is not enough.
+    This console allows inputting commands with arguments.
+    Needed, when simple keyboard shortcuts are not enough.
 
     Attributes
     ----------
     core : obj
-        The GonioImsoftCore instance this console operates on.
+        The GonioImsoftCore instance that this console operates on.
     '''
     def __init__(self, core):
         self.core = core
 
 
-    def enter(self, command):
+    def enter(self, user_input):
+        '''Parses the user input and runs the command.
         '''
-        Calling a command 
-        '''
-        command_name = command.split(' ')[0]
-        args = command.split(' ')[1:]
+        command_name = user_input.split(' ')[0]
+        args = user_input.split(' ')[1:]
 
         if hasattr(self, command_name):
             method = getattr(self, command_name)
@@ -54,40 +53,62 @@ class Console:
             except TypeError as e:
                 print(e)
                 self.help()
-                
         else:
-            print('Command {} does not exit'.format(command_name))
+            print('Command {} does not exist'.format(command_name))
             self.help()
     
 
     def help(self, command_name=None):
+        '''Prints help.
+
+        Arguments
+        ---------
+        command_name : None or string
+            The name of the command.
+        '''
         if command_name is None:
-            print('List of commands and their options')
+            print('\n# List of commands:')
             
             for name, value in inspect.getmembers(self):
                 
                 if not inspect.ismethod(value):
                     continue
 
-                print(f'{name}')
+                helps = inspect.getdoc(value).split('\n')[0]
 
-            print('For more, try retrieving the full help or the source code by')
+                print(f'  {name: >16}    {helps}')
+
+            print('\nFor more instructions, try')
             print('  help [command_name]')
             print('  source [command name]')
         else:
             value = getattr(self, command_name, None)
-
+            print()
             if value is not None:
                 print(inspect.getdoc(value))
-
+            print()
 
     def source(self, command_name):
-        print(f'Source code of the "{command_name}" command (Python)')
-        
-        print('End of source code.')
+        '''Prints the command's source code on screen (for help).
+        '''
+        val = getattr(self, command_name, None)
+        if val is None:
+            print(f'No command named {val}')
+            return
+
+        source = inspect.getsource(val)
+
+        print(f'\nSource code of the "{command_name}" command (Python)\n')
+        print(source)
+        print('\nEnd of source.\n')
 
     def suffix(self, suffix):
         '''Set the suffix to add in the image folders' save name
+
+        Arguments
+        ---------
+        suffix : string
+            The appendix to the image folder name
         '''
 
         # Replaces spaces by underscores
@@ -109,12 +130,14 @@ class Console:
 
 
     def limitset(self, side, i_motor):
-        '''
-        Sets the current position as a limit.
-
-        action      "set" or "get"
-        side        "upper" or "lower"
-        i_motor     0, 1, 2, ...
+        '''Sets the current position as a limit for a motor.
+        
+        Arguments
+        ---------
+        side : string
+            "upper" or "lower"
+        i_motor : int
+            Index of the motor.
         '''
         
         if side == 'upper':
@@ -133,6 +156,11 @@ class Console:
 
     def where(self, i_motor):
         '''Prints the coordinates of the motor i_motor.
+
+        Arguments
+        ---------
+        i_motor : int
+            Index of the motor
         '''
         # Getting motor's position
         mpos = self.core.motors[motor].get_position()
@@ -141,13 +169,26 @@ class Console:
 
     def drive(self, i_motor, position):
         '''Drive i_motor to the given coordinates.
+
+        Arguments
+        ---------
+        i_motor : int
+            Index of the motor
+        position : int or float
+            The new position
         '''
         self.core.motors[i_motor].move_to(position)
         
 
     def macro(self, command, macro_name):
-        '''
-        Running and setting macros (automated imaging sequences.)
+        '''Running and setting macros (automated imaging sequences).
+
+        Arguments
+        ---------
+        command : string
+            One of the following: run, list or stop
+        macro_name : string
+            The name of the macro.
         '''
         if command == 'run':
             self.core.run_macro(macro_name)
@@ -163,6 +204,16 @@ class Console:
 
 
     def set_roi(self, x,y,w,h, i_camera=None):
+        '''Sets the camera crop or region of interest.
+
+        Arguments
+        ---------
+        x, y, w, h : int
+            Crop position and dimensions.
+        i_camera : int or None
+            The index of the camera to set the crop for.
+            If not specified, uses the same crop for all the cameras.
+        '''
         if i_camera is None:
             for camera in self.core.cameras:
                 camera.set_roi((x,y,w,h))
@@ -171,6 +222,15 @@ class Console:
 
 
     def eternal_repeat(self, isi):
+        '''Repeats the imaging until the user hits enter.
+
+        The save-suffix is appended with a running index.
+
+        Arguments
+        ---------
+        isi : int
+            In seconds, how long to wait between imagings
+        '''
 
         isi = float(isi)
         print(isi)
@@ -194,11 +254,14 @@ class Console:
 
 
     def chain_presets(self, delay, *preset_names):
-        '''
-        Running multiple presets all one after each other,
-        in a fixed (horizonta, vertical) location.
+        '''Runs multiple presets all one after each other.
 
-        delay       In seconds, how long to wait between presets
+        The location (horizontal, vertical) should remain fixed.
+        
+        Arguments
+        ---------
+        delay : int or float
+            In seconds, how long to wait between the presets.
         '''
         delay = float(delay)
         original_parameters = copy.copy(self.core.dynamic_parameters)
@@ -220,12 +283,43 @@ class Console:
 
             
     def set_rotation(self, horizontal, vertical):
+        '''Sets the given rotation as the current one.
+        '''
         ho = int(horizontal)
         ve = int(vertical)
         cho, cve = self.core.reader.latest_angle
         
         self.core.reader.offset = (cho-ho, cve-ve)
 
+
+    def live(self):
+        '''Toggles the cameras' livefeed (running/paused).
+        '''
+        if self.core.pause_livefeed == True:
+            self.core.pause_livefeed = False
+        else:
+            self.core.pause_livefeed = True
+
+    def violive(self, duration=None):
+        '''Toggles the vios' livefeed (running/paused) or sets rec. dur.
+        '''
+        if duration is not None:
+            duration = float(duration)
+            self.core.vio_livefeed_dur = duration
+        else:
+            if self.core.vio_livefeed == True:
+                self.core.vio_livefeed = False
+            else:
+                self.core.vio_livefeed = True
+
+
+    def setoutput(self, device, channel, value):
+        '''Sets an out-channel (eg. Dev1/ao1) to the given voltage value.
+        '''
+        try:
+            self.core.set_led(f'{device}/{channel}', float(value))
+        except Exception as e:
+            print(e)
 
 
 class GonioImsoftTUI:
@@ -281,7 +375,12 @@ class GonioImsoftTUI:
                 ['Add a local camera', self.add_local_camera],
                 ['Add a remote camera', self.add_remote_camera],
                 ['Edit camera settings', self.camera_settings_edit],
-                ['Remove camera', self.remove_camera]]
+                ['Remove camera', self.remove_camera],
+                ['\n', None],
+                ['Add a local vio', self.add_local_vio],
+                ['Add a remote vio', self.add_remote_vio],
+                ['Remove vio', self.remove_vio],
+                ]
         return menu
 
 
@@ -295,7 +394,15 @@ class GonioImsoftTUI:
             client.load_state('previous')
         except FileNotFoundError:
             self.libui.print('Could not find previous settings for this camera')
-        
+    
+    def _add_vio(self, client):
+        cancels = 'back'
+
+        device = self.libui.input('Device', cancels)
+        channels = self.libui.input('Channels (comma separated)', cancels)
+        fs = self.libui.input('Sampling frequency (Hz)', cancels)
+
+        client.set_settings(device, channels, fs)
 
     def add_local_camera(self):
         '''Add a camera from a local camera server.
@@ -304,9 +411,23 @@ class GonioImsoftTUI:
         self._add_camera(client)
 
 
-    def add_remote_camera(self):
+    def add_local_vio(self):
+        '''Start a local vio server and a client.
+        '''
+        client = self.core.add_vio_client(None, None)
+        self._add_vio(client)
+
+
+    def _add_remote_client(self, name):
+        if name == 'camera':
+            addfunc = self.core.add_camera_client
+        elif name == 'vio':
+            addfunc = self.core.add_vio_client
+        else:
+            raise ValueError
+
         cancels = 'back'
-        self.libui.input(f'# Type in {cancels} to cancel')
+        self.libui.print(f'# Type in {cancels} to cancel')
 
         host = self.libui.input('IP address or hostname', cancels)
         if host is None:
@@ -320,12 +441,28 @@ class GonioImsoftTUI:
         else:
             port = int(port)
 
-        client = self.core.add_camera_client(host, port)
+        client = addfunc(host, port)
         
-        if not client.is_server_running:
+        while not client.is_server_running():
+            print('Waiting the server to come up...')
+            time.sleep(1)
+
+        if not client.is_server_running():
             self.libui.print('Cannot connect to the server')
         else:
-            self._add_camera(client)
+            if name == 'camera':
+                self._add_camera(client)
+            else:
+                self._add_vio(client)
+
+    
+    def add_remote_camera(self):
+        self._add_remote_client('camera')
+    
+    def add_remote_vio(self):
+        self._add_remote_client('vio')
+
+
 
     def remove_camera(self):
         names = [cam.get_camera() for cam in self.core.cameras]
@@ -335,6 +472,17 @@ class GonioImsoftTUI:
         if selection != '..back':
             index = names.index(selection)
             self.core.remove_camera_client(index)
+
+    def remove_vio(self):
+        names = [f'vio_{i}' for i, vio in enumerate(self.core.vios)]
+        selection = self.libui.item_select(
+                names+['..back'], 'Select camera to remove')
+
+        if selection != '..back':
+            index = names.index(selection)
+            self.core.remove_vio_client(index)
+
+   
 
     @property
     def menutext(self):

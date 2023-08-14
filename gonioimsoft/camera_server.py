@@ -23,7 +23,6 @@ import os
 import sys
 import time
 import datetime
-import socket
 import argparse
 import threading
 import multiprocessing
@@ -39,9 +38,9 @@ import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 from matplotlib.widgets import RectangleSelector
 
-from .camera_communication import PORT
+from .common import CAMERA_PORT
+from .serverbase import ServerBase
 
-DEFAULT_SAVING_DIRECTORY = "imaging_data"
 DEFAULT_MICROMANAGER_DIR = 'C:/Program Files/Micro-Manager-2.0'
 
 # Integer between 1-inf (1 = no downsampling), images for imageshower
@@ -185,8 +184,6 @@ class DummyCamera:
         pass
     def save_images(images, label, metadata, savedir):
         pass
-    def set_saving_directory(self, saving_directory):
-        pass
     def set_binning(self, binning):
         self.settings['binning'] = binning
     def set_roi(self, x,y,w,h):
@@ -230,10 +227,8 @@ class MMCamera:
     '''Controls any camera using MicroManager and its pymmcore bindings.
     '''
 
-    def __init__(self, saving_directory=DEFAULT_SAVING_DIRECTORY):
+    def __init__(self):
 
-        self.set_saving_directory(saving_directory)
-        
         self.mmc = pymmcore.CMMCore() 
         self.mmc.setDeviceAdapterSearchPaths([DEFAULT_MICROMANAGER_DIR])
 
@@ -255,6 +250,9 @@ class MMCamera:
         self.description_string = ''
 
         self.save_stack = False
+        self.save_directory = None
+
+        self._startdir = os.getcwd()
 
         self.title = 'Camera not set'
         self.servertitle = ''
@@ -384,7 +382,7 @@ class MMCamera:
         if save == 'True':
             metadata = {'exposure_time_s': exposure_time, 'function': 'acquireSingle', 'start_time': start_time}
 
-            save_thread = threading.Thread(target=self.save_images,args=([image],'snap_{}'.format(start_time.replace(':','.').replace(' ','_')), metadata,os.path.join(self.saving_directory, subdir)))
+            save_thread = threading.Thread(target=self.save_images,args=([image],'snap_{}'.format(start_time.replace(':','.').replace(' ','_')), metadata,os.path.join(self.save_directory, subdir)))
             save_thread.start()
 
 
@@ -469,7 +467,7 @@ class MMCamera:
                     'N_frames': N_frames, 'label': label, 'function': 'acquireSeries', 'start_time': start_time}
         metadata.update(self.settings)
 
-        save_thread = threading.Thread(target=self.save_images, args=(images,label,metadata,os.path.join(self.saving_directory, subdir)))
+        save_thread = threading.Thread(target=self.save_images, args=(images,label,metadata,os.path.join(self.save_directory, subdir)))
         save_thread.start()
         
         #if 'hamamatsu' in device_name.lower() and trigger_direction == 'receive':
@@ -482,6 +480,7 @@ class MMCamera:
         '''
         Save given images as grayscale tiff images.
         '''
+        savedir = os.path.join(self._startdir, savedir)
         if not os.path.isdir(savedir):
             try:
                 os.makedirs(savedir)
@@ -501,17 +500,6 @@ class MMCamera:
             tifffile.imwrite(os.path.join(savedir, fn), np.asarray(images), metadata=metadata)
         
         self.save_description(os.path.join(savedir, 'description'), self.description_string, internal=True)
-
-
-    def set_saving_directory(self, saving_directory):
-        '''
-        Sets where the specimen folders are saved and if the directory
-        does not yet exist, creates it.
-        '''
-        if not os.path.isdir(saving_directory):
-            os.makedirs(saving_directory)
-            
-        self.saving_directory = saving_directory
 
 
     def set_save_stack(self, boolean):
@@ -563,7 +551,7 @@ class MMCamera:
         if internal:
             fn = specimen_name
         else:
-            fn = os.path.join(self.saving_directory, specimen_name, specimen_name)
+            fn = os.path.join(self.save_directory, specimen_name, specimen_name)
         
         # Check if the folder exists
         if not os.path.exists(os.path.dirname(fn)):
@@ -593,7 +581,7 @@ class MMCamera:
         pass
 
 
-class CameraServer:
+class CameraServer(ServerBase):
     '''Camera server listens incoming connections from the client and
     controls a camera class.
     '''
@@ -601,24 +589,17 @@ class CameraServer:
     def __init__(self, camera, port=None):
         
         if port is None:
-            port = PORT
-        HOST = ''           # This is not cac.SERVER_HOSTNAME, leave empty
-
-        self.running = False
-
-        print(f'Binding a socket (host {HOST}, port {port}))')
-
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.socket.bind((HOST, port))
-        self.socket.listen(1)
+            port = CAMERA_PORT
+        
+        super().__init__('', port, camera)
+        
         
         print(f'Using the camera <{camera.__class__.__name__}>')
-        self.cam = camera
+        self.cam = self.device
         self.cam.servertitle = f'Server on port {port}'
         self.cam.wait_for_client = self.wait_for_client
         
-        self.functions = {'acquireSeries': self.cam.acquire_series,
-                          'setSavingDirectory': self.cam.set_saving_directory,
+        added_functions = {'acquireSeries': self.cam.acquire_series,
                           'acquireSingle': self.cam.acquire_single,
                           'saveDescription': self.cam.save_description,
                           'set_roi': self.cam.set_roi,
@@ -630,88 +611,16 @@ class CameraServer:
                           'get_setting_type': self.cam.get_setting_type,
                           'get_setting': self.cam.get_setting,
                           'set_setting': self.cam.set_setting,
-                          'ping': self.ping,
-                          'exit': self.stop}
+                          }
 
-        self.responding = set([
-            'get_cameras', 'get_camera', 'get_settings', 'get_setting_type', 'get_setting'])
+        self.functions = {**self.functions, **added_functions}
 
+        self.responders.extend(
+                ['get_cameras', 'get_camera', 'get_settings',
+                 'get_setting_type', 'get_setting']
+                )
 
-    def ping(self, message):
-        print(message)
-
-
-    def wait_for_client(self):
-        '''Waits until client confirms that it is ready by sending us
-        anything (usually ping).
-        '''
-        conn, addr = self.socket.accept()
-        string = ''
-        while True:
-            data = conn.recv(1024)
-            if not data: break
-            string += data.decode()
-        conn.close()
-        print("Client ready")
         
-
-    def run(self):
-        '''
-        Loop waiting for incoming connections.
-        Each established connection can give one command and then the connection
-        is closed.
-        '''
-        
-        print('Waiting for clients to connect')
-
-        self.running = True
-        while self.running:
-            conn, addr = self.socket.accept()
-            string = ''
-            while True:
-                data = conn.recv(1024)
-                #if not data: break
-                string += data.decode()
-                break
-
-            if not string:
-                conn.close()
-                continue
-            
-            print('Recieved command "'+string+'" at time '+str(time.time()))
-            if ';' in string:
-                func, parameters = string.split(';')
-                parameters = parameters.split(':')
-            else:
-                func = string
-                parameters = None
-        
-            # Can close connection early, no response so let's not delay the client
-            if not func in self.responding:
-                conn.close()
-            
-            if parameters:
-                response = self.functions[func](*parameters)
-            else:
-                response = self.functions[func]()
-
-            # Say back the response and close because still open
-            if func in self.responding:
-                
-                if isinstance(response, (list, tuple)):
-                    response = ':'.join(response)
-
-                conn.sendall(str(response).encode())
-                conn.close()
-
-
-    def stop(self, placeholder):
-        '''
-        Stop running the camera server.
-        '''
-        self.cam.close()
-        self.running = False
-
 
 def test_camera():
     cam = Camera()
@@ -750,7 +659,7 @@ def main():
     camera = Camera()
 
     if args.save_directory:
-        camera.set_saving_directory(args.save_directory)
+        self.set_save_directory(args.save_directory)
 
     if args.port:
         args.port = int(args.port)

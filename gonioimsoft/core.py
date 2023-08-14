@@ -17,6 +17,7 @@ except ModuleNotFoundError:
 from gonioimsoft.anglepairs import saveAnglePairs, loadAnglePairs, toDegrees
 from gonioimsoft.arduino_serial import ArduinoReader
 from gonioimsoft.camera_client import CameraClient
+from gonioimsoft.vio_client import VIOClient
 from gonioimsoft.motors import Motor
 from gonioimsoft.imaging_parameters import (
         DEFAULT_DYNAMIC_PARAMETERS,
@@ -35,7 +36,12 @@ class GonioImsoftCore:
     reader : obj
         Reading rotary encoder values from the Arduino Board.
     cameras : list
-        Lis of camera client objects
+        Camera client objects that each talk to a specific server
+        over IPv4 sockets. The server's can be local (on the same
+        machine) or remote.
+    vios : list
+        Analog voltage input/ouput clients. Similar to the cameras,
+        they talk to a vio server.
     '''
 
 
@@ -47,8 +53,8 @@ class GonioImsoftCore:
         # Angle pairs reader (rotary encoder values)
         self.reader = ArduinoReader()
         
-        # Initiate camera client/server
         self.cameras = []
+        self.vios = []
         
         # Details about preparation (name, sex, age) are saved in this
         self.preparation = {'name': 'test', 'sex': '', 'age': ''}
@@ -85,30 +91,61 @@ class GonioImsoftCore:
 
         self.data_savedir = None
 
-        self.local_servers_running_index = 0
+        self.local_camera_servers_running_index = 0
+        self.local_vio_servers_running_index = 0
+
+        self.pause_livefeed = False
+        self.vio_livefeed = False
+        self.vio_livefeed_dur = 0.1
+
+        self._last_vio = time.time()
 
     
-    def add_camera_client(self, host, port):
+    def _add_client(self, name, host, port):
         '''Adds a camera client to the given host and port.
 
         If host is None uses the localhost and starts a local
         server if no local server running at that port
+
+        Arguments
+        ---------
+        name : string
+            The name of the client. "camera" or "vio"
         '''
-        client = CameraClient(
-                host, port,
-                running_index=self.local_servers_running_index)
-        self.local_servers_running_index += 1
+        if name == 'camera':
+            Client = CameraClient
+            register = self.cameras
+            self.local_camera_servers_running_index += 1
+            index = self.local_camera_servers_running_index
+        elif name == 'vio':
+            Client = VIOClient
+            register = self.vios
+            self.local_vio_servers_running_index += 1
+            index = self.local_vio_servers_running_index
+        else:
+            raise ValueError
+
+        client = Client(host, port, running_index=index-1)
 
         if host is None and not client.is_server_running():
             client.start_server()
-
-        self.cameras.append(client)
-
+        register.append(client)
+        
         return client
 
-    def remove_camera_client(self, i_client):
-        '''Removes the camera client and closes its server if local server
-        '''
+
+    def add_camera_client(self, host, port):
+        return self._add_client('camera', host, port)
+        
+    def add_vio_client(self, host, port):
+        return self._add_client('vio', host, port)
+
+
+    def _remove_client(self, name, i_client):
+        if name == 'camera':
+            register = self.cameras
+        elif name == 'vio':
+            reigster = self.vios
         # Popping is enough and the client should be garbage collected
         # by Python (the sockets are not kept alive so nothing is
         # left open etc. by the client)
@@ -119,6 +156,18 @@ class GonioImsoftCore:
             client.close_server()
 
         return client
+
+    def remove_camera_client(self, i_client):
+        '''Removes the camera client and closes its server if local
+        '''
+        return self._remove_client('camera', i_client)
+   
+
+    def remove_vio_client(self, i_client):
+        '''Removes the vio client and closes its server if local
+        '''
+        return self._remove_client('vio', i_client)
+
 
 
     def analog_output(self, channels, stimuli, fs, wait_trigger, camera=True):
@@ -135,12 +184,12 @@ class GonioImsoftCore:
             print('    pretending analog_output on channels {}'.format(channels))
             return None
 
+
         with nidaqmx.Task() as task:
             for i_channel, channel in enumerate(channels):
                 if type(channel) == type('string'):
                     task.ao_channels.add_ao_voltage_chan(channel)
                 else:
-                    
                     for subchan in channel:
                         task.ao_channels.add_ao_voltage_chan(subchan)
                         stimuli.insert(i_channel, stimuli[i_channel])
@@ -166,7 +215,7 @@ class GonioImsoftCore:
 
             if camera:
                 for camera in self.cameras:
-                    camera.sendCommand('ready')
+                    camera.send_command('ready')
                 
             task.wait_until_done(timeout=(len(stimuli[0])/fs)*1.5+20)
 
@@ -195,7 +244,7 @@ class GonioImsoftCore:
         self.triggered_anglepairs.append(self.reader.get_latest())
 
 
-    def set_led(self, device, value, wait_trigger=False):
+    def set_led(self, device, value, wait_trigger=False, exclude=None):
         '''
         Set an output channel to a specific voltage value.
 
@@ -206,6 +255,9 @@ class GonioImsoftCore:
             print(f'    pretending to set {device} on value {value}')
             return None
 
+
+        excluded = 0
+
         with nidaqmx.Task() as task:
             
             if type(device) == type('string'):
@@ -214,8 +266,11 @@ class GonioImsoftCore:
             else:
                 # If device is actually a list of devices
                 for dev in device:
+                    if exclude and dev in exclude:
+                        excluded += 1
+                        continue
                     task.ao_channels.add_ao_voltage_chan(dev)
-                value = [value for i in range(len(device))]
+                value = [value for i in range(len(device)-excluded)]
             
             if wait_trigger:
                 task.timing.cfg_samp_clk_timing(10000)
@@ -264,9 +319,16 @@ class GonioImsoftCore:
 
             print('A snap image taken')
         else:
+            if self.pause_livefeed:
+                return
+
+
+                
             for camera in self.cameras:
                 camera.acquireSingle(False, '')
             time.sleep(0.1)
+
+
 
 
 
@@ -383,15 +445,17 @@ class GonioImsoftCore:
         # Get the current rotation stage angles and use this through the repeating
         # (even if it would change during imaging)
         imaging_angle = self.reader.get_latest()
+
+        spaceless_angle = str(imaging_angle).replace(' ', '')
         
         # Prepare some variables that stay constant over imaging
-        image_directory = os.path.join(self.preparation['name'], 'pos{}{}'.format(imaging_angle, dynamic_parameters['suffix']+self.suffix))
+        image_directory = os.path.join(self.preparation['name'], 'pos{}{}'.format(spaceless_angle, dynamic_parameters['suffix']+self.suffix))
         N_frames = int((dynamic_parameters['pre_stim']+dynamic_parameters['stim']+dynamic_parameters['post_stim'])/dynamic_parameters['frame_length'])
        
 
         for i in range(dynamic_parameters['repeats']):
 
-            label = 'im_pos{}_rep{}'.format(imaging_angle, i)
+            label = 'im_pos{}_rep{}'.format(spaceless_angle, i)
             
             # INTER_LOOP_CALLBACK for showing info to the user and for exiting
             if callable(inter_loop_callback) and inter_loop_callback(label, i) == False:
@@ -413,10 +477,13 @@ class GonioImsoftCore:
                 N_frames = int(round((len(bsstim)/fs) / dynamic_parameters['frame_length']))
 
             if i==0 and dynamic_parameters['avgint_adaptation']:
-                self.set_led(dynamic_parameters['flash_channel'], np.mean(builder.get_stimulus_pulse()))
+                self.set_led(dynamic_parameters['flash_channel'], np.mean(builder.get_stimulus_pulse()), exclude='Dev1/ao4')
                 time.sleep(dynamic_parameters['avgint_adaptation'])
             
             imaging_function(dynamic_parameters, builder, label, N_frames, image_directory, set_led=bool(dynamic_parameters['isi'][i]))
+
+            if i==0 and dynamic_parameters['avgint_adaptation']:
+                self.set_led(dynamic_parameters['flash_channel'], np.mean(builder.get_stimulus_pulse()), exclude='Dev1/ao4')
 
             # Dirtyfix
             if dynamic_parameters['reboot_cameras']:
@@ -494,6 +561,15 @@ class GonioImsoftCore:
             channels = [dynamic_parameters['flash_channel'], dynamic_parameters['ir_channel']]
 
 
+
+        # Arm analog input recording if any vio clients
+        for i_vio, vio in enumerate(self.vios):
+            vio.set_save_directory(os.path.join(self.data_savedir, image_directory))
+            duration = N_frames * dynamic_parameters['frame_length']
+            vio_label = f'vi{i_vio}{label[2:]}'
+            vio.analog_input(duration, save=vio_label, wait_trigger=True)
+
+
         if len(self.cameras) == 1:
             self.cameras[0].acquireSeries(dynamic_parameters['frame_length'], 0, N_frames, label, image_directory)
         elif len(self.cameras) > 1:
@@ -501,7 +577,21 @@ class GonioImsoftCore:
             for i_camera, camera in enumerate(self.cameras):
                 camera.acquireSeries(dynamic_parameters['frame_length'], 0, N_frames, f'{label}_cam{i_camera}', image_directory)
 
-        self.analog_output(channels, stimuli, fs, wait_trigger=True)
+
+        # If no cameras, we should not wait for trigger to come from them.
+        # Create own trigger on the trigger channel
+        if not self.cameras:
+            wait_trigger = False
+            trigwave = np.zeros(len(stimuli[0]))
+            for i in range(min(100, len(trigwave))):
+                trigwave[i] = 5
+            
+            stimuli = [*stimuli, trigwave]
+            channels = [*channels, dynamic_parameters['trigger_out_channel']]
+        else:
+            wait_trigger = True
+        
+        self.analog_output(channels, stimuli, fs, wait_trigger=wait_trigger)
 
         
 
@@ -514,8 +604,8 @@ class GonioImsoftCore:
             If False, do not attempt to update save folder to the camera server
         '''
         if camera:
-            for camera in self.cameras:
-                camera.setSavingDirectory(savedir)
+            for device in self.cameras+self.vios:
+                device.set_save_directory(savedir)
         self.data_savedir = savedir
 
 
@@ -591,6 +681,12 @@ class GonioImsoftCore:
         '''
 
         change = False
+
+        if self.vio_livefeed:
+            if time.time()-self._last_vio > max(self.vio_livefeed_dur+0.1, 0.1):
+                for vio in self.vios:
+                    vio.analog_input(self.vio_livefeed_dur)
+                self._last_vio = time.time()
         
         while True:
             
