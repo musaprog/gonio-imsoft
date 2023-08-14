@@ -379,7 +379,7 @@ class GonioImsoftTUI:
                 ['\n', None],
                 ['Add a local vio', self.add_local_vio],
                 ['Add a remote vio', self.add_remote_vio],
-                ['Remove vio', self.add_remote_vio],
+                ['Remove vio', self.remove_vio],
                 ]
         return menu
 
