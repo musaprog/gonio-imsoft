@@ -63,8 +63,8 @@ class ServerBase:
     def set_save_directory(self, directory):
         '''Sets the location for the data saving
         '''
+        abspath = os.path.abspath(directory)
         if not os.path.isdir(directory):
-            abspath = os.path.abspath(directory)
             print(f'Creating directory {abspath} for saving data')
             os.makedirs(directory)
         else:
