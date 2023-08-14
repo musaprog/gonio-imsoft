@@ -1,6 +1,12 @@
 '''Voltage input/output server.
 '''
 
+import os
+import multiprocessing
+
+import numpy as np
+import matplotlib.pyplot as plt
+
 try:
     import nidaqmx
 except ImportError:
@@ -9,6 +15,37 @@ except ImportError:
 
 from .common import VIO_PORT
 from .serverbase import ServerBase
+
+
+class Plotter:
+         
+    def loop(self, queue, title):
+        
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+        plt.show(block=False)
+
+        fig.canvas.toolbar.winfo_toplevel().title(title)
+        
+        while True:
+            if queue.empty():
+                plt.pause(0.1)
+                continue
+            while not queue.empty():
+                data = queue.get()
+            if isinstance(data, str) and data == 'close':
+                break
+
+            ax.clear()
+            ax.plot(data)
+            plt.pause(0.1)
+        
+
+
+def run_plotter(queue, title):
+    plotter = Plotter()
+    plotter.loop(queue, title)
+
 
 class DummyBoard:
     '''For testing the server without an NI board.
@@ -28,6 +65,9 @@ class NIBoard:
         
         self.channels = None
         self.fs = 1000
+
+        self.live_queue = None
+        self.title = 'Analog input'
     
 
     def set_settings(self, device, channels, fs):
@@ -45,9 +85,11 @@ class NIBoard:
         self.device = device
         self.channels = channels.split(',')
         self.fs = float(fs)
+
+        self.title = f'Analog input - {self.device} {self.channels} {self.fs} Hz'
         
    
-    def analog_input(self, duration, wait_trigger=False):
+    def analog_input(self, duration, save=None, wait_trigger=False):
         '''Records voltage input and saves it.
 
            
@@ -55,6 +97,9 @@ class NIBoard:
             In seconds, the recording's length.
 
         '''
+        if save == 'None':
+            save = None
+            
         duration = float(duration)
         timeout = duration + 10
 
@@ -84,6 +129,24 @@ class NIBoard:
 
             task.read(timeout=timeout)
 
+
+        if save is not None:
+            fn = os.path.join(
+                self.save_directory, f'{save}.npy')
+            np.save(fn, np.array(data))
+
+
+        if self.live_queue is None:
+            self.live_queue = multiprocessing.Queue()
+            self.live_queue.put(data)
+            
+            self.livep = multiprocessing.Process(
+                    target=run_plotter,
+                    args=(self.live_queue,self.title))
+            self.livep.start()
+            
+        else:
+            self.live_queue.put(data)
 
 
 class VIOServer(ServerBase):
