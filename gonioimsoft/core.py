@@ -445,15 +445,17 @@ class GonioImsoftCore:
         # Get the current rotation stage angles and use this through the repeating
         # (even if it would change during imaging)
         imaging_angle = self.reader.get_latest()
+
+        spaceless_angle = str(imaging_angle).replace(' ', '')
         
         # Prepare some variables that stay constant over imaging
-        image_directory = os.path.join(self.preparation['name'], 'pos{}{}'.format(imaging_angle, dynamic_parameters['suffix']+self.suffix))
+        image_directory = os.path.join(self.preparation['name'], 'pos{}{}'.format(spaceless_angle, dynamic_parameters['suffix']+self.suffix))
         N_frames = int((dynamic_parameters['pre_stim']+dynamic_parameters['stim']+dynamic_parameters['post_stim'])/dynamic_parameters['frame_length'])
        
 
         for i in range(dynamic_parameters['repeats']):
 
-            label = 'im_pos{}_rep{}'.format(imaging_angle, i)
+            label = 'im_pos{}_rep{}'.format(spaceless_angle, i)
             
             # INTER_LOOP_CALLBACK for showing info to the user and for exiting
             if callable(inter_loop_callback) and inter_loop_callback(label, i) == False:
