@@ -300,6 +300,26 @@ class Console:
         else:
             self.core.pause_livefeed = True
 
+    def violive(self, duration=None):
+        '''Toggles the vios' livefeed (running/paused) or sets rec. dur.
+        '''
+        if duration is not None:
+            duration = float(duration)
+            self.core.vio_livefeed_dur = duration
+        else:
+            if self.core.vio_livefeed == True:
+                self.core.vio_livefeed = False
+            else:
+                self.core.vio_livefeed = True
+
+
+    def setoutput(self, device, channel, value):
+        '''Sets an out-channel (eg. Dev1/ao1) to the given voltage value.
+        '''
+        try:
+            self.core.set_led(f'{device}/{channel}', float(value))
+        except Exception as e:
+            print(e)
 
 
 class GonioImsoftTUI:
