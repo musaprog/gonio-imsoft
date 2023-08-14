@@ -215,7 +215,7 @@ class GonioImsoftCore:
 
             if camera:
                 for camera in self.cameras:
-                    camera.sendCommand('ready')
+                    camera.send_command('ready')
                 
             task.wait_until_done(timeout=(len(stimuli[0])/fs)*1.5+20)
 
