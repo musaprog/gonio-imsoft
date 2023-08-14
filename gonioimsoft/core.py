@@ -573,8 +573,22 @@ class GonioImsoftCore:
             # With many cameras, add camN suffix to the label
             for i_camera, camera in enumerate(self.cameras):
                 camera.acquireSeries(dynamic_parameters['frame_length'], 0, N_frames, f'{label}_cam{i_camera}', image_directory)
+
+
+        # If no cameras, we should not wait for trigger to come from them.
+        # Create own trigger on the trigger channel
+        if not self.cameras:
+            wait_trigger = False
+            trigwave = np.zeros(len(stimuli[0]))
+            for i in range(min(100, len(trigwave))):
+                trigwave[i] = 5
+            
+            stimuli = [*stimuli, trigwave]
+            channels = [*channels, dynamic_parameters['trigger_out_channel']]
+        else:
+            wait_trigger = True
         
-        self.analog_output(channels, stimuli, fs, wait_trigger=True)
+        self.analog_output(channels, stimuli, fs, wait_trigger=wait_trigger)
 
         
 
