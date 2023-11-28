@@ -24,7 +24,7 @@ setuptools.setup(
     description="Goniometric imaging software",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/jkemppainen/gonio-imsoft",
+    url="https://github.com/musaprog/gonio-imsoft",
     packages=setuptools.find_packages(),
     install_requires=install_requires,
     classifiers=[
