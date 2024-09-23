@@ -372,6 +372,7 @@ class GonioImsoftTUI:
                 [f'Change savefolder (current: {self.experimenter})', self._run_experimenter_select],
                 ['Quit', self.quit],
                 ['\n', None],
+                ['Add all local cameras', self.add_all_local_cameras],
                 ['Add a local camera', self.add_local_camera],
                 ['Add a remote camera', self.add_remote_camera],
                 ['Edit camera settings', self.camera_settings_edit],
@@ -384,17 +385,30 @@ class GonioImsoftTUI:
         return menu
 
 
-    def _add_camera(self, client):
-        cameras = client.get_cameras()
-        camera = self.libui.item_select(
-                cameras, 'Select a camera')
+    def _add_camera(self, client, camera=None):
+        '''Lets the user to select the camera for this client
+
+        Arguments
+        ---------
+        client : CameraClient object
+            The client that we select the used camera for
+        camera : string or None
+            If not None, use this camera instead of letting
+            the user to select a camera.
+        '''
+        if camera is None:
+            cameras = client.get_cameras()
+            camera = self.libui.item_select(
+                    cameras, 'Select a camera')
+        
         client.set_camera(camera)
         
         try:
             client.load_state('previous')
         except FileNotFoundError:
-            self.libui.print('Could not find previous settings for this camera')
-    
+            self.libui.print('Could not find previous settings for this camera') 
+
+
     def _add_vio(self, client):
         cancels = 'back'
 
@@ -403,6 +417,27 @@ class GonioImsoftTUI:
         fs = self.libui.input('Sampling frequency (Hz)', cancels)
 
         client.set_settings(device, channels, fs)
+
+    def add_all_local_cameras(self):
+        '''Add all local cameras, in the order of alphabetical sort.
+        '''
+        client = self.core.add_camera_client(None, None)
+        cameras = client.get_cameras()
+        
+        if not cameras:
+            self.core.remove_camera_client(client)
+            return None
+
+        cameras.sort()
+        self._add_camera(client, cameras[0])
+        self.libui.print(f'Added camera {cameras[0]}') 
+
+        if len(cameras) > 1:
+            for camera in cameras[1:]:
+                client = self.core.add_camera_client(None, None)
+                self._add_camera(client, camera)
+                self.libui.print(f'Added camera {camera}') 
+
 
     def add_local_camera(self):
         '''Add a camera from a local camera server.
