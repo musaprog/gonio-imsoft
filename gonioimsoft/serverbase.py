@@ -28,6 +28,7 @@ class ServerBase:
         
         print(f'Binding a socket (host {host}, port {port}')
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.socket.bind(('', port))
         self.socket.listen(1)
         
