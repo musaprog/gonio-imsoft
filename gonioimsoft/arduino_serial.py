@@ -12,37 +12,57 @@ except ModuleNotFoundError:
 
 
 class ArduinoReader:
-    '''
-    Class for reading  angle pairs (states of the rotation encoders) from Arduino.
+    '''Read rotation encoders from Arduino over USB serial.
+    
+    ArduinoReader reads so called "angle pairs" from two rotation encoders
+    connected to an Arduino board running compatible firmware.
     '''
 
-    def __init__(self, port=None):
+    def __init__(self, port=None, baudrate=9600, timeout=0.01):
         '''
-        port        On Windows, "COM4" or similar. May change if other serial devices
-                    are addded or removed?
+        Arguments
+        ---------
+        port : string
+            On Windows, "COM4" or similar. May change if other serial
+            devices are addded or removed?
+        baudrate : int
+            Default 9600.
+        timeout : float
+            Default 0.01.
         '''
         
-        if serial:
-            if port is None:
-                # No port provided, use the first one with text "Arduino" in it
-                ports = [str(p) for p in comports()]
-                print(f'Selecting an Arduino from {ports}')
-                for port in ports:
-                    if not 'arduino' in port.lower():
-                        continue
-                    print(f'  Trying {port}')
-                    try:
-                        self.serial = serial.Serial(port=port.split(' ')[0], baudrate=9600, timeout=0.01)
-                        self.serial.readline()
-                        print(f'Accepted port {port}')
-                        break
-                    except Exception as e:
-                        print(e)
-            else:
-                # Use the provided port
-                self.serial = serial.Serial(port=port, baudrate=9600, timeout=0.01)
-        else:
+        # Serial lib not available
+        if not serial:
             self.serial = None
+
+        # Use the provided serial port and case closed
+        if port is not None:
+            self.serial = serial.Serial(
+                    port=port, baudrate=baudrate, timeout=timeout)
+
+        else: 
+            # Autodetect the Arduino board:
+            # Use the first one with text "Arduino" in it
+            ports = [str(p) for p in comports()]
+            
+            if not ports:
+                self.serial = None
+            else:
+                print(f'Selecting an Arduino from {ports}')
+
+            for port in ports:
+                if not 'arduino' in port.lower():
+                    continue
+                print(f'  Trying {port}')
+                try:
+                    self.serial = serial.Serial(
+                            port=port.split(' ')[0],
+                            baudrate=baudrate, timeout=timeout)
+                    self.serial.readline()
+                    print(f'Accepted port {port}')
+                    break
+                except Exception as e:
+                    print(e)
 
         self.latest_angle = (0,0)
         self.offset = (0,0)
