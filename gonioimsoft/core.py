@@ -149,24 +149,43 @@ class GonioImsoftCore:
         # Popping is enough and the client should be garbage collected
         # by Python (the sockets are not kept alive so nothing is
         # left open etc. by the client)
-        client = self.cameras.pop(i_client)
-        
+        if isinstance(i_client, int):
+            client = self.register.pop(i_client)
+        elif isinstance(i_client, (CameraClient, VIOClient)):
+            client = i_client
+            self.register.remove(client)
+        else:
+            raise ValueError(f'Cannot remove {i_client} from clients')
+
         # If the client started a local server, close the server
         if client.local_server is not None:
             client.close_server()
 
         return client
 
-    def remove_camera_client(self, i_client):
-        '''Removes the camera client and closes its server if local
+
+    def remove_camera_client(self, client):
+        '''Removes a camera client and closes its server if local server
+
+        Arguments
+        ---------
+        client : object or int
+            Index of the client in self.cameras or the CameraClient
+            object to be removed
         '''
-        return self._remove_client('camera', i_client)
+        return self._remove_client('camera', client)
    
 
-    def remove_vio_client(self, i_client):
-        '''Removes the vio client and closes its server if local
+    def remove_vio_client(self, client):
+        '''Removes the vio client and closes its server if local server
+
+        Arguments
+        ---------
+        client: object or int
+            Index of the client in self.vios or the VIOClient
+            object to be removed
         '''
-        return self._remove_client('vio', i_client)
+        return self._remove_client('vio', client)
 
 
 
