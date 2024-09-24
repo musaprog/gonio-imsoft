@@ -11,8 +11,28 @@ if OS == 'Windows':
     import msvcrt   # reading pressed keys without blocking
 else:
     import sys
-    import select
+    import threading
 
+
+class NBlock:
+    '''Non-blocking read of key pressess using threading and stdin read
+    '''
+    def __init__(self):
+        self.input = []
+        self.exit = False
+        self.t = threading.Thread(target=self.target)
+
+    def run(self):
+        self.t.start()
+
+    def target(self):
+        while not self.exit:
+            char = sys.stdin.read(1)
+            self.input.append(char)
+
+    def stop(self):
+        self.exit = True
+        self.t.join()
 
 class SimpleTUI:
     '''A terminal user interface (TUI) library.
@@ -25,17 +45,21 @@ class SimpleTUI:
     
     def __init__(self):
         self.header = None
+        
+        if OS != 'Windows':
+            self.nblock = NBlock()
+            self.nblock.run()
 
-
-    @staticmethod
-    def read_key():
+    def read_key(self):
         if OS == 'Windows':
             if msvcrt.kbhit():
                 key = ord(msvcrt.getwch())
                 return chr(key)
         else:
-            if select.select([sys.stdin], [], [], 0.1):
-                return sys.stdin.read(1)
+            if not self.nblock.input:
+                return ''
+            button = self.nblock.input.pop(0)
+            return button
         return ''
 
     def clear_screen(self):
@@ -167,7 +191,7 @@ class SimpleTUI:
             self.print(message)
 
         while True:
-            sel = input('(yes/no) >> ').lower()
+            sel = self.input('(yes/no) >> ').lower()
             if sel.startswith('yes') or sel == 'y':
 
                 return True
@@ -195,14 +219,29 @@ class SimpleTUI:
         -------
         user_input : string or None if cancels
         '''
-        if message is not None:
-            uinput = input(f'{message} >> ')
+        if OS == 'Windows':
+            if message is not None:
+                uinput = input(f'{message} >> ')
+            else:
+                uinput = input('>> ')
+            
         else:
-            uinput = input('>> ')
-        
+            if message is not None:
+                self.print(f'{message} >> ')
+            else:
+                self.print('>> ')
+            uinput = ''
+            while True:
+                if self.nblock.input:
+                    char = self.nblock.input.pop(0)
+                    if char in ['\n', '\r']:
+                        break
+                    uinput += char
+                else:
+                    time.sleep(0.1)
+
         if isinstance(cancels, str) and uinput == cancels:
             return None
-
         return uinput
 
 

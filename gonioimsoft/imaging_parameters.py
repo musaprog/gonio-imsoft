@@ -155,10 +155,12 @@ class ParameterEditor:
     '''
     Dictionary editor on command line with ability to load and save presets.
     '''
-    def __init__(self, dynamic_parameters):
+    def __init__(self, dynamic_parameters, libui=None):
         '''
         dynamic_parameters      Dictionary of the dynamic imaging parameters.
         '''
+        self.libui = libui
+
         self.dynamic_parameters = dynamic_parameters
         self.parameter_names = sorted(self.dynamic_parameters.keys())
 
@@ -228,7 +230,7 @@ class ParameterEditor:
         while True:
             print('MODIFYING IMAGING PARAMETERS')
             self.print_preset(self.dynamic_parameters)
-            parameter = input('Parameter name or (list/save/load/back) (Enter to continue) >> ')
+            parameter = self.libui.input('Parameter name or (list/save/load/back) (Enter to continue) >> ')
             
             # If breaking free
             if parameter == '':
@@ -240,7 +242,7 @@ class ParameterEditor:
             
             # If saving preset
             if parameter.lower() == 'save':
-                name = input('Save current parameters under preset name (if empty == suffix) >> ')
+                name = self.libui.input('Save current parameters under preset name (if empty == suffix) >> ')
                 if name == '' and self.dynamic_parameters['suffix'] != '':
                     name = self.dynamic_parameters['suffix']
                 
@@ -272,7 +274,7 @@ class ParameterEditor:
                     for i, name in enumerate(preset_names):
                         print('{}) {}'.format(i+1, name))
                     
-                    sel = input('>> ')
+                    sel = self.libui.input('>> ')
 
                     try:
                         to_load = preset_names[int(sel)-1]
@@ -288,7 +290,7 @@ class ParameterEditor:
             if parameter in self.presets.keys():
                 self.print_preset(self.presets[parameter])
                 
-                confirm = input('Load this (y/n)>> ').lower()
+                confirm = self.libui.input('Load this (y/n)>> ').lower()
                 if confirm and confirm[0] == 'y':
                     self.dynamic_parameters = self.presets[parameter]
                 else:
@@ -306,7 +308,7 @@ class ParameterEditor:
 
             while True:
 
-                value = input('Value for {} >> '.format(parameter))
+                value = self.libui.input('Value for {} >> '.format(parameter))
                 
                 if value == '':
                     break
@@ -324,12 +326,12 @@ class ParameterEditor:
         return self.dynamic_parameters
 
 
-def getModifiedParameters(**kwargs):
+def getModifiedParameters(libui=None, **kwargs):
     '''
     Take in the DEFAULT parameters in the beginning of this code file
     and let the user modify them using text based ParameterEditor
     '''
-    editor = ParameterEditor(DEFAULT_DYNAMIC_PARAMETERS, **kwargs)
+    editor = ParameterEditor(DEFAULT_DYNAMIC_PARAMETERS, libui=libui, **kwargs)
     return editor.getModified()
 
 

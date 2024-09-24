@@ -628,7 +628,8 @@ class GonioImsoftTUI:
                 'Age ({})'.format(self.core.preparation['age']), cancels)
         if age is None: return
 
-        if self.core.initialize(name, sex, age, camera=camera) is None:
+        if self.core.initialize(
+                name, sex, age, camera=camera, libui=self.libui) is None:
             return
 
         upper_lines = ['-','Dynamic imaging', '-', 'Help F1', 'Space ']
@@ -693,7 +694,7 @@ class GonioImsoftTUI:
             elif key == 's':
                 if camera:
                     self.core.take_snap(save=True)
-            elif key == '\r':
+            elif key in ['\r', '\n']:
                 # If user hits enter we'll exit
                 break
             elif key == 'e':

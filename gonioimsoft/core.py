@@ -649,7 +649,7 @@ class GonioImsoftCore:
             camera.saveDescription(self.preparation['name'], desc_string)
         
 
-    def initialize(self, name, sex, age, camera=False):
+    def initialize(self, name, sex, age, camera=False, libui=None):
         '''Call this to initialize the experiments.
 
         Returns True if worked or None if user cancelled.
@@ -665,7 +665,7 @@ class GonioImsoftCore:
         if age != '':
             self.preparation['age'] = age
 
-        params = getModifiedParameters()
+        params = getModifiedParameters(libui)
         if params is None:
             return None 
 
