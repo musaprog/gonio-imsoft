@@ -439,7 +439,8 @@ class MMCamera:
 
         self.mmc.clearCircularBuffer()
         #self.mmc.prepareSequenceAcquisition(self._device_name)
-        self.wait_for_client()
+        #self.wait_for_client()
+        
         
         start_time = str(datetime.datetime.now())
         self.mmc.startSequenceAcquisition(N_frames, image_interval+(1-scaler)*exposure, False)
@@ -576,9 +577,6 @@ class MMCamera:
     def close(self):
         if self.live_queue:
             self.live_queue.put('close')
-
-    def wait_for_client(self):
-        pass
 
 
 class CameraServer(ServerBase):
