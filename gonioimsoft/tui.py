@@ -696,6 +696,8 @@ class GonioImsoftTUI:
                     self.core.take_snap(save=True)
             elif key in ['\r', '\n']:
                 # If user hits enter we'll exit
+                time.sleep(0.5)
+                self.core.do_trigger()
                 break
             elif key == 'e':
                 if self.core.initialize(name, sex, age, camera=camera) is None:
@@ -718,6 +720,10 @@ class GonioImsoftTUI:
                 elif key == ';':
                     self.core.motors[2].move_raw(1)
             elif key == '`':
+                
+                time.sleep(0.5)
+                self.core.do_trigger()
+                
                 user_input = self.libui.input("Type command >> ", '')
                 if user_input is None:
                     continue

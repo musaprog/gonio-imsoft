@@ -274,23 +274,26 @@ class GonioImsoftCore:
         Sending trigger.
         '''
 
-        chan = self.dynamic_parameters.get('trigger_out_channel', None)
-        
-        if nidaqmx is None:
-            print(f'    pretending to send trigger on chan {chan}')
-            return None
+        chans = self.dynamic_parameters.get('trigger_out_channel', None)
+        if isinstance(chans, str):
+            chans = [chans]
+        for chan in chans:
+            if nidaqmx is None:
+                print(f'    pretending to send trigger on chan {chan}')
+                return None
 
-        if chan:
-            with nidaqmx.Task() as task:
-                task.ao_channels.add_ao_voltage_chan(chan)
-                task.timing.cfg_samp_clk_timing(1000., samps_per_chan=4)
-                task.write(self.trigger_signal)
-                task.start()
-                task.wait_until_done(timeout=1.)
-        else:
-            print('trigger_out_channel not specified, no trigger out')
+            if chan:
+                with nidaqmx.Task() as task:
+                    task.ao_channels.add_ao_voltage_chan(chan)
+                    task.timing.cfg_samp_clk_timing(1000., samps_per_chan=4)
+                    task.write(self.trigger_signal)
+                    task.start()
+                    task.wait_until_done(timeout=1.)
+            else:
+                print('trigger_out_channel not specified, no trigger out')
 
-        self.triggered_anglepairs.append(self.reader.get_latest())
+            self.triggered_anglepairs.append(self.reader.get_latest())
+            
 
 
     def set_led(self, device, value, wait_trigger=False, exclude=None):
