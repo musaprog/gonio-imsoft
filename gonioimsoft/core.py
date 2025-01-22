@@ -203,7 +203,32 @@ class GonioImsoftCore:
             print('    pretending analog_output on channels {}'.format(channels))
             return None
 
+        # Pop off digital channels
+        index_digi = []
+        for i_channel, channel in enumerate(channels):
+            if isinstance(channel, str) and 'port' in channel:
+                index_digi.append(i_channel)
 
+        if index_digi:
+            dtask = nidaqmx.Task()
+            dout = []
+            for index in index_digi:
+                channel = channels.pop(index)
+                dout.append(stimuli.pop(index))
+                # Dev1/port0/line8
+                dtask.do_channels.add_do_chan(channel)
+                
+            dtask.timing.cfg_samp_clk_timing(float(fs), samps_per_chan=len(stimuli[0]))
+            #dtask.triggers.start_trigger.cfg_dig_edge_start_trig("/Dev1/PFI0", trigger_edge=nidaqmx.constants.Edge.RISING)
+            if len(dout) > 1:
+                stimulus = dout[0]
+                for s in dout[1:]:
+                    stimulus = np.vstack((stimulus, s))
+            else:
+                stimulus = dout[0]
+            dout = np.digitize(stimulus, [1]).astype(bool)
+            dtask.write(dout)
+        
         with nidaqmx.Task() as task:
             for i_channel, channel in enumerate(channels):
                 if type(channel) == type('string'):
@@ -213,9 +238,8 @@ class GonioImsoftCore:
                         task.ao_channels.add_ao_voltage_chan(subchan)
                         stimuli.insert(i_channel, stimuli[i_channel])
                     stimuli.pop(i_channel)
-                    
-            task.timing.cfg_samp_clk_timing(float(fs), samps_per_chan=len(stimuli[0]))
 
+            task.timing.cfg_samp_clk_timing(float(fs), samps_per_chan=len(stimuli[0]))
             
             if len(stimuli) > 1:
                 stimulus = stimuli[0]
@@ -225,19 +249,25 @@ class GonioImsoftCore:
                 stimulus = stimuli[0]
 
             task.write(stimulus)
+            
 
             if wait_trigger:
                 task.triggers.start_trigger.cfg_dig_edge_start_trig("/Dev1/PFI0", trigger_edge=nidaqmx.constants.Edge.RISING)
 
             
             task.start()
+            if index_digi:
+                dtask.start()
 
-            if camera:
-                for camera in self.cameras:
-                    camera.send_command('ready')
+            #if camera:
+            #    for camera in self.cameras:
+            #        camera.send_command('ready')
                 
             task.wait_until_done(timeout=(len(stimuli[0])/fs)*1.5+20)
 
+        if index_digi:
+            dtask.wait_until_done(timeout=(len(stimuli[0])/fs)*1.5+20)
+            dtask.close()
 
     def send_trigger(self):
         '''
@@ -281,7 +311,11 @@ class GonioImsoftCore:
             
             if type(device) == type('string'):
                 # If there's only a single device
-                task.ao_channels.add_ao_voltage_chan(device)
+                if '/port' in device:
+                    task.do_channels.add_do_chan(device)
+                    value = bool(value)
+                else:
+                    task.ao_channels.add_ao_voltage_chan(device)
             else:
                 # If device is actually a list of devices
                 for dev in device:
