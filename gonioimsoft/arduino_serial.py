@@ -30,42 +30,45 @@ class ArduinoReader:
         timeout : float
             Default 0.01.
         '''
+
+        self.latest_angle = (0,0)
+        self.offset = (0,0)
         
         # Serial lib not available
         if not serial:
             self.serial = None
-
+            return
+        
         # Use the provided serial port and case closed
         if port is not None:
             self.serial = serial.Serial(
                     port=port, baudrate=baudrate, timeout=timeout)
-
-        else: 
-            # Autodetect the Arduino board:
-            # Use the first one with text "Arduino" in it
-            ports = [str(p) for p in comports()]
+            return
+        
+        # Autodetect the Arduino board:
+        # Use the first one with text "Arduino" in it
+        ports = [str(p) for p in comports()]
             
-            if not ports:
-                self.serial = None
-            else:
-                print(f'Selecting an Arduino from {ports}')
+        if not ports:
+            self.serial = None
+        else:
+            print(f'Selecting an Arduino from {ports}')
 
-            for port in ports:
-                if not 'arduino' in port.lower():
-                    continue
-                print(f'  Trying {port}')
-                try:
-                    self.serial = serial.Serial(
-                            port=port.split(' ')[0],
-                            baudrate=baudrate, timeout=timeout)
-                    self.serial.readline()
-                    print(f'Accepted port {port}')
-                    break
-                except Exception as e:
-                    print(e)
+        for port in ports:
+            if not 'arduino' in port.lower():
+                continue
+            print(f'  Trying {port}')
+            try:
+                self.serial = serial.Serial(
+                         port=port.split(' ')[0],
+                        baudrate=baudrate, timeout=timeout)
+                self.serial.readline()
+                print(f'Accepted port {port}')
+                break
+            except Exception as e:
+                print(e)
+        self.serial = None
 
-        self.latest_angle = (0,0)
-        self.offset = (0,0)
 
     def _offset_correct(self, angles):
         '''
