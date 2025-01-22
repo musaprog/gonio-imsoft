@@ -352,6 +352,22 @@ class GonioImsoftCore:
             
             task.triggers.start_trigger.cfg_dig_edge_start_trig("/Dev1/PFI0", trigger_edge=nidaqmx.constants.Edge.RISING)
             task.read(number_of_samples_per_channel=1)
+
+    def do_trigger(self):
+        chans = self.dynamic_parameters.get('trigger_out_channel', None)
+        if isinstance(chans, str):
+            chans = [chans]
+        N = len(chans)
+            
+        trigwave = np.zeros(50)
+        for i in range(40):
+            trigwave[i] = 3.3
+                
+        stimuli = N*[trigwave]
+        channels = [*chans]
+
+        self.analog_output(channels, stimuli, 1000, wait_trigger=False)
+
         
 
 
@@ -370,90 +386,57 @@ class GonioImsoftCore:
             time.sleep(0.3)
             for camera in self.cameras:
                 camera.acquireSingle(True, os.path.join(self.preparation['name'], 'snaps'))
-            self.set_led(self.dynamic_parameters['ir_channel'], self.dynamic_parameters['ir_livefeed'])
+
             time.sleep(0.2)
+            self.do_trigger()
+            
+            self.set_led(self.dynamic_parameters['ir_channel'], self.dynamic_parameters['ir_livefeed'])
+            
 
             print('A snap image taken')
         else:
             if self.pause_livefeed:
                 return
 
-
-                
             for camera in self.cameras:
                 camera.acquireSingle(False, '')
+            
             time.sleep(0.1)
-
+            self.do_trigger()
 
 
 
 
     
-    def image_trigger_softhard(self):
-        '''Software triggering of the cameras.
-
-        How this works?
-        CameraClient (self.camera) send message to CameraServer to start image acquisition. Starting
-        image acquistion takes some time, so to synchronize, we wait a trigger signal from the camera
-        before turning the LED on. What is done is essentially half software half hardware triggering.
-        Not ideal but seems to work.
+    def image_trigger_none(self, dynamic_parameters, builder, label, N_frames, image_directory, set_led=True):
+        '''Full software no attempt to sync anything...
         '''
-        
-        self.set_led(dynamic_parameters['ir_channel'], dynamic_parameters['ir_imaging'])
-        time.sleep(0.5)
-        
-        # Subfolder suffix so if experimenter takes many images from the same position in different conditions
-        self.camera.acquireSeries(frame_length, 0, N_frames, label, os.path.join(self.preparation['name'], 'pos{}_{}'.format(imaging_angle, dynamic_parameters['suffix']+self.suffix)), 'send')
-        
-        self.wait_for_trigger()
-        time.sleep(dynamic_parameters['pre_stim'])
-        
-        self.set_led(dynamic_parameters['flash_channel'], dynamic_parameters['flash_on'][i])
-        time.sleep(dynamic_parameters['stim'])
+        return self.image_trigger_hard_cameramaster(
+            dynamic_parameters, builder, label, N_frames, image_directory, set_led=set_led,
+            wait_for_trigger=False)
 
-        self.set_led(dynamic_parameters['flash_channel'], dynamic_parameters['flash_off'])
-        
-        time.sleep(dynamic_parameters['post_stim'])
-        
-        self.set_led(dynamic_parameters['ir_channel'], dynamic_parameters['ir_waiting'])
-        
 
-    def image_trigger_hard_cameraslave(self):
+    def image_trigger_hard_cameraslave(self, dynamic_parameters, builder, label, N_frames, image_directory, set_led=True):
         '''
         Where camera is triggered by square wave.
         Since the camera cannot be run this way at 100Hz at full frame,
         image_series3 is used instead.
+
         '''
-
-        fs = 1000
-
-        stimulus, illumination, camera = get_pulse_stimulus(dynamic_parameters['stim'],
-                dynamic_parameters['pre_stim'], dynamic_parameters['post_stim'],
-                dynamic_parameters['frame_length'], dynamic_parameters['flash_on'][i],
-                dynamic_parameters['ir_imaging'], fs,
-                stimulus_finalval=dynamic_parameters['flash_off'],
-                illumination_finalval=dynamic_parameters['ir_waiting'])
-        
-
-        self.camera.acquireSeries(frame_length, 0, N_frames, label,
-                os.path.join(self.preparation['name'], 'pos{}{}'.format(imaging_angle,
-                    dynamic_parameters['suffix']+self.suffix)), 'receive')
-        
-        time.sleep(5)
-
-        
-        self.analog_output([dynamic_parameters['flash_channel'],
-                dynamic_parameters['ir_channel'],
-                dynamic_parameters['trigger_channel']],
-                [stimulus, illumination, camera], fs)
+        return self.image_trigger_hard_cameramaster(
+            dynamic_parameters, builder, label, N_frames, image_directory, set_led=set_led,
+            wait_for_trigger='from-NI')
 
       
 
-    def image_series(self, trigger='hard_cameramaster', inter_loop_callback=None):
+    def image_series(self, trigger='from-NI', inter_loop_callback=None):
         '''
         Contains common steps for all image_series methods.
-        
-        triggering_type     "softhard", "hard_cameraslave", "hard_cameramaster"
+
+        ARGUMENTS
+        ---------
+        triggering_type : str
+            "none", "from-NI", "to-NI"
 
         Returns True if finished properly and False if user cancelled.
         '''
@@ -463,11 +446,11 @@ class GonioImsoftCore:
         exit_imaging = False
 
         print('Starting dynamic imaging using {} triggering'.format(trigger))
-        if trigger == 'softhard':
-            imaging_function = self.image_trigger_softhard
-        elif trigger == 'hard_cameraslave':
+        if trigger == 'none':
+            imaging_function = self.image_trigger_none
+        elif trigger == 'from-NI':
             imaging_function = self.image_trigger_hard_cameraslave
-        elif trigger == 'hard_cameramaster':
+        elif trigger == 'to-NI':
             imaging_function = self.image_trigger_hard_cameramaster
 
         # Wait ISI period here, if it has not passed since the last series imaging
@@ -519,7 +502,7 @@ class GonioImsoftCore:
             if exit_imaging:
                 break
             
-            fs = 1000
+            fs = 10000
             builder = StimulusBuilder(dynamic_parameters['stim'],
                 dynamic_parameters['pre_stim'], dynamic_parameters['post_stim'],
                 dynamic_parameters['frame_length'], dynamic_parameters['flash_on'][i],
@@ -577,15 +560,30 @@ class GonioImsoftCore:
             return True
 
 
-    def image_trigger_hard_cameramaster(self, dynamic_parameters, builder, label, N_frames, image_directory, set_led=True):
+    def image_trigger_hard_cameramaster(self, dynamic_parameters, builder, label, N_frames, image_directory, set_led=True,
+                                        wait_for_trigger='from-NI'):
         '''
         When starting the imaging, the camera sends a trigger pulse to NI board, leading to onset
         of the stimulus (hardware triggering by the camera).
         
         Illumination IR light is hardware triggered together with the stimulus.
 
-        set_led   Set IR to ir_waiting in between (if long enough ISI)
+        ARGUMENTS
+        ---------
+        set_led : bool
+            Set IR to ir_waiting in between (if long enough ISI)
+        wait_for_trigger : string or false
+            If "to_NI", wait trigger to come from the camera to NI card (default)
+            One camera has to be then configured to send trigger, others to wait for it
+            If "from_NI", NI generates trigger.
+            If False, does not wait for trigger.
         '''
+        if wait_for_trigger == 'from-NI':
+            # Trigger to release
+            self.do_trigger()
+            self.do_trigger()
+
+        
         if set_led:
             self.set_led(dynamic_parameters['ir_channel'], dynamic_parameters['ir_imaging'])
             time.sleep(0.5)
@@ -636,21 +634,55 @@ class GonioImsoftCore:
 
         # If no cameras, we should not wait for trigger to come from them.
         # Create own trigger on the trigger channel
+        # - This is needed to sync two NI cards, one input one output
+        # - If only one NI card then not needed?
+        print(f'Wait for trigger is: {wait_for_trigger}')
         if not self.cameras:
             wait_trigger = False
             trigwave = np.zeros(len(stimuli[0]))
             for i in range(min(100, len(trigwave))):
-                trigwave[i] = 5
+                trigwave[i] = 3
+
+            chans = self.dynamic_parameters.get('trigger_out_channel', None)
+            if isinstance(chans, str):
+                chans = [chans]
+            N =len(chans)
             
-            stimuli = [*stimuli, trigwave]
-            channels = [*channels, dynamic_parameters['trigger_out_channel']]
+            stimuli = [*stimuli, *(N*[trigwave])]
+            channels = [*channels, *chans]
+        elif wait_for_trigger == 'from-NI':
+            wait_trigger = False
+            
+
+            chans = self.dynamic_parameters.get('trigger_out_channel', None)
+            if isinstance(chans, str):
+                chans = [chans]
+            N=len(chans)
+
+            trigwaves = builder.get_camera(N, interleaved=False)
+
+            stimuli = [*stimuli, *trigwaves]
+            channels = [*channels, *chans]
+
+            #stimuli = [*stimuli, trigwave]
+            #channels = [*channels, dynamic_parameters['trigger_out_channel']]
+
+            # Give 1000 ms for the cameras to get ready for incoming trigger
+            time.sleep(1)
+        elif wait_for_trigger == 'to-NI':
+            wait_trigger = True
+        elif not wait_for_trigger:
+            wait_trigger = False
         else:
             wait_trigger = True
+        print(f'Wait trigger is: {wait_trigger}')
+
         
         self.analog_output(channels, stimuli, fs, wait_trigger=wait_trigger)
-
-        
-
+        if wait_for_trigger == 'from-NI':
+            self.do_trigger()
+            self.do_trigger()
+            self.do_trigger()
 
     def set_savedir(self, savedir, camera=True):
         '''

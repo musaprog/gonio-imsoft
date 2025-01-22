@@ -168,22 +168,44 @@ class StimulusBuilder:
 
 
 
-    def get_camera(self):
+    def get_camera(self, N=1, interleaved=False):
         '''
         Get square wave camera triggering stimulus.
+
+        Arguments
+        ---------
+        N : int
+            The number trigger out channels
+        interleaved : int
+            Wheter to interleave or return identical
+            
         
         Returns 1D np.array.
         '''
+        cameras = []
         
         samples_per_frame = int(self.frame_length * self.fs /2)
+        if interleaved:
+            shift = int(samples_per_frame*2/N)
+        else:
+            shift = 0
         
-        camera = np.concatenate( ( np.ones((samples_per_frame, self.N_frames)), np.zeros((samples_per_frame, self.N_frames)) ) ).T.flatten()
-        camera = 5*camera
-    
-        camera[-1] = 0
+        for i in range(N):
+            camera = np.concatenate( ( np.ones((samples_per_frame, self.N_frames)), np.zeros((samples_per_frame, self.N_frames)) ) )
+            camera = camera.T.flatten()
+            camera = 3.3*camera
 
-        return camera
+            ashift = shift*i 
+            if ashift:
+                a,b = np.split(camera, [ashift], axis=0)
+                camera = np.concatenate((b,a))
+            camera[-1] = 0
 
+            cameras.append(camera)
+
+        return cameras
+
+        
 
 
 def main():
