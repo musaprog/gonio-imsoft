@@ -150,10 +150,10 @@ class GonioImsoftCore:
         # by Python (the sockets are not kept alive so nothing is
         # left open etc. by the client)
         if isinstance(i_client, int):
-            client = self.register.pop(i_client)
+            client = register.pop(i_client)
         elif isinstance(i_client, (CameraClient, VIOClient)):
             client = i_client
-            self.register.remove(client)
+            register.remove(client)
         else:
             raise ValueError(f'Cannot remove {i_client} from clients')
 
