@@ -239,7 +239,7 @@ class MMCamera:
         #self.mmc.initializeAllDevices()
         #self.mmc.setCameraDevice('Camera')
             
-        self.settings = {'exposure_time_scaler': 1}
+        self.settings = {'exposure_time_scaler': 1, 'transpose': 0}
         
         #self.mmc.setCircularBufferMemoryFootprint(4000)
         self.live_queue= False
@@ -366,6 +366,9 @@ class MMCamera:
  
         self.mmc.snapImage()
         image = self.mmc.getImage()
+
+        if self.settings['transpose'] != 0:
+            image = np.transpose(image)
         
         if not self.live_queue:
             self.live_queue = multiprocessing.Queue()
@@ -460,7 +463,10 @@ class MMCamera:
                 except:
                     # Index error for example when circular buffer is still empty
                     self.mmc.sleep(1000*exposure_time)
-            
+                    print(f'No image {i}/{N_frames}, waiting...')
+
+            if self.settings['transpose'] != 0:
+                image = np.transpose(image)
             images.append(image)
             
             
