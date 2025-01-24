@@ -239,9 +239,14 @@ class MMCamera:
         #self.mmc.initializeAllDevices()
         #self.mmc.setCameraDevice('Camera')
             
-        self.settings = {'exposure_time_scaler': 1, 'transpose': 0}
+        self.settings = {
+            'exposure_time_scaler': 1,
+            'transpose': 0,
+            'fliplr': 0,
+            'flipud': 0,
+            }
         
-        #self.mmc.setCircularBufferMemoryFootprint(4000)
+        self.mmc.setCircularBufferMemoryFootprint(4000)
         self.live_queue= False
 
         self.shower = ImageShower()
@@ -348,6 +353,16 @@ class MMCamera:
             print('Error! The set value likely out of range.')
             print(e)
 
+    def _image_postprocess(self, image):
+        if self.settings['transpose'] != 0:
+            image = np.transpose(image)
+        if self.settings['flipud'] != 0:
+            image = np.flipud(image)
+        if self.settings['fliplr'] != 0:
+            image = np.fliplr(image)
+        return image
+            
+
     def acquire_single(self, exposure_time, save, subdir):
         '''
         Acquire a single image.
@@ -366,9 +381,7 @@ class MMCamera:
  
         self.mmc.snapImage()
         image = self.mmc.getImage()
-
-        if self.settings['transpose'] != 0:
-            image = np.transpose(image)
+        image = self._image_postprocess(image)
         
         if not self.live_queue:
             self.live_queue = multiprocessing.Queue()
@@ -465,8 +478,7 @@ class MMCamera:
                     self.mmc.sleep(1000*exposure_time)
                     print(f'No image {i}/{N_frames}, waiting...')
 
-            if self.settings['transpose'] != 0:
-                image = np.transpose(image)
+            image = self._image_postprocess(image)
             images.append(image)
             
             
