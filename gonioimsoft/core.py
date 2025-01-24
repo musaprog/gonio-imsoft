@@ -741,7 +741,8 @@ class GonioImsoftCore:
         if age != '':
             self.preparation['age'] = age
 
-        params = getModifiedParameters(libui=libui)
+        params = getModifiedParameters(libui=libui,
+                                       parameters=self.dynamic_parameters)
         if params is None:
             return None 
 
