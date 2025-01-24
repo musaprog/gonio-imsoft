@@ -461,8 +461,8 @@ class MMCamera:
         start_time = str(datetime.datetime.now())
         self.mmc.startSequenceAcquisition(N_frames, image_interval+(1-scaler)*exposure, False)
         
-        while self.mmc.isSequenceRunning():
-            self.mmc.sleep(1000*exposure_time)
+        #while self.mmc.isSequenceRunning():
+        #    self.mmc.sleep(1000*exposure_time)
 
         self.mmc.sleep(1000)
 
