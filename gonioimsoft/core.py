@@ -714,6 +714,13 @@ class GonioImsoftCore:
         desc_string += "\n\n#DYNAMIC PROTOCOL PARAMETERS\n"
         for name, value in self.dynamic_parameters.items():
             desc_string += '{} {}\n'.format(name, value)
+
+        # Save information about cameras: What was the name of the camera number
+        # 1, number 2 ans do on
+        desc_string += '\n#CAMERA NUMBER-NAME RELATIONS\n'
+        for i_camera, camera in enumerate(self.cameras):
+            desc_string += f'cam_{i_camera} {camera.get_camera()}\n'
+            
         for camera in self.cameras:
             camera.saveDescription(self.preparation['name'], desc_string)
         
