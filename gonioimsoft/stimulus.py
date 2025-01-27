@@ -57,7 +57,7 @@ class StimulusBuilder:
             self.overload_stimulus = None
             
 
-    def overload_biosyst_stimulus(self, fn, channel=0):
+    def overload_biosyst_stimulus(self, fn, channel=0, multiplier=1):
         '''
         Loads a Biosyst stimulus that gets returned then at
         get_stimulus_pulse instead.
@@ -77,7 +77,7 @@ class StimulusBuilder:
                 key = f'stim_{i_stim}'
                 if key not in data:
                     continue
-                self.overload_stimulus.append(np.array(data[key]))
+                self.overload_stimulus.append(multiplier*np.array(data[key]))
 
             return self.overload_stimulus[0], self.fs
 
@@ -183,6 +183,11 @@ class StimulusBuilder:
         Returns 1D np.array.
         '''
         cameras = []
+
+        N0_samples = int(self.prestim_time*self.fs)
+        N1_samples = int(self.stim_time*self.fs)
+        N2_samples = int(self.poststim_time*self.fs)
+        N_total_samples = N0_samples + N1_samples + N2_samples
         
         samples_per_frame = int(self.frame_length * self.fs /2)
         if interleaved:
@@ -199,6 +204,16 @@ class StimulusBuilder:
             if ashift:
                 a,b = np.split(camera, [ashift], axis=0)
                 camera = np.concatenate((b,a))
+
+            # Theres a bug in this code that camera wave can be longer
+            # than the stimulus and IR so lets keep it same length
+            if len(camera) > N_total_samples:
+                camera = camera[0:N_total_samples]
+            elif len(camera) < N_total_samples:
+                camera = np.concatenate(
+                    (camera, np.zeros(N_total_samples-len(camera)))
+                    )
+                
             camera[-1] = 0
 
             cameras.append(camera)
