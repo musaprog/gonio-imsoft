@@ -587,23 +587,30 @@ class GonioImsoftCore:
             self.do_trigger()
             self.do_trigger()
 
+        # If IR is used or not
+        if dynamic_parameters['ir_channel'].lower() in ['none']:
+            use_ir = False
+        else:
+            use_ir = True            
         
-        if set_led:
+        if use_ir and set_led:
             self.set_led(dynamic_parameters['ir_channel'], dynamic_parameters['ir_imaging'])
             time.sleep(0.5)
         
         fs = builder.fs
-          
+
+        # Create stimulus
         stimulus = builder.get_stimulus_pulse()
         if isinstance(stimulus, list):
             NN = len(stimulus[0])
         else:
             NN = stimulus.shape
-        irwave = dynamic_parameters['ir_imaging'] * np.ones(NN)
 
-        #irwave = dynamic_parameters['ir_imaging'] * np.ones(stimulus.shape)
-        if set_led:
-            irwave[-1] = dynamic_parameters['ir_waiting']
+        if use_ir:
+            irwave = dynamic_parameters['ir_imaging'] * np.ones(NN)
+            #irwave = dynamic_parameters['ir_imaging'] * np.ones(stimulus.shape)
+            if set_led:
+                irwave[-1] = dynamic_parameters['ir_waiting']
 
         stimuli = []
         channels = []
@@ -611,13 +618,16 @@ class GonioImsoftCore:
         if isinstance(stimulus, list):
             # Many stimulus channels
             print('Many stimulus channels')
-            stimuli = [*stimulus, irwave]
-            channels = [*dynamic_parameters['flash_channel'], dynamic_parameters['ir_channel']]
+            stimuli = [*stimulus]
+            channels = [*dynamic_parameters['flash_channel']]
         else:
             # One stimulus channel
-            stimuli = [stimulus, irwave]
-            channels = [dynamic_parameters['flash_channel'], dynamic_parameters['ir_channel']]
+            stimuli = [stimulus]
+            channels = [dynamic_parameters['flash_channel']]
 
+        if use_ir:
+            stimuli.append(irwave)
+            channels.append(dynamic_parameters['ir_channel'])
 
 
         # Arm analog input recording if any vio clients
