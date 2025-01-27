@@ -155,8 +155,13 @@ class CameraClient(ClientBase):
         fn = os.path.join(savedir, f'{label}.json')
         
         if not os.path.exists(fn):
-            raise FileNotFoundError(f'{fn} does not exist')
-
+            if label == 'previous':
+                # If wanting the previous and it does not exist
+                # this is ok, meaning we go with the existing settings
+                return
+            else:
+                raise FileNotFoundError(f'{fn} does not exist')
+            
         with open(fn, 'r') as fp:
             state = json.load(fp)
 
