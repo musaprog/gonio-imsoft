@@ -321,6 +321,21 @@ class Console:
         except Exception as e:
             print(e)
 
+    def set_snapexpo(self, time):
+        '''Sets the exposure time for snap images
+        '''
+        try:
+            self.core.snap_exposure_time = float(time)
+        except Exception as e:
+            print(e)
+
+    def set_liveexpo(self, time):
+        '''Sets the exposure time for livefeed video
+        '''
+        try:
+            self.core.live_exposure_time = float(time)
+        except Exception as e:
+            print(e)
 
 class GonioImsoftTUI:
     '''Terminal user interface for goniometric imaging.

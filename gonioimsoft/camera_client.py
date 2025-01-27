@@ -67,8 +67,9 @@ class CameraClient(ClientBase):
         self.send_command(message)
 
 
-    def acquireSingle(self, save, subdir):
-        self.send_command('acquireSingle;0.1:{}:{}'.format(str(save), subdir))
+    def acquireSingle(self, save, subdir, exposure_time=0.01):
+        self.send_command('acquireSingle;{}:{}:{}'.format(
+            exposure_time, str(save), subdir))
     
     def saveDescription(self, filename, string):
         self.send_command('saveDescription;'+filename+':'+string)

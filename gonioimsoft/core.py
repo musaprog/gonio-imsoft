@@ -55,6 +55,10 @@ class GonioImsoftCore:
         
         self.cameras = []
         self.vios = []
+
+        # Exposure times for snaps and livefeed
+        self.snap_exposure_time = 0.01
+        self.live_exposure_time = 0.01
         
         # Details about preparation (name, sex, age) are saved in this
         self.preparation = {'name': 'test', 'sex': '', 'age': ''}
@@ -387,7 +391,10 @@ class GonioImsoftCore:
             self.set_led(self.dynamic_parameters['ir_channel'], self.dynamic_parameters['ir_imaging'])
             time.sleep(0.3)
             for camera in self.cameras:
-                camera.acquireSingle(True, os.path.join(self.preparation['name'], 'snaps'))
+                camera.acquireSingle(
+                    True, os.path.join(self.preparation['name'], 'snaps'),
+                    exposure_time=self.snap_exposure_time,
+                    )
 
             time.sleep(0.2)
             self.do_trigger()
@@ -395,13 +402,14 @@ class GonioImsoftCore:
             self.set_led(self.dynamic_parameters['ir_channel'], self.dynamic_parameters['ir_livefeed'])
             
 
-            print('A snap image taken')
+            print(f'A snap image taken. Exposure time {self.snap_exposure_time} seconds')
         else:
             if self.pause_livefeed:
                 return
 
             for camera in self.cameras:
-                camera.acquireSingle(False, '')
+                camera.acquireSingle(
+                    False, '', exposure_time=self.live_exposure_time)
             
             time.sleep(0.1)
             self.do_trigger()
