@@ -307,6 +307,8 @@ class GonioImsoftCore:
             print(f'    pretending to set {device} on value {value}')
             return None
 
+        if isinstance(device, str) and device.lower() in ['none']:
+            return
 
         excluded = 0
 
