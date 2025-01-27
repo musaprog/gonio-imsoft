@@ -700,6 +700,9 @@ class GonioImsoftTUI:
                 self.core.do_trigger()
                 break
             elif key == 'e':
+                time.sleep(0.5)
+                self.core.do_trigger()
+                
                 if self.core.initialize(name, sex, age, camera=camera, libui=self.libui) is None:
                     continue
             elif key == 'h':
