@@ -512,7 +512,9 @@ class GonioImsoftCore:
                 wtype=dynamic_parameters['flash_type'])
 
             if dynamic_parameters.get('biosyst_stimulus', ''):
-                bsstim, fs = builder.overload_biosyst_stimulus(dynamic_parameters['biosyst_stimulus'], dynamic_parameters['biosyst_channel'])
+                bsstim, fs = builder.overload_biosyst_stimulus(
+                    dynamic_parameters['biosyst_stimulus'], dynamic_parameters['biosyst_channel'],
+                    multiplier=dynamic_parameters.get('biosyst_multiplier', 1))
                 N_frames = int(round((len(bsstim)/fs) / dynamic_parameters['frame_length']))
 
             if i==0 and dynamic_parameters['avgint_adaptation']:

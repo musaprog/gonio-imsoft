@@ -22,6 +22,7 @@ DEFAULT_DYNAMIC_PARAMETERS = {
         'trigger_out_channel': "Dev1/ao7",
         'biosyst_stimulus': '',
         'biosyst_channel': 2,
+        'biosyst_multiplier': 1,
         'avgint_adaptation': 0,
         'flash_type': 'square',
         'save_stack': True,
@@ -34,6 +35,7 @@ DYNAMIC_PARAMETERS_TYPES = {
         'voltage': ['ir_imaging', 'ir_waiting', 'ir_livefeed', 'flash_on', 'flash_off'],
         'channel': ['ir_channel', 'flash_channel', 'trigger_channel', 'trigger_out_channel'],
         'integer': ['repeats', 'biosyst_channel'],
+        'float': ['biosyst_multiplier'],
         'string': ['suffix', 'biosyst_stimulus', 'flash_type'],
         'boolean': ['save_stack', 'reboot_cameras'],
         'roibox': ['ROI']}
@@ -58,6 +60,7 @@ DYNAMIC_PARAMETERS_HELP = {
         'suffix': 'Tag added to the saved folders',
         'biosyst_stimulus': 'Override the square pulse by a biosyst stimulus [filename]',
         'biosyst_channel': 'The channel read from the biosyst simulus file if set',
+        'biosyst_multiplier': 'Multiply a biosyst stimulus by this number',
         'avgint_adaptation': 'Time to show stimulus mean value before imaging [s]',
         'flash_type': 'square, sinelogsweep, squarelogsweep or 3steplogsweep. "{sweep},f0,f1" for Hz',
         'save_stack': 'If true, save a stack instead separate images',
@@ -76,6 +79,8 @@ def getRightType(parameter_name, string_value):
     if parameter_name in DYNAMIC_PARAMETERS_TYPES['integer']:
         return int(string_value)
 
+    if parameter_name in DYNAMIC_PARAMETERS_TYPES['float']:
+        return float(string_value)
    
     if parameter_name in DYNAMIC_PARAMETERS_TYPES['seconds']:
         if string_value.startswith('[') and string_value.endswith(']'):
