@@ -331,12 +331,15 @@ class ParameterEditor:
         return self.dynamic_parameters
 
 
-def getModifiedParameters(libui=None, **kwargs):
+def getModifiedParameters(libui=None, parameters=None, **kwargs):
     '''
     Take in the DEFAULT parameters in the beginning of this code file
     and let the user modify them using text based ParameterEditor
     '''
-    editor = ParameterEditor(DEFAULT_DYNAMIC_PARAMETERS, libui=libui, **kwargs)
+
+    if parameters is None:
+        parameters = DEFAULT_DYNAMIC_PARAMETERS
+    editor = ParameterEditor(parameters, libui=libui, **kwargs)
     return editor.getModified()
 
 
