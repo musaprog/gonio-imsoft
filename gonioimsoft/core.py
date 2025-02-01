@@ -390,10 +390,10 @@ class GonioImsoftCore:
         if save:
             self.set_led(self.dynamic_parameters['ir_channel'], self.dynamic_parameters['ir_imaging'])
             time.sleep(0.3)
-            for camera in self.cameras:
+            for i_camera, camera in enumerate(self.cameras):
                 camera.acquireSingle(
                     True, os.path.join(self.preparation['name'], 'snaps'),
-                    exposure_time=self.snap_exposure_time,
+                    exposure_time=self.snap_exposure_time, suffix=f'cam{i_camera}'
                     )
 
             time.sleep(0.2)
