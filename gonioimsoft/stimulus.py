@@ -227,11 +227,14 @@ def main():
     '''Saves stimulus as a json.
     '''
     from .imaging_parameters import getModifiedParameters
-
+    from .libtui import SimpleTUI
+    
+    libui = SimpleTUI()
+    
     data = {}
     for i_stim in range(10):
 
-        dynamic_parameters = getModifiedParameters()
+        dynamic_parameters = getModifiedParameters(libui=libui)
 
         fs = 10000
         builder = StimulusBuilder(
