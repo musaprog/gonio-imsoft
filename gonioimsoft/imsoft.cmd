@@ -1,1 +1,1 @@
-python tui.py
+python -m gonioimsoft
