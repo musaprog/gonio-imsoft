@@ -156,6 +156,7 @@ class ImageShower:
         self.rectangle = RectangleSelector(self.ax, self.__onSelectRectangle, useblit=True)
         
         image = queue.get()
+        image = np.astype(image, np.float32)
         self.im = plt.imshow(1000*image/np.max(image), cmap='gray', vmin=0, vmax=1, interpolation='none', aspect='auto')
         self.ani = FuncAnimation(plt.gcf(), self._updateImage, frames=range(100), interval=50, blit=False)
 
