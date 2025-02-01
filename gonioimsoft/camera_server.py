@@ -364,7 +364,7 @@ class MMCamera:
         return image
             
 
-    def acquire_single(self, exposure_time, save, subdir):
+    def acquire_single(self, exposure_time, save, subdir, suffix=None):
         '''
         Acquire a single image.
 
@@ -399,7 +399,12 @@ class MMCamera:
         if save == 'True':
             metadata = {'exposure_time_s': exposure_time, 'function': 'acquireSingle', 'start_time': start_time}
 
-            save_thread = threading.Thread(target=self.save_images,args=([image],'snap_{}'.format(start_time.replace(':','.').replace(' ','_')), metadata,os.path.join(self.save_directory, subdir)))
+            name = 'snap_{}'.format(start_time.replace(':','.').replace(' ','_'))
+
+            if suffix:
+                name = f'{name}_{suffix}'
+            
+            save_thread = threading.Thread(target=self.save_images,args=([image], name, metadata,os.path.join(self.save_directory, subdir)))
             save_thread.start()
 
 
